@@ -4,151 +4,317 @@ import { getCollection } from 'astro:content';
 
 const posts = (await getCollection('journal', ({ data }) => !data.draft))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const sotdEntries = await getCollection('sotd');
+const latestSotd = sotdEntries
+  .sort((a, b) => b.data.date.localeCompare(a.data.date))[0];
+
+function getYouTubeId(url: string): string | null {
+  const m = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+const videoId = latestSotd?.data.link ? getYouTubeId(latestSotd.data.link) : null;
 ---
 
 <BaseLayout title="Journal — Infinite Circles" description="Music journal, thoughts and notes.">
+<div class="page-journal">
 
-  <div class="page-journal">
-    <section class="journal-header reveal">
-      <div class="section-label">Journal</div>
-      <h1>Thoughts, music &<br><em>fragments.</em></h1>
-      <p class="header-desc">{posts.length} entries so far.</p>
-    </section>
+  <section class="journal-header reveal">
+    <div class="section-label">Journal</div>
+    <h1>Thoughts, music &<br><em>fragments.</em></h1>
+    <p class="header-desc">{posts.length} entries so far.</p>
+  </section>
 
-    <section class="cards-section">
-      <div class="cards-grid">
-        {posts.map((post, i) => (
-          <a href={`/journal/${post.id}`} class="card reveal" style={`transition-delay:${i * 0.08}s`}>
-            <div class="card-date">
-              {post.data.date.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })}
-            </div>
-            <div class="card-title">{post.data.title}</div>
-            <div class="card-desc">{post.data.description}</div>
-            <div class="card-arrow">→</div>
-          </a>
-        ))}
+  {latestSotd && (
+    <section class="sotd-widget reveal">
+      <div class="section-label">Song of the Day</div>
+      <div class="sotd-meta">
+        <div>
+          <div class="sotd-title">{latestSotd.data.title}</div>
+          <div class="sotd-artist">{latestSotd.data.artist}</div>
+          {latestSotd.data.note && <div class="sotd-note">{latestSotd.data.note}</div>}
+        </div>
+        <a href="/sotd" class="sotd-all">Alle Songs →</a>
       </div>
-    </section>
-  </div>
 
+      {videoId && (
+        <div class="yt-wrap" data-vid={videoId}>
+          <div class="yt-card" id="sotd-yt-card">
+            <img
+              id="sotd-yt-thumb"
+              src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
+              alt={latestSotd.data.title}
+            />
+            <div class="yt-card-play">
+              <div class="yt-card-play-btn">
+                <div class="yt-card-tri"></div>
+              </div>
+            </div>
+            <div class="yt-card-label">{latestSotd.data.title} — {latestSotd.data.artist}</div>
+          </div>
+          <div class="yt-player" id="sotd-yt-player"></div>
+        </div>
+      )}
+    </section>
+  )}
+
+  <section class="cards-section">
+    <div class="cards-grid">
+      {posts.map((post, i) => (
+        <a href={`/journal/${post.id}`} class="card reveal" style={`transition-delay:${i * 0.08}s`}>
+          <div class="card-date">
+            {post.data.date.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })}
+          </div>
+          <div class="card-title">{post.data.title}</div>
+          <div class="card-desc">{post.data.description}</div>
+          <div class="card-arrow">→</div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+</div>
 </BaseLayout>
 
 <style>
-  body { background: var(--sky-top); }
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 40%, var(--sky-bot) 100%);
-    z-index: -2;
-    pointer-events: none;
-  }
+body { background: var(--sky-top); }
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 40%, var(--sky-bot) 100%);
+  z-index: -2;
+  pointer-events: none;
+}
+.page-journal {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+.journal-header {
+  padding: 5rem 0 3.5rem;
+  border-bottom: 0.5px solid var(--border-light);
+  margin-bottom: 3.5rem;
+}
+.section-label {
+  font-size: 9px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1.5rem;
+}
+.section-label::before { content: '·'; margin-right: .45em; font-size: 1.4em; line-height: 0; vertical-align: middle; }
+h1 {
+  font-family: var(--font-serif);
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 300;
+  line-height: 1.05;
+  color: var(--text-deep);
+  margin-bottom: 1rem;
+}
+h1 em { font-style: italic; color: var(--accent); }
+.header-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: .06em;
+}
 
-  .page-journal {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 0 2rem;
-  }
+/* SOTD Widget */
+.sotd-widget {
+  margin-bottom: 3.5rem;
+  padding: 1.75rem 2rem;
+  background: var(--glass-bg);
+  border: 0.5px solid var(--glass-border);
+  border-radius: 14px;
+  backdrop-filter: blur(16px);
+}
+.sotd-meta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.sotd-title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 300;
+  color: var(--text-deep);
+  margin-bottom: .2rem;
+}
+.sotd-artist {
+  font-size: 11px;
+  letter-spacing: .08em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: .4rem;
+}
+.sotd-note {
+  font-size: 11px;
+  color: var(--text-mid);
+  line-height: 1.7;
+}
+.sotd-all {
+  font-size: 10px;
+  letter-spacing: .1em;
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: var(--t);
+  flex-shrink: 0;
+  padding-top: .2rem;
+}
+.sotd-all:hover { color: var(--accent); }
 
-  .journal-header {
-    padding: 5rem 0 3.5rem;
-    border-bottom: 0.5px solid var(--border-light);
-    margin-bottom: 3.5rem;
-  }
+/* YouTube */
+.yt-wrap {
+  width: 100%;
+}
+.yt-card {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #000;
+  width: 100%;
+  aspect-ratio: 16/9;
+  border: 0.5px solid var(--glass-border);
+}
+.yt-card img {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity .2s;
+}
+.yt-card:hover img { opacity: .75; }
+.yt-card-play {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.yt-card-play-btn {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: rgba(255,255,255,.92);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 12px rgba(0,0,0,.35);
+  transition: transform .15s;
+}
+.yt-card:hover .yt-card-play-btn { transform: scale(1.1); }
+.yt-card-tri {
+  width: 0; height: 0; border-style: solid;
+  border-width: 8px 0 8px 15px;
+  border-color: transparent transparent transparent #1a1a1a;
+  margin-left: 3px;
+}
+.yt-card-label {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 6px 10px;
+  background: linear-gradient(transparent, rgba(0,0,0,.55));
+  font-size: 9px; letter-spacing: .06em; color: rgba(255,255,255,.8);
+}
+.yt-player {
+  display: none;
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 0.5px solid var(--glass-border);
+  background: #000;
+}
+.yt-player.open { display: block; }
+.yt-player iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
 
-  .section-label {
-    font-size: 9px;
-    letter-spacing: .22em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 1.5rem;
-  }
-  .section-label::before { content: '·'; margin-right: .45em; font-size: 1.4em; line-height: 0; vertical-align: middle; }
+/* Cards */
+.cards-section { padding-bottom: 5rem; }
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.card {
+  background: var(--glass-bg);
+  border: 0.5px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 2rem;
+  transition: var(--t);
+  backdrop-filter: blur(16px);
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+}
+.card:hover {
+  background: var(--glass-bg-strong);
+  transform: translateY(-2px);
+  border-color: var(--accent2);
+}
+.card-date {
+  font-size: 9px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.card-title {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 300;
+  line-height: 1.25;
+  color: var(--text-deep);
+}
+.card-desc {
+  font-size: 11px;
+  color: var(--text-mid);
+  line-height: 1.8;
+  flex: 1;
+}
+.card-arrow {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-top: .5rem;
+  transition: var(--t);
+}
+.card:hover .card-arrow { color: var(--accent); transform: translateX(3px); }
+.reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
+.reveal.in { opacity: 1; transform: translateY(0); }
 
-  h1 {
-    font-family: var(--font-serif);
-    font-size: clamp(40px, 5vw, 64px);
-    font-weight: 300;
-    line-height: 1.05;
-    color: var(--text-deep);
-    margin-bottom: 1rem;
-  }
-  h1 em { font-style: italic; color: var(--accent); }
-
-  .header-desc {
-    font-size: 11px;
-    color: var(--text-dim);
-    letter-spacing: .06em;
-  }
-
-  .cards-section {
-    padding-bottom: 5rem;
-  }
-
-  .cards-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-
-  .card {
-    background: var(--glass-bg);
-    border: 0.5px solid var(--glass-border);
-    border-radius: 14px;
-    padding: 2rem;
-    transition: var(--t);
-    backdrop-filter: blur(16px);
-    text-decoration: none;
-    display: flex;
-    flex-direction: column;
-    gap: .6rem;
-  }
-  .card:hover {
-    background: var(--glass-bg-strong);
-    transform: translateY(-2px);
-    border-color: var(--accent2);
-  }
-  .card-date {
-    font-size: 9px;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--accent);
-  }
-  .card-title {
-    font-family: var(--font-serif);
-    font-size: 22px;
-    font-weight: 300;
-    line-height: 1.25;
-    color: var(--text-deep);
-  }
-  .card-desc {
-    font-size: 11px;
-    color: var(--text-mid);
-    line-height: 1.8;
-    flex: 1;
-  }
-  .card-arrow {
-    font-size: 14px;
-    color: var(--text-dim);
-    margin-top: .5rem;
-    transition: var(--t);
-  }
-  .card:hover .card-arrow { color: var(--accent); transform: translateX(3px); }
-
-  .reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
-  .reveal.in { opacity: 1; transform: translateY(0); }
-
-  @media (max-width: 768px) {
-    .page-journal { padding: 0 1.5rem; }
-    .journal-header { padding: 3rem 0 2.5rem; }
-    .cards-grid { grid-template-columns: 1fr; }
-  }
+@media (max-width: 768px) {
+  .page-journal { padding: 0 1.5rem; }
+  .journal-header { padding: 3rem 0 2.5rem; }
+  .cards-grid { grid-template-columns: 1fr; }
+  .sotd-meta { flex-direction: column; }
+}
 </style>
 
 <script>
-  const observer = new IntersectionObserver(
-    (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }),
-    { threshold: 0.1 }
-  );
-  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+const observer = new IntersectionObserver(
+  (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }),
+  { threshold: 0.1 }
+);
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+const ytCard = document.getElementById('sotd-yt-card');
+const ytPlayer = document.getElementById('sotd-yt-player');
+if (ytCard && ytPlayer) {
+  ytCard.addEventListener('click', () => {
+    const wrap = ytCard.closest('.yt-wrap') as HTMLElement;
+    const id = wrap?.dataset.vid;
+    if (!id) return;
+    const width = wrap.offsetWidth;
+    const height = Math.round(width * 9 / 16);
+    ytPlayer.style.width = width + 'px';
+    ytPlayer.style.height = height + 'px';
+    ytPlayer.style.aspectRatio = 'unset';
+    ytPlayer.innerHTML = `<iframe width="${width}" height="${height}" src="https://www.youtube.com/embed/${id}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+    ytPlayer.classList.add('open');
+    ytCard.style.display = 'none';
+  });
+}
 </script>

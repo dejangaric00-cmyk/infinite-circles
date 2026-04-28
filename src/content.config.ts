@@ -11,4 +11,17 @@ const journal = defineCollection({
   }),
 });
 
-export const collections = { journal };
+const sotd = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/sotd' }),
+  schema: z.object({
+    date: z.string(),
+    title: z.string(),
+    artist: z.string(),
+    album: z.string().optional(),
+    link: z.string().url().optional(),
+    mood: z.string().optional(),
+    note: z.string().optional(),
+  }),
+});
+
+export const collections = { journal, sotd };

@@ -1,0 +1,243 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+function getYouTubeId(url: string): string | null {
+  const m = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+const entries = await getCollection('sotd');
+const sorted = entries.sort((a, b) => b.data.date.localeCompare(a.data.date));
+---
+
+<BaseLayout title="Song of the Day — Infinite Circles" description="Every day a song.">
+<div class="page-sotd">
+
+  <section class="sotd-header reveal">
+    <div class="section-label">Song of the Day</div>
+    <h1>One song,<br><em>every day.</em></h1>
+    <p class="header-desc">{sorted.length} songs so far.</p>
+  </section>
+
+  <section class="sotd-list">
+    {sorted.map((entry, i) => {
+      const vid = entry.data.link ? getYouTubeId(entry.data.link) : null;
+      return (
+        <div class="sotd-item reveal" style={`transition-delay:${i * 0.06}s`} data-vid={vid ?? ''}>
+          <div class="sotd-item-left">
+            <div class="sotd-item-date">{entry.data.date}</div>
+            {vid && (
+              <div class="yt-thumb-wrap">
+                <div class="yt-thumb" data-vid={vid}>
+                  <img src={`https://img.youtube.com/vi/${vid}/hqdefault.jpg`} alt={entry.data.title} />
+                  <div class="yt-thumb-play">
+                    <div class="yt-thumb-btn"><div class="yt-thumb-tri"></div></div>
+                  </div>
+                </div>
+                <div class="yt-thumb-player"></div>
+              </div>
+            )}
+          </div>
+          <div class="sotd-item-right">
+            <div class="sotd-item-title">{entry.data.title}</div>
+            <div class="sotd-item-artist">{entry.data.artist}</div>
+            {entry.data.album && <div class="sotd-item-album">{entry.data.album}</div>}
+            {entry.data.mood && <span class="sotd-item-mood">{entry.data.mood}</span>}
+            {entry.data.note && <p class="sotd-item-note">{entry.data.note}</p>}
+          </div>
+        </div>
+      );
+    })}
+  </section>
+
+</div>
+</BaseLayout>
+
+<style>
+body { background: var(--sky-top); }
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 40%, var(--sky-bot) 100%);
+  z-index: -2;
+  pointer-events: none;
+}
+.page-sotd {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+.sotd-header {
+  padding: 5rem 0 3.5rem;
+  border-bottom: 0.5px solid var(--border-light);
+  margin-bottom: 3.5rem;
+}
+.section-label {
+  font-size: 9px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1.5rem;
+}
+.section-label::before { content: '·'; margin-right: .45em; font-size: 1.4em; line-height: 0; vertical-align: middle; }
+h1 {
+  font-family: var(--font-serif);
+  font-size: clamp(40px, 5vw, 64px);
+  font-weight: 300;
+  line-height: 1.05;
+  color: var(--text-deep);
+  margin-bottom: 1rem;
+}
+h1 em { font-style: italic; color: var(--accent); }
+.header-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: .06em;
+}
+
+/* List */
+.sotd-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-bottom: 5rem;
+}
+.sotd-item {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 2rem;
+  padding: 2rem 0;
+  border-bottom: 0.5px solid var(--border-light);
+}
+.sotd-item-date {
+  font-size: 9px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: .75rem;
+}
+
+/* Thumbnail */
+.yt-thumb-wrap { width: 100%; }
+.yt-thumb {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #000;
+  width: 100%;
+  aspect-ratio: 16/9;
+  border: 0.5px solid var(--glass-border);
+}
+.yt-thumb img {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity .2s;
+}
+.yt-thumb:hover img { opacity: .75; }
+.yt-thumb-play {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.yt-thumb-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,.9);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  transition: transform .15s;
+}
+.yt-thumb:hover .yt-thumb-btn { transform: scale(1.1); }
+.yt-thumb-tri {
+  width: 0; height: 0; border-style: solid;
+  border-width: 6px 0 6px 11px;
+  border-color: transparent transparent transparent #1a1a1a;
+  margin-left: 2px;
+}
+.yt-thumb-player {
+  display: none;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+}
+.yt-thumb-player.open { display: block; }
+.yt-thumb-player iframe { width: 100%; border: none; display: block; }
+
+/* Info */
+.sotd-item-title {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 300;
+  color: var(--text-deep);
+  line-height: 1.2;
+  margin-bottom: .2rem;
+}
+.sotd-item-artist {
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: .2rem;
+}
+.sotd-item-album {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-bottom: .5rem;
+}
+.sotd-item-mood {
+  font-size: 8px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border: 0.5px solid var(--glass-border);
+  border-radius: 20px;
+  color: var(--text-dim);
+  display: inline-block;
+  margin-bottom: .75rem;
+}
+.sotd-item-note {
+  font-size: 11px;
+  color: var(--text-mid);
+  line-height: 1.8;
+  margin-top: .5rem;
+}
+
+.reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
+.reveal.in { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 768px) {
+  .page-sotd { padding: 0 1.5rem; }
+  .sotd-header { padding: 3rem 0 2.5rem; }
+  .sotd-item { grid-template-columns: 1fr; gap: 1rem; }
+}
+</style>
+
+<script>
+const observer = new IntersectionObserver(
+  (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }),
+  { threshold: 0.1 }
+);
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+document.querySelectorAll('.yt-thumb').forEach(card => {
+  const wrap = card.closest('.yt-thumb-wrap') as HTMLElement;
+  const player = wrap?.querySelector('.yt-thumb-player') as HTMLElement;
+  if (!player) return;
+  card.addEventListener('click', () => {
+    const vid = (card as HTMLElement).dataset.vid;
+    if (!vid) return;
+    const width = wrap.offsetWidth;
+    const height = Math.round(width * 9 / 16);
+    player.style.height = height + 'px';
+    player.innerHTML = `<iframe width="${width}" height="${height}" src="https://www.youtube.com/embed/${vid}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+    player.classList.add('open');
+    (card as HTMLElement).style.display = 'none';
+  });
+});
+</script>
