@@ -1,0 +1,45 @@
+---
+const links = [
+  { href: "/", label: "home" },
+  { href: "/now", label: "now" },
+  { href: "/works", label: "works" },
+  { href: "/journal", label: "journal" },
+  { href: "/writing", label: "writing" },
+  { href: "/about", label: "about" },
+];
+
+const current = Astro.url.pathname;
+---
+
+<nav>
+  {links.map(({ href, label }) => (
+    <a href={href} class={current === href ? "active" : ""}>{label}</a>
+  ))}
+</nav>
+
+<style>
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    gap: 2rem;
+    padding: 1.5rem 2.5rem;
+    z-index: 100;
+  }
+
+  a {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  a:hover,
+  a.active {
+    color: var(--text);
+  }
+</style>
