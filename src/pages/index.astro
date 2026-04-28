@@ -2,34 +2,371 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Infinite Circles">
-  <main>
-    <h1>infinite-circles.de</h1>
-    <p>Work in progress.</p>
-  </main>
+<BaseLayout title="Infinite Circles — Dejan">
+
+  <!-- Sky background -->
+  <canvas id="rainbow-canvas"></canvas>
+  <div class="cloud-layer">
+    <div class="cloud" style="width:220px;height:55px;top:8%;left:8%;animation-duration:11s;animation-direction:alternate"></div>
+    <div class="cloud" style="width:180px;height:50px;top:5%;right:6%;animation-duration:9s;animation-direction:alternate"></div>
+    <div class="cloud" style="width:260px;height:65px;top:20%;right:20%;animation-duration:13s;animation-direction:alternate-reverse"></div>
+  </div>
+
+  <!-- HOME PAGE -->
+  <div id="page-home">
+
+    <!-- HERO -->
+    <section class="hero">
+      <div>
+        <h1 class="reveal">A place for<br><em>thoughts,</em><br>links &amp; things.</h1>
+        <p class="hero-desc reveal" style="transition-delay:.1s">Personal site of Dejan. Curator, internet wanderer, play-to-earn explorer. Based in Hannover, Germany.</p>
+      </div>
+      <div class="hero-right reveal" style="transition-delay:.2s">
+        <div class="tag-cloud">
+          <span class="tag">Music Journal</span>
+          <span class="tag">Writing</span>
+          <span class="tag">Curation</span>
+          <span class="tag">Play to Earn</span>
+          <span class="tag">Experiments</span>
+        </div>
+        <div class="hero-meta">infinite-circles.de &ensp;—&ensp; est. 2026</div>
+        <a href="/journal" class="btn btn-dark">Open music journal &rarr;</a>
+      </div>
+    </section>
+
+    <!-- SOTD -->
+    <section class="section">
+      <div class="sotd-home reveal" id="home-sotd">
+        <div>
+          <div class="section-label">Song of the day</div>
+          <div class="sotd-title">Today's<br><em>pick</em></div>
+        </div>
+        <div class="sotd-right-home">
+          <div class="sotd-track" id="home-track">No entry yet</div>
+          <div class="sotd-artist">
+            <a href="/journal" style="color:var(--text-mid);text-decoration:underline;text-underline-offset:3px;font-size:10px;letter-spacing:.1em">Add your first pick in the Journal →</a>
+          </div>
+          <div class="sotd-date" id="home-date"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LINKS STRIP -->
+    <div class="links-strip">
+      <a class="strip-link" href="https://everynoise.com" target="_blank" rel="noopener">Every Noise at Once<span>Music discovery</span></a>
+      <a class="strip-link" href="https://radio.garden" target="_blank" rel="noopener">Radio Garden<span>Live global radio</span></a>
+      <a class="strip-link" href="https://are.na" target="_blank" rel="noopener">Are.na<span>Visual research</span></a>
+      <a class="strip-link" href="https://soundcloud.com" target="_blank" rel="noopener">SoundCloud<span>Music</span></a>
+      <a class="strip-link" href="https://neal.fun" target="_blank" rel="noopener">Neal.fun<span>Wonderful internet</span></a>
+      <a class="strip-link" href="https://archive.org" target="_blank" rel="noopener">Archive.org<span>Internet memory</span></a>
+      <a class="strip-link" href="https://listen.hatnote.com" target="_blank" rel="noopener">Listen to Wikipedia<span>Live data art</span></a>
+      <a class="strip-link" href="https://thetruesize.com" target="_blank" rel="noopener">True Size<span>Geography</span></a>
+      <a class="strip-link" href="https://windows93.net" target="_blank" rel="noopener">Windows 93<span>Internet art</span></a>
+      <a class="strip-link" href="https://bsky.app" target="_blank" rel="noopener">Bluesky<span>Open social</span></a>
+      <a class="strip-link" href="https://obsidian.md" target="_blank" rel="noopener">Obsidian<span>Notes</span></a>
+      <a class="strip-link" href="https://raindrop.io" target="_blank" rel="noopener">Raindrop<span>Bookmarks</span></a>
+    </div>
+
+    <!-- RECENT WRITING -->
+    <section class="section">
+      <div class="section-label">Recent writing</div>
+      <div class="cards-grid">
+        <a href="/writing/daily-internet-routine" class="card reveal">
+          <div class="card-type">Essay</div>
+          <div class="card-title">On building a daily internet routine</div>
+          <div class="card-meta">Apr 2026 &middot; 4 min</div>
+        </a>
+        <a href="/writing/reset-skill-tree" class="card reveal" style="transition-delay:.08s">
+          <div class="card-type">Note</div>
+          <div class="card-title">Why I reset my skill tree</div>
+          <div class="card-meta">Mar 2026 &middot; 4 min</div>
+        </a>
+        <a href="/writing/p2e-getting-started" class="card reveal" style="transition-delay:.16s">
+          <div class="card-type">Guide</div>
+          <div class="card-title">Getting started with P2E in 2026</div>
+          <div class="card-meta">Feb 2026 &middot; 5 min</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- LAB PREVIEW -->
+    <section class="section">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center" class="reveal">
+        <div>
+          <div class="section-label">The Lab</div>
+          <div class="lab-title">Experiments in<br><em>code &amp; form</em></div>
+          <p style="font-size:11px;color:var(--text-mid);line-height:2;margin-bottom:1.5rem;max-width:340px">Music visualisers, generative art, live weather poetry, particle fields.</p>
+          <a href="/lab" class="btn btn-dark">Enter the Lab &rarr;</a>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <a href="/lab" class="glass lab-card"><div class="lab-num">01</div><div class="lab-name">Music Visualiser</div></a>
+          <a href="/lab" class="glass lab-card"><div class="lab-num">02</div><div class="lab-name">Live Weather</div></a>
+          <a href="/lab" class="glass lab-card"><div class="lab-num">03</div><div class="lab-name">Generative Art</div></a>
+          <a href="/lab" class="glass lab-card"><div class="lab-num">04</div><div class="lab-name">Particle Field</div></a>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
 </BaseLayout>
 
 <style>
-  main {
-    display: grid;
-    place-items: center;
-    min-height: 100vh;
-    padding: 2rem;
-    text-align: center;
+  /* Sky background */
+  body {
+    background: var(--sky-top);
+    position: relative;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 40%, var(--sky-bot) 100%);
+    z-index: -2;
+    pointer-events: none;
+  }
+  #rainbow-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.55;
+  }
+  .cloud-layer {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .cloud {
+    position: absolute;
+    background: rgba(255,255,255,0.52);
+    border-radius: 50px;
+    filter: blur(12px);
+    animation: cloudDrift linear infinite;
+  }
+  @keyframes cloudDrift {
+    from { transform: translateX(-10px); }
+    to   { transform: translateX(10px); }
   }
 
-  h1 {
+  /* HERO */
+  .hero {
+    padding: 5.5rem 4rem 4rem;
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 6rem;
+    align-items: end;
+    border-bottom: 0.5px solid var(--border-light);
+  }
+  .hero h1 {
     font-family: var(--font-serif);
-    font-size: clamp(2rem, 6vw, 5rem);
+    font-size: clamp(48px, 6vw, 80px);
     font-weight: 300;
-    letter-spacing: 0.15em;
+    line-height: 1.03;
+    margin-bottom: 1.5rem;
+    color: var(--text-deep);
+  }
+  .hero h1 em { font-style: italic; color: var(--accent); }
+  .hero-desc {
+    font-size: 11px;
+    letter-spacing: .04em;
+    line-height: 2.1;
+    color: var(--text-mid);
+    max-width: 340px;
+  }
+  .hero-right { display: flex; flex-direction: column; gap: 1.25rem; }
+  .tag-cloud { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .tag {
+    font-size: 9px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    background: var(--glass-bg);
+    border: 0.5px solid var(--glass-border);
+    color: var(--text-mid);
+    border-radius: 20px;
+    transition: var(--t);
+    backdrop-filter: blur(10px);
+  }
+  .hero-meta { font-size: 10px; color: var(--text-dim); letter-spacing: .08em; }
+
+  /* SECTION */
+  .section {
+    padding: 3.5rem 4rem;
+    border-bottom: 0.5px solid var(--border-light);
+  }
+  .section-label {
+    font-size: 9px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
     color: var(--accent);
+    margin-bottom: 1.5rem;
+  }
+  .section-label::before { content: '·'; margin-right: .45em; font-size: 1.4em; line-height: 0; vertical-align: middle; }
+
+  /* BTN */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    padding: 9px 20px;
+    border: 0.5px solid var(--glass-border);
+    color: var(--text-mid);
+    background: var(--glass-bg);
+    border-radius: 20px;
+    transition: var(--t);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    backdrop-filter: blur(12px);
+    text-decoration: none;
+  }
+  .btn-dark { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-dark:hover { background: var(--accent2); border-color: var(--accent2); }
+
+  /* GLASS */
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px) saturate(150%);
+    border: 0.5px solid var(--glass-border);
+    border-radius: 14px;
+  }
+
+  /* REVEAL */
+  .reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+
+  /* SOTD */
+  .sotd-home {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 4rem;
+    align-items: center;
+  }
+  .sotd-title {
+    font-family: var(--font-serif);
+    font-size: 42px;
+    font-weight: 300;
+    line-height: 1.1;
+    color: var(--text-deep);
     margin-bottom: 1rem;
   }
+  .sotd-title em { font-style: italic; color: var(--accent); }
+  .sotd-right-home { border-left: 0.5px solid var(--border-light); padding-left: 4rem; }
+  .sotd-track {
+    font-family: var(--font-serif);
+    font-size: 28px;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--text-deep);
+    margin-bottom: .3rem;
+  }
 
-  p {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    letter-spacing: 0.1em;
+  /* LINKS STRIP */
+  .links-strip { display: flex; overflow-x: auto; border-bottom: 0.5px solid var(--border-light); }
+  .links-strip::-webkit-scrollbar { display: none; }
+  .strip-link {
+    flex: 0 0 auto;
+    padding: 1rem 1.5rem;
+    border-right: 0.5px solid var(--border-light);
+    font-size: 10px;
+    letter-spacing: .09em;
+    color: var(--text-mid);
+    transition: var(--t);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    background: var(--glass-bg);
+    text-decoration: none;
+  }
+  .strip-link:hover { background: var(--glass-bg-strong); color: var(--text-deep); }
+  .strip-link span { font-size: 8px; color: var(--text-dim); letter-spacing: .11em; }
+
+  /* CARDS */
+  .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .card {
+    background: var(--glass-bg);
+    border: 0.5px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 2rem;
+    transition: var(--t);
+    backdrop-filter: blur(16px);
+    text-decoration: none;
+    display: block;
+  }
+  .card:hover { background: var(--glass-bg-strong); transform: translateY(-2px); border-color: var(--accent2); }
+  .card-type { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); margin-bottom: .8rem; }
+  .card-title { font-family: var(--font-serif); font-size: 21px; font-weight: 300; line-height: 1.3; color: var(--text-deep); margin-bottom: .5rem; }
+  .card-meta { font-size: 10px; color: var(--text-dim); }
+
+  /* LAB */
+  .lab-title {
+    font-family: var(--font-serif);
+    font-size: 38px;
+    font-weight: 300;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+    color: var(--text-deep);
+  }
+  .lab-title em { font-style: italic; color: var(--accent); }
+  .lab-card {
+    padding: 1.35rem;
+    cursor: pointer;
+    transition: var(--t);
+    text-decoration: none;
+    display: block;
+  }
+  .lab-num { font-size: 8px; letter-spacing: .16em; color: var(--text-dim); margin-bottom: .35rem; }
+  .lab-name { font-family: var(--font-serif); font-size: 16px; font-weight: 300; color: var(--text-deep); }
+
+  /* MOBILE */
+  @media (max-width: 768px) {
+    .hero { grid-template-columns: 1fr; gap: 2rem; padding: 3rem 1.5rem 2.5rem; }
+    .section { padding: 2.5rem 1.5rem; }
+    .cards-grid { grid-template-columns: 1fr; }
+    .sotd-home { grid-template-columns: 1fr; gap: 1.5rem; }
+    .sotd-right-home { border-left: none; border-top: 0.5px solid var(--border-light); padding-left: 0; padding-top: 1.5rem; }
   }
 </style>
+
+<script>
+  // Reveal on scroll
+  const observer = new IntersectionObserver(
+    (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }),
+    { threshold: 0.1 }
+  );
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Rainbow canvas (subtle aurora)
+  const canvas = document.getElementById('rainbow-canvas') as HTMLCanvasElement;
+  if (canvas) {
+    const ctx = canvas.getContext('2d')!;
+    let t = 0;
+    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    resize();
+    window.addEventListener('resize', resize);
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < 3; i++) {
+        const x = canvas.width * (0.2 + i * 0.3 + Math.sin(t * 0.0008 + i) * 0.1);
+        const y = canvas.height * (0.3 + Math.sin(t * 0.0006 + i * 1.2) * 0.2);
+        const r = canvas.width * 0.35;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        const colors = ['rgba(74,144,217,0.12)', 'rgba(135,206,235,0.08)', 'rgba(26,107,181,0.1)'];
+        g.addColorStop(0, colors[i]);
+        g.addColorStop(1, 'transparent');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      t++;
+      requestAnimationFrame(draw);
+    };
+    draw();
+  }
+</script>
