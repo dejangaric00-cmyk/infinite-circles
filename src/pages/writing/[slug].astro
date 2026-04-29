@@ -1,0 +1,43 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('writing', ({ data }) => !data.draft);
+  return entries.map(entry => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<BaseLayout title={`${entry.data.title} – Infinite Circles`} description={entry.data.description}>
+  <main style="max-width: 680px; margin: 4rem auto; padding: 0 2rem;">
+    <header style="margin-bottom: 3rem;">
+      <span style="font-size: 11px; letter-spacing: .12em; color: var(--text-dim); font-family: var(--font-mono);">
+        {entry.data.date.toISOString().slice(0, 10)}
+      </span>
+      <h1 style="font-family: var(--font-serif); font-size: 2.8rem; font-weight: 300; color: var(--text-deep); margin: 0.4rem 0 0.8rem;">{entry.data.title}</h1>
+      {entry.data.description && (
+        <p style="font-size: 15px; color: var(--text-mid); font-style: italic;">{entry.data.description}</p>
+      )}
+    </header>
+    <article style="font-family: var(--font-serif); font-size: 1.2rem; font-weight: 300; line-height: 1.9; color: var(--text-deep);">
+      <Content />
+    </article>
+  </main>
+</BaseLayout>
+<style>
+body { background: var(--sky-top); position: relative; }
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 40%, var(--sky-bot) 100%);
+  z-index: -2;
+  pointer-events: none;
+}
+</style>
