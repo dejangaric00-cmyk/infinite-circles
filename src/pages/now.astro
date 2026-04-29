@@ -1,0 +1,44 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Now – Infinite Circles">
+  <main style="max-width: 680px; margin: 4rem auto; padding: 0 2rem;">
+    <h1 style="font-family: var(--font-serif); font-size: 2.5rem; font-weight: 300; margin-bottom: 0.5rem; color: var(--text-deep);">Now</h1>
+    <p style="font-size: 11px; color: var(--text-dim); letter-spacing: .08em; margin-bottom: 3rem;">Updated April 2026 · Hannover</p>
+
+    <section style="margin-bottom: 2.5rem;">
+      <h2 style="font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem;">Listening</h2>
+      <p style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 300; line-height: 1.9; color: var(--text-deep);">Logging one song a day. Lately a lot of deep house, some ambient, and things I can't easily categorise.</p>
+    </section>
+
+    <section style="margin-bottom: 2.5rem;">
+      <h2 style="font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem;">Playing</h2>
+      <p style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 300; line-height: 1.9; color: var(--text-deep);">SuperWalk daily. Level 30, working toward an Epic NFT upgrade. The tokens are a bonus — I was already walking.</p>
+    </section>
+
+    <section style="margin-bottom: 2.5rem;">
+      <h2 style="font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem;">Building</h2>
+      <p style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 300; line-height: 1.9; color: var(--text-deep);">This site. Figuring out what it wants to be.</p>
+    </section>
+
+    <section style="margin-bottom: 2.5rem;">
+      <h2 style="font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem;">Reading</h2>
+      <p style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 300; line-height: 1.9; color: var(--text-deep);">Nothing specific right now. Lots of RSS, lots of tabs left open too long.</p>
+    </section>
+
+    <p style="font-size: 10px; color: var(--text-dim); margin-top: 3rem;">This is a <a href="https://nownownow.com/about" target="_blank" style="color: var(--accent); text-decoration: none;">/now page</a>. Updated manually when things change.</p>
+  </main>
+</BaseLayout>
+
+<style>
+body { background: var(--sky-top); position: relative; }
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 40%, var(--sky-bot) 100%);
+  z-index: -2;
+  pointer-events: none;
+}
+</style>
