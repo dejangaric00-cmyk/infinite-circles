@@ -7,18 +7,27 @@ const entries = (await getCollection('writing', ({ data }) => !data.draft))
 ---
 
 <BaseLayout title="Writing – Infinite Circles" description="Texte von Dejan.">
-  <main style="max-width: 680px; margin: 4rem auto; padding: 0 2rem;">
-    <h1 style="font-family: var(--font-serif); font-size: 2.5rem; font-weight: 300; margin-bottom: 2.5rem; color: var(--text-deep);">Writing</h1>
-    <ul style="list-style: none;">
+  <main class="writing-index">
+    <header class="writing-header">
+      <span class="writing-eyebrow">All writing</span>
+      <h1>Essays, notes<br><em>&amp; observations.</em></h1>
+      <p class="writing-sub">Occasional writing on tools, the internet, play-to-earn, and whatever feels worth putting into words.</p>
+    </header>
+
+    <ul class="writing-list">
       {entries.map(entry => (
-        <li style="margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 0.5px solid var(--border-mid);">
-          <a href={`/writing/${entry.id}`} style="text-decoration: none;">
-            <span style="font-size: 11px; letter-spacing: .12em; color: var(--text-dim); font-family: var(--font-mono);">
-              {entry.data.date.toISOString().slice(0, 10)}
-            </span>
-            <h2 style="font-family: var(--font-serif); font-size: 1.5rem; font-weight: 300; color: var(--text-deep); margin: 0.3rem 0;">{entry.data.title}</h2>
+        <li class="writing-item">
+          <a href={`/writing/${entry.id}`} class="writing-link">
+            <div class="writing-meta-row">
+              {entry.data.type && <span class="tag tag-type">{entry.data.type}</span>}
+              {entry.data.readtime && <span class="tag tag-read">{entry.data.readtime}</span>}
+              <span class="tag tag-date">
+                {entry.data.date.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
+              </span>
+            </div>
+            <h2 class="writing-title">{entry.data.title}</h2>
             {entry.data.description && (
-              <p style="font-size: 13px; color: var(--text-mid);">{entry.data.description}</p>
+              <p class="writing-desc">{entry.data.description}</p>
             )}
           </a>
         </li>
@@ -26,8 +35,9 @@ const entries = (await getCollection('writing', ({ data }) => !data.draft))
     </ul>
   </main>
 </BaseLayout>
-<style>
-body { background: var(--sky-top); position: relative; }
+
+<style is:global>
+body { background: var(--sky-top); }
 body::before {
   content: '';
   position: fixed;
@@ -35,5 +45,122 @@ body::before {
   background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 40%, var(--sky-bot) 100%);
   z-index: -2;
   pointer-events: none;
+}
+
+.writing-index {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 2rem 6rem;
+}
+
+.writing-header {
+  padding: 5rem 0 3rem;
+  border-bottom: 0.5px solid var(--border-light);
+  margin-bottom: 0;
+}
+
+.writing-eyebrow {
+  font-size: 9px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.writing-header h1 {
+  font-family: var(--font-serif);
+  font-size: 3.2rem;
+  font-weight: 300;
+  line-height: 1.05;
+  color: var(--text-deep);
+  margin: 0 0 1rem;
+}
+
+.writing-header h1 em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.writing-sub {
+  font-size: 11px;
+  letter-spacing: .04em;
+  line-height: 2;
+  color: var(--text-mid);
+  max-width: 480px;
+  margin: 0;
+}
+
+.writing-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.writing-item {
+  border-bottom: 0.5px solid var(--border-light);
+}
+
+.writing-link {
+  display: block;
+  padding: 2rem 0;
+  text-decoration: none;
+  transition: all .2s ease;
+}
+
+.writing-link:hover .writing-title {
+  color: var(--accent);
+}
+
+.writing-meta-row {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-bottom: .75rem;
+}
+
+.tag {
+  font-size: 9px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+}
+
+.tag-type {
+  background: rgba(74, 144, 217, .12);
+  border: 0.5px solid rgba(74, 144, 217, .35);
+  color: var(--accent);
+}
+
+.tag-read {
+  background: var(--glass-bg);
+  border: 0.5px solid var(--border-light);
+  color: var(--text-dim);
+}
+
+.tag-date {
+  background: var(--glass-bg);
+  border: 0.5px solid var(--border-light);
+  color: var(--text-dim);
+}
+
+.writing-title {
+  font-family: var(--font-serif);
+  font-size: 1.7rem;
+  font-weight: 300;
+  color: var(--text-deep);
+  margin: 0 0 .5rem;
+  line-height: 1.2;
+  transition: color .2s ease;
+}
+
+.writing-desc {
+  font-size: 12px;
+  color: var(--text-mid);
+  line-height: 1.8;
+  margin: 0;
+  max-width: 560px;
 }
 </style>

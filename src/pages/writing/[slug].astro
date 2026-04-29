@@ -15,23 +15,43 @@ const { Content } = await render(entry);
 ---
 
 <BaseLayout title={`${entry.data.title} – Infinite Circles`} description={entry.data.description}>
-  <main style="max-width: 680px; margin: 4rem auto; padding: 0 2rem;">
-    <header style="margin-bottom: 3rem;">
-      <span style="font-size: 11px; letter-spacing: .12em; color: var(--text-dim); font-family: var(--font-mono);">
-        {entry.data.date.toISOString().slice(0, 10)}
-      </span>
-      <h1 style="font-family: var(--font-serif); font-size: 2.8rem; font-weight: 300; color: var(--text-deep); margin: 0.4rem 0 0.8rem;">{entry.data.title}</h1>
+  <main class="reader">
+
+    <a href="/writing" class="back-link">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2">
+        <path d="M9 2L4 7l5 5"/>
+      </svg>
+      All writing
+    </a>
+
+    <header class="reader-header">
+      <div class="reader-meta-row">
+        {entry.data.type && <span class="tag tag-type">{entry.data.type}</span>}
+        {entry.data.readtime && <span class="tag tag-read">{entry.data.readtime}</span>}
+        <span class="tag tag-date">
+          {entry.data.date.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
+        </span>
+      </div>
+      <h1 class="reader-title">{entry.data.title}</h1>
       {entry.data.description && (
-        <p style="font-size: 15px; color: var(--text-mid); font-style: italic;">{entry.data.description}</p>
+        <p class="reader-desc">{entry.data.description}</p>
       )}
     </header>
-    <article style="font-family: var(--font-serif); font-size: 1.2rem; font-weight: 300; line-height: 1.9; color: var(--text-deep);">
+
+    <article class="reader-body">
       <Content />
     </article>
+
+    <footer class="reader-footer">
+      <span class="reader-fin">— fin.</span>
+      <a href="/writing" class="back-link">← Back to all writing</a>
+    </footer>
+
   </main>
 </BaseLayout>
-<style>
-body { background: var(--sky-top); position: relative; }
+
+<style is:global>
+body { background: var(--sky-top); }
 body::before {
   content: '';
   position: fixed;
@@ -39,5 +59,127 @@ body::before {
   background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 40%, var(--sky-bot) 100%);
   z-index: -2;
   pointer-events: none;
+}
+
+.reader {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 2rem 6rem;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--text-mid);
+  text-decoration: none;
+  margin: 2.5rem 0 0;
+  padding: 7px 16px;
+  border: 0.5px solid var(--border-light);
+  border-radius: 20px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  transition: all .2s ease;
+}
+
+.back-link:hover {
+  color: var(--text-deep);
+  border-color: var(--accent);
+}
+
+.reader-header {
+  margin: 3rem 0 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 0.5px solid var(--border-light);
+}
+
+.reader-meta-row {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.tag {
+  font-size: 9px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+}
+
+.tag-type {
+  background: rgba(74, 144, 217, .12);
+  border: 0.5px solid rgba(74, 144, 217, .35);
+  color: var(--accent);
+}
+
+.tag-read {
+  background: var(--glass-bg);
+  border: 0.5px solid var(--border-light);
+  color: var(--text-dim);
+}
+
+.tag-date {
+  background: var(--glass-bg);
+  border: 0.5px solid var(--border-light);
+  color: var(--text-dim);
+}
+
+.reader-title {
+  font-family: var(--font-serif);
+  font-size: 3rem;
+  font-weight: 300;
+  color: var(--text-deep);
+  margin: 0 0 1rem;
+  line-height: 1.1;
+}
+
+.reader-desc {
+  font-size: 15px;
+  color: var(--text-mid);
+  font-style: italic;
+  line-height: 1.8;
+  margin: 0;
+}
+
+.reader-body {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 300;
+  line-height: 1.9;
+  color: var(--text-deep);
+}
+
+.reader-body p {
+  margin-bottom: 1.5rem;
+}
+
+.reader-body blockquote {
+  border-left: 2px solid var(--accent);
+  margin: 2rem 0;
+  padding: .5rem 0 .5rem 1.5rem;
+  font-style: italic;
+  color: var(--text-mid);
+}
+
+.reader-footer {
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 0.5px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.reader-fin {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  font-style: italic;
+  color: var(--text-dim);
 }
 </style>

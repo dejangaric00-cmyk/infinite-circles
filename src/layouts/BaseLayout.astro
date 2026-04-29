@@ -114,14 +114,24 @@ const {
     }
   }
 
-  body {
-    font-family: var(--font-mono);
-    color: var(--text-deep);
-    line-height: 1.6;
-    overflow-x: hidden;
-    min-height: 100vh;
-  }
+body {
+  font-family: var(--font-mono);
+  color: var(--text-deep);
+  line-height: 1.6;
+  overflow-x: hidden;
+  min-height: 100vh;
+  background: var(--sky-top);
+  position: relative;
+}
 
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 40%, var(--sky-bot) 100%);
+  z-index: -2;
+  pointer-events: none;
+}
   /* NAV */
   nav {
     position: sticky;
