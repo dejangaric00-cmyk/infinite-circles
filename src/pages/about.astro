@@ -1,0 +1,39 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="About – Infinite Circles">
+  <main style="max-width: 680px; margin: 5rem auto; padding: 0 2rem; text-align: center;">
+
+    <div style="font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); margin-bottom: 2rem;">About — Dejan</div>
+
+    <h1 style="font-family: var(--font-serif); font-size: clamp(48px, 6vw, 80px); font-weight: 300; line-height: 1.05; color: var(--text-deep); margin-bottom: 2rem;">
+      Curator.<br><em style="font-style: italic; color: var(--accent);">Explorer.</em><br>Builder.
+    </h1>
+
+    <p style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 300; line-height: 2; color: var(--text-deep); margin-bottom: 3rem;">I run <em>Infinite Circles</em> — a personal site.</p>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 480px; margin: 0 auto;">
+      <div style="background: var(--glass-bg); border: 0.5px solid var(--glass-border); border-radius: 14px; padding: 1.5rem; backdrop-filter: blur(16px);">
+        <div style="font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.5rem;">Location</div>
+        <div style="font-family: var(--font-serif); font-size: 20px; font-weight: 300; color: var(--text-deep);">Hannover, DE</div>
+      </div>
+      <div style="background: var(--glass-bg); border: 0.5px solid var(--glass-border); border-radius: 14px; padding: 1.5rem; backdrop-filter: blur(16px);">
+        <div style="font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.5rem;">Built with</div>
+        <div style="font-family: var(--font-serif); font-size: 20px; font-weight: 300; color: var(--text-deep);">Astro · GitHub · Netlify</div>
+      </div>
+    </div>
+
+  </main>
+</BaseLayout>
+
+<style>
+body { background: var(--sky-top); position: relative; }
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 40%, var(--sky-bot) 100%);
+  z-index: -2;
+  pointer-events: none;
+}
+</style>
