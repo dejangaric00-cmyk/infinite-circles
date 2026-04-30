@@ -14,12 +14,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <div class="hero-right reveal" style="transition-delay:.2s">
 
       <div class="signal-panel">
-        <div class="panel-header">Signal · 52°N 9°E</div>
+        <div class="panel-header">52°N 9°E · Hannover</div>
 
         <!-- SUN -->
         <div class="sig-block">
           <div class="sig-label">Sonne</div>
-          <canvas id="sun-arc" width="280" height="52"></canvas>
+          <div class="sun-arc-wrap">
+            <canvas id="sun-arc"></canvas>
+          </div>
           <div class="sig-val" id="sun-times">—</div>
           <div class="sig-val" id="sun-daylength">—</div>
           <div class="sig-val" id="sun-countdown">—</div>
@@ -31,7 +33,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <div class="sig-block">
           <div class="sig-label">Mond</div>
           <div class="moon-wrap">
-            <canvas id="moon-canvas" width="32" height="32"></canvas>
+            <canvas id="moon-canvas" width="28" height="28"></canvas>
             <div>
               <div class="sig-val" id="moon-name">—</div>
               <div class="sig-val" id="moon-pct">—</div>
@@ -54,7 +56,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <div class="sig-block">
           <div class="sig-label">Position</div>
           <div class="sig-val">52.3759° N &nbsp; 9.7320° E</div>
-          <div class="sig-val">Hannover · UTC+2 · CEST</div>
+          <div class="sig-val">UTC+2 · CEST</div>
         </div>
 
       </div>
@@ -96,7 +98,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   max-width: 340px;
 }
 
-/* SIGNAL PANEL — vollständig transparent, kein Box-Rahmen */
+/* SIGNAL PANEL — vollständig transparent */
 .signal-panel {
   display: flex;
   flex-direction: column;
@@ -115,15 +117,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 .sig-block {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.75rem 0;
+  gap: 0.22rem;
+  padding: 0.7rem 0;
 }
 
 .sig-divider {
-  width: 32px;
+  width: 28px;
   height: 0.5px;
-  background: var(--glass-border);
-  opacity: 0.5;
+  background: currentColor;
+  opacity: 0.15;
 }
 
 .sig-label {
@@ -132,34 +134,42 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   text-transform: uppercase;
   color: var(--text-dim);
   font-family: var(--font-mono);
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.3rem;
 }
 
-/* Einheitliche Schriftgröße für alle Werte — alles Mono */
 .sig-val {
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 400;
   color: var(--text-deep);
   line-height: 1.7;
-  letter-spacing: .04em;
+  letter-spacing: .03em;
+}
+
+/* Sun arc — fluid width */
+.sun-arc-wrap {
+  width: 100%;
+  margin: 4px 0 2px;
+}
+#sun-arc {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .moon-wrap {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 4px;
+  margin-top: 2px;
 }
-#moon-canvas { display: block; }
-#sun-arc { display: block; margin: 4px 0; }
+#moon-canvas { display: block; flex-shrink: 0; }
 
 .reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
 .reveal.in { opacity: 1; transform: translateY(0); }
 
 @media (max-width: 768px) {
   .hero { grid-template-columns: 1fr; gap: 2.5rem; padding: 3rem 1.5rem 2.5rem; }
-  #sun-arc { width: 100%; }
 }
 </style>
 
@@ -176,13 +186,11 @@ const isDark = () => document.documentElement.classList.contains('dark');
 function fmt(d: Date) {
   return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 }
-
 function fmtDuration(ms: number) {
   const totalSec = Math.round(ms / 1000);
   const h = Math.floor(totalSec / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
-  const s = totalSec % 60;
-  return { h, m, s };
+  return { h, m };
 }
 
 function getSunTimes(date: Date, lat: number, lng: number) {
@@ -204,9 +212,46 @@ function getSunTimes(date: Date, lat: number, lng: number) {
   };
 }
 
+// Vollständiges Tagesspektrum (f: 0=Aufgang, 1=Untergang)
+function dayColor(f: number): [number, number, number] {
+  const stops: Array<[number, [number,number,number]]> = [
+    [0.00, [180,  60, 120]], // Morgenrot tief
+    [0.08, [255, 100,  50]], // Aufgang orange
+    [0.18, [255, 170,  60]], // goldene Morgenstunde
+    [0.30, [255, 210, 100]], // helles Gold
+    [0.45, [160, 210, 255]], // Tagblau
+    [0.50, [185, 225, 255]], // Mittagshell
+    [0.55, [160, 210, 255]], // Tagblau
+    [0.70, [255, 200,  80]], // Nachmittagsgold
+    [0.82, [255, 140,  50]], // Abendsonne
+    [0.92, [220,  70,  90]], // Abendrot
+    [1.00, [130,  30, 100]], // Dämmerung
+  ];
+  for (let i = 0; i < stops.length - 1; i++) {
+    const [f0, c0] = stops[i];
+    const [f1, c1] = stops[i + 1];
+    if (f >= f0 && f <= f1) {
+      const t = (f - f0) / (f1 - f0);
+      return [
+        Math.round(c0[0] + (c1[0] - c0[0]) * t),
+        Math.round(c0[1] + (c1[1] - c0[1]) * t),
+        Math.round(c0[2] + (c1[2] - c0[2]) * t),
+      ];
+    }
+  }
+  return stops[stops.length - 1][1];
+}
+
 function drawSunArc() {
   const canvas = document.getElementById('sun-arc') as HTMLCanvasElement;
   if (!canvas) return;
+
+  const wrap = canvas.parentElement!;
+  const W = wrap.clientWidth || 220;
+  const H = Math.round(W * 0.38);
+  canvas.width  = W;
+  canvas.height = H;
+
   const ctx = canvas.getContext('2d')!;
   const now = new Date();
   const dark = isDark();
@@ -219,56 +264,81 @@ function drawSunArc() {
   const yestLen  = yss.getTime() - ysr.getTime();
   const diff     = todayLen - yestLen;
 
-  const W = 280, H = 52, cx = W / 2, cy = H + 6, r = H - 4;
+  const cx = W / 2;
+  const cy = H + Math.round(H * 0.12);
+  const r  = Math.round(W * 0.43);
+
   ctx.clearRect(0, 0, W, H);
 
-  const steps = 120;
-  for (let i = 0; i < steps; i++) {
-    const a1 = Math.PI + (i / steps) * Math.PI;
-    const a2 = Math.PI + ((i + 1) / steps) * Math.PI;
-    const f = i / steps;
-    let rc, gc, bc;
-    if      (f < 0.20) { rc=255; gc=120; bc=60;  }
-    else if (f < 0.45) { rc=255; gc=200; bc=70;  }
-    else if (f < 0.55) { rc=140; gc=200; bc=255; }
-    else if (f < 0.80) { rc=255; gc=190; bc=70;  }
-    else               { rc=220; gc=80;  bc=150; }
-    ctx.beginPath(); ctx.arc(cx, cy, r, a1, a2);
-    ctx.strokeStyle = `rgba(${rc},${gc},${bc},${dark ? 0.18 : 0.22})`;
-    ctx.lineWidth = 2; ctx.stroke();
-  }
-
+  const steps = 160;
   const total   = sunset.getTime() - sunrise.getTime();
   const elapsed = Math.max(0, Math.min(total, now.getTime() - sunrise.getTime()));
   const prog    = elapsed / total;
   const pSteps  = Math.round(prog * steps);
-  for (let i = 0; i < pSteps; i++) {
-    const a1 = Math.PI + (i / steps) * Math.PI;
+
+  // Dim arc
+  for (let i = 0; i < steps; i++) {
+    const f  = i / steps;
+    const a1 = Math.PI + f * Math.PI;
     const a2 = Math.PI + ((i + 1) / steps) * Math.PI;
-    const f = i / steps;
-    let rc, gc, bc;
-    if      (f < 0.20) { rc=255; gc=130; bc=50;  }
-    else if (f < 0.45) { rc=255; gc=210; bc=80;  }
-    else if (f < 0.55) { rc=160; gc=215; bc=255; }
-    else if (f < 0.80) { rc=255; gc=200; bc=85;  }
-    else               { rc=230; gc=100; bc=160; }
-    ctx.beginPath(); ctx.arc(cx, cy, r, a1, a2);
-    ctx.strokeStyle = `rgba(${rc},${gc},${bc},${dark ? 0.70 : 0.85})`;
-    ctx.lineWidth = 2; ctx.stroke();
+    const [rc, gc, bc] = dayColor(f);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, a1, a2);
+    ctx.strokeStyle = `rgba(${rc},${gc},${bc},${dark ? 0.15 : 0.18})`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
   }
 
+  // Bright progress arc mit Glow
+  for (let i = 0; i < pSteps; i++) {
+    const f  = i / steps;
+    const a1 = Math.PI + f * Math.PI;
+    const a2 = Math.PI + ((i + 1) / steps) * Math.PI;
+    const [rc, gc, bc] = dayColor(f);
+
+    // Glow layer
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, a1, a2);
+    ctx.strokeStyle = `rgba(${rc},${gc},${bc},${dark ? 0.22 : 0.28})`;
+    ctx.lineWidth = 5;
+    ctx.stroke();
+
+    // Core
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, a1, a2);
+    ctx.strokeStyle = `rgba(${rc},${gc},${bc},${dark ? 0.82 : 0.95})`;
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+  }
+
+  // Sonnenpunkt
   const sa = Math.PI + prog * Math.PI;
   const sx = cx + Math.cos(sa) * r;
   const sy = cy + Math.sin(sa) * r;
-  const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, 13);
-  glow.addColorStop(0,   'rgba(255,215,80,0.95)');
-  glow.addColorStop(0.5, 'rgba(255,160,40,0.40)');
-  glow.addColorStop(1,   'rgba(255,100,20,0)');
-  ctx.fillStyle = glow;
-  ctx.beginPath(); ctx.arc(sx, sy, 13, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI * 2);
-  ctx.fillStyle = dark ? '#fff5cc' : '#ff9500'; ctx.fill();
+  const [cr, cg, cb] = dayColor(prog);
 
+  // Äußerer Glow
+  const g2 = ctx.createRadialGradient(sx, sy, 0, sx, sy, 16);
+  g2.addColorStop(0,   `rgba(${cr},${cg},${cb},0.50)`);
+  g2.addColorStop(0.5, `rgba(${cr},${cg},${cb},0.15)`);
+  g2.addColorStop(1,   `rgba(${cr},${cg},${cb},0)`);
+  ctx.fillStyle = g2;
+  ctx.beginPath(); ctx.arc(sx, sy, 16, 0, Math.PI * 2); ctx.fill();
+
+  // Innerer Glow
+  const g1 = ctx.createRadialGradient(sx, sy, 0, sx, sy, 7);
+  g1.addColorStop(0,   'rgba(255,245,210,0.98)');
+  g1.addColorStop(0.6, `rgba(${cr},${cg},${cb},0.60)`);
+  g1.addColorStop(1,   `rgba(${cr},${cg},${cb},0)`);
+  ctx.fillStyle = g1;
+  ctx.beginPath(); ctx.arc(sx, sy, 7, 0, Math.PI * 2); ctx.fill();
+
+  // Kern
+  ctx.beginPath(); ctx.arc(sx, sy, 2, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+
+  // Texte
   const tEl  = document.getElementById('sun-times');
   const dlEl = document.getElementById('sun-daylength');
   const cdEl = document.getElementById('sun-countdown');
@@ -283,16 +353,14 @@ function drawSunArc() {
     const dm = Math.floor(absSec / 60);
     const ds = absSec % 60;
     const diffStr = dm > 0 ? `${sign}${dm}min ${ds}sek` : `${sign}${ds}sek`;
-    dlEl.textContent = `Tageslänge ${h}h ${m}min · ${diffStr} gegenüber gestern`;
+    dlEl.textContent = `Tageslänge ${h}h ${m}min · ${diffStr} ggü. gestern`;
   }
 
   if (cdEl) {
     const msLeft = sunset.getTime() - now.getTime();
     if (msLeft > 0) {
       const { h, m } = fmtDuration(msLeft);
-      cdEl.textContent = h > 0
-        ? `Untergang in ${h}h ${m}min`
-        : `Untergang in ${m}min`;
+      cdEl.textContent = h > 0 ? `Untergang in ${h}h ${m}min` : `Untergang in ${m}min`;
     } else {
       const msToRise = sunrise.getTime() + 86400000 - now.getTime();
       const { h, m } = fmtDuration(msToRise);
@@ -324,13 +392,13 @@ function drawMoon() {
   const ctx = canvas.getContext('2d')!;
   const { frac, name } = getMoonPhase(new Date());
   const dark = isDark();
-  const r = 13, cx = 16, cy = 16;
-  ctx.clearRect(0, 0, 32, 32);
+  const r = 12, cx = 14, cy = 14;
+  ctx.clearRect(0, 0, 28, 28);
   ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.fillStyle = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
   ctx.fill();
-  ctx.strokeStyle = dark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.14)';
-  ctx.lineWidth = 0.8; ctx.stroke();
+  ctx.strokeStyle = dark ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.12)';
+  ctx.lineWidth = 0.7; ctx.stroke();
   const angle = frac * Math.PI * 2;
   const ill = Math.cos(angle);
   ctx.save();
@@ -338,7 +406,7 @@ function drawMoon() {
   ctx.arc(cx, cy, r, Math.PI / 2, -Math.PI / 2, false);
   ctx.ellipse(cx, cy, Math.abs(r * ill), r, 0, -Math.PI / 2, Math.PI / 2, ill < 0);
   ctx.closePath();
-  ctx.fillStyle = dark ? 'rgba(255,255,200,0.72)' : 'rgba(255,235,120,0.85)';
+  ctx.fillStyle = dark ? 'rgba(255,250,200,0.75)' : 'rgba(255,230,110,0.88)';
   ctx.fill();
   ctx.restore();
 
@@ -354,7 +422,7 @@ async function fetchAQI() {
     const data = await res.json();
     const aqi  = data?.current?.european_aqi;
     const valEl = document.getElementById('aqi-value');
-    const lblEl = document.getElementById('aqi-label');
+    const lblEl = document.getElementById('aqi-label') as HTMLElement | null;
     if (!valEl || !lblEl || aqi == null) return;
     valEl.textContent = `AQI ${aqi}`;
     let label = '', color = '';
@@ -364,7 +432,7 @@ async function fetchAQI() {
     else if (aqi <= 80) { label = 'Schlecht';      color = '#ff7043'; }
     else                { label = 'Sehr schlecht'; color = '#e53935'; }
     lblEl.textContent = label;
-    (lblEl as HTMLElement).style.color = color;
+    lblEl.style.color = color;
   } catch {
     const lblEl = document.getElementById('aqi-label');
     if (lblEl) lblEl.textContent = 'Nicht verfügbar';
@@ -376,6 +444,7 @@ drawSunArc();
 drawMoon();
 fetchAQI();
 setInterval(drawSunArc, 60000);
+window.addEventListener('resize', drawSunArc);
 
 document.getElementById('dm-btn')?.addEventListener('click', () => {
   setTimeout(() => { drawSunArc(); drawMoon(); }, 50);
@@ -384,7 +453,7 @@ document.getElementById('dm-btn')?.addEventListener('click', () => {
 // ── Infinite Circles Canvas ──────────────────────────────
 const canvas = document.getElementById('circle-canvas') as HTMLCanvasElement;
 if (canvas) {
-  const ctx = canvas.getContext('2d')!;
+  const ctx2 = canvas.getContext('2d')!;
   let W = 0, H = 0;
   const resize = () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; };
   resize();
@@ -402,7 +471,7 @@ if (canvas) {
 
   let t = 0;
   const draw = () => {
-    ctx.clearRect(0, 0, W, H);
+    ctx2.clearRect(0, 0, W, H);
     const dark = isDark();
     const cx = W > 768 ? W * 0.72 : W * 0.5;
     const cy = H * 0.42;
@@ -412,16 +481,16 @@ if (canvas) {
     for (let i = 0; i < rings.length; i++) {
       const ring = rings[i];
       const r = base * ring.rf;
-      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(255,255,255,${ringAlphaBase - i * 0.01})`;
-      ctx.lineWidth = 0.8; ctx.stroke();
+      ctx2.beginPath(); ctx2.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx2.strokeStyle = `rgba(255,255,255,${ringAlphaBase - i * 0.01})`;
+      ctx2.lineWidth = 0.8; ctx2.stroke();
 
       const angle = t * ring.speed + ring.offset;
       const dotX = cx + Math.cos(angle) * r;
       const dotY = cy + Math.sin(angle) * r;
       const dotSize = r * 0.08;
 
-      const glow = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, dotSize);
+      const glow = ctx2.createRadialGradient(dotX, dotY, 0, dotX, dotY, dotSize);
       if (dark) {
         glow.addColorStop(0,   'rgba(220,240,255,0.90)');
         glow.addColorStop(0.3, 'rgba(180,220,255,0.45)');
@@ -431,20 +500,20 @@ if (canvas) {
         glow.addColorStop(0.3, 'rgba(220,235,255,0.40)');
         glow.addColorStop(1,   'rgba(220,235,255,0)');
       }
-      ctx.fillStyle = glow;
-      ctx.beginPath(); ctx.arc(dotX, dotY, dotSize, 0, Math.PI * 2); ctx.fill();
+      ctx2.fillStyle = glow;
+      ctx2.beginPath(); ctx2.arc(dotX, dotY, dotSize, 0, Math.PI * 2); ctx2.fill();
 
       const trailLength = Math.PI * 0.35;
       const trailStart = angle - trailLength;
-      const trail = ctx.createLinearGradient(
+      const trail = ctx2.createLinearGradient(
         cx + Math.cos(trailStart) * r, cy + Math.sin(trailStart) * r, dotX, dotY
       );
       const tc = dark ? '200,225,255' : '255,255,255';
       trail.addColorStop(0, `rgba(${tc},0)`);
       trail.addColorStop(1, `rgba(${tc},${dark ? 0.18 : 0.22})`);
-      ctx.beginPath(); ctx.arc(cx, cy, r, trailStart, angle);
-      ctx.strokeStyle = trail;
-      ctx.lineWidth = dark ? 1.2 : 1.4; ctx.stroke();
+      ctx2.beginPath(); ctx2.arc(cx, cy, r, trailStart, angle);
+      ctx2.strokeStyle = trail;
+      ctx2.lineWidth = dark ? 1.2 : 1.4; ctx2.stroke();
     }
 
     t++;
