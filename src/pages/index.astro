@@ -13,42 +13,48 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </div>
     <div class="hero-right reveal" style="transition-delay:.2s">
 
-      <!-- DATA WIDGETS -->
-      <div class="data-stack">
+      <div class="signal-panel">
+        <div class="panel-header">Signal · 52°N 9°E</div>
+        <div class="signal-grid">
 
-        <!-- SUN -->
-        <div class="data-widget" id="widget-sun">
-          <div class="widget-label">Sonne · Hannover</div>
-          <div class="sun-arc-wrap">
-            <canvas id="sun-arc" width="160" height="52"></canvas>
+          <!-- SUN – wide -->
+          <div class="cell wide">
+            <div class="cell-label">Sonne</div>
+            <canvas id="sun-arc" width="280" height="52"></canvas>
+            <div class="cell-sub" id="sun-times">—</div>
+            <div class="cell-sub" id="sun-daylength">—</div>
+            <div class="cell-sub" id="sun-countdown">—</div>
           </div>
-          <div class="widget-sub" id="sun-times">—</div>
-        </div>
 
-        <!-- MOON -->
-        <div class="data-widget" id="widget-moon">
-          <div class="widget-label">Mondphase</div>
-          <div class="moon-wrap">
-            <canvas id="moon-canvas" width="28" height="28"></canvas>
-            <span class="widget-value" id="moon-label">—</span>
+          <!-- MOON -->
+          <div class="cell">
+            <div class="cell-label">Mond</div>
+            <div class="moon-wrap">
+              <canvas id="moon-canvas" width="32" height="32"></canvas>
+              <div>
+                <div class="cell-value" id="moon-name">—</div>
+                <div class="cell-sub" id="moon-pct">—</div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <!-- LOCATION -->
-        <div class="data-widget">
-          <div class="widget-label">Position</div>
-          <div class="widget-value mono">52.3759° N &nbsp;9.7320° E</div>
-          <div class="widget-sub">Hannover · UTC+2</div>
-        </div>
+          <!-- AQI -->
+          <div class="cell">
+            <div class="cell-label">Luftqualität</div>
+            <div class="cell-value" id="aqi-value">—</div>
+            <div class="cell-sub" id="aqi-label">wird geladen…</div>
+          </div>
 
-        <!-- AIR QUALITY -->
-        <div class="data-widget" id="widget-aqi">
-          <div class="widget-label">Luftqualität</div>
-          <div class="widget-value" id="aqi-value">—</div>
-          <div class="widget-sub" id="aqi-label">wird geladen…</div>
-        </div>
+          <!-- POSITION -->
+          <div class="cell wide">
+            <div class="cell-label">Position</div>
+            <div class="cell-value mono">52.3759° N &nbsp; 9.7320° E</div>
+            <div class="cell-sub">Hannover · UTC+2 · CEST</div>
+          </div>
 
+        </div>
       </div>
+
     </div>
   </section>
 
@@ -86,267 +92,286 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   max-width: 340px;
 }
 
-/* DATA STACK */
-.data-stack {
+/* SIGNAL PANEL */
+.signal-panel {
+  background: var(--glass-bg);
+  border: 0.5px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.panel-header {
+  font-size: 8px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  margin-bottom: 1rem;
+}
+.signal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+.cell {
+  background: var(--glass-bg);
+  border: 0.5px solid var(--glass-border-dim);
+  border-radius: 10px;
+  padding: 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 0.3rem;
 }
-.data-widget {
-  padding: 0.85rem 0;
-  border-bottom: 0.5px solid var(--border-mid);
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-.data-widget:first-child { border-top: 0.5px solid var(--border-mid); }
-.widget-label {
+.cell.wide { grid-column: 1 / -1; }
+.cell-label {
   font-size: 8px;
   letter-spacing: .16em;
   text-transform: uppercase;
   color: var(--text-dim);
+  font-family: var(--font-mono);
 }
-.widget-value {
-  font-size: 13px;
+.cell-value {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 300;
   color: var(--text-deep);
-  letter-spacing: .04em;
+  line-height: 1.2;
 }
-.widget-value.mono {
+.cell-value.mono {
   font-family: var(--font-mono);
   font-size: 11px;
 }
-.widget-sub {
+.cell-sub {
   font-size: 9px;
   color: var(--text-mid);
-  letter-spacing: .06em;
+  font-family: var(--font-mono);
+  letter-spacing: .04em;
+  line-height: 1.6;
 }
-
-/* SUN ARC */
-.sun-arc-wrap { line-height: 0; }
-#sun-arc { display: block; }
-
-/* MOON */
 .moon-wrap {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 8px;
+  margin-top: 4px;
 }
 #moon-canvas { display: block; }
+#sun-arc { display: block; margin: 4px 0; }
 
 .reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
 .reveal.in { opacity: 1; transform: translateY(0); }
 
 @media (max-width: 768px) {
   .hero { grid-template-columns: 1fr; gap: 2.5rem; padding: 3rem 1.5rem 2.5rem; }
+  #sun-arc { width: 100%; }
 }
 </style>
 
 <script>
-// ── Reveal ──────────────────────────────────────────────
 const observer = new IntersectionObserver(
   (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }),
   { threshold: 0.1 }
 );
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-// ── Helpers ──────────────────────────────────────────────
-const LAT = 52.3759;
-const LNG = 9.7320;
+const LAT = 52.3759, LNG = 9.7320;
 const isDark = () => document.documentElement.classList.contains('dark');
 
-function fmt(date: Date) {
-  return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+function fmt(d: Date) {
+  return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 }
 
-// ── SunCalc inline (no import needed – pure math) ────────
-// Simplified sun position + times calculation
-function getSunTimes(date: Date, lat: number, lng: number) {
-  const J1970 = 2440588, J2000 = 2451545;
-  const rad = Math.PI / 180;
-  const toJulian = (d: Date) => d.valueOf() / 86400000 - 0.5 + J1970;
-  const toDays = (d: Date) => toJulian(d) - J2000;
+function fmtDuration(ms: number) {
+  const totalSec = Math.round(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  return { h, m, s };
+}
 
-  const n = toDays(date);
+function getSunTimes(date: Date, lat: number, lng: number) {
+  const J1970 = 2440588, J2000 = 2451545, rad = Math.PI / 180;
+  const toJ = (d: Date) => d.valueOf() / 86400000 - 0.5 + J1970;
+  const n = toJ(date) - J2000;
   const M = (357.5291 + 0.98560028 * n) * rad;
   const C = (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M)) * rad;
   const P = 102.9372 * rad;
   const lambda = M + C + P + Math.PI;
   const sinD = Math.sin(lambda) * Math.sin(23.45 * rad);
   const cosD = Math.cos(Math.asin(sinD));
-
   const Jnoon = J2000 + 0.0009 + ((-lng) / 360) + Math.round(n - (-lng) / 360);
   const w0 = Math.acos((Math.sin(-0.833 * rad) - Math.sin(lat * rad) * sinD) / (Math.cos(lat * rad) * cosD));
-  const Jset = Jnoon + (w0 / (2 * Math.PI));
-  const Jrise = Jnoon - (w0 / (2 * Math.PI));
-
-  const fromJulian = (j: number) => new Date((j + 0.5 - J1970) * 86400000);
+  const fromJ = (j: number) => new Date((j + 0.5 - J1970) * 86400000);
   return {
-    sunrise: fromJulian(Jrise),
-    sunset: fromJulian(Jset),
-    noon: fromJulian(Jnoon),
+    sunrise: fromJ(Jnoon - w0 / (2 * Math.PI)),
+    sunset:  fromJ(Jnoon + w0 / (2 * Math.PI)),
   };
 }
 
-function getSunAltitude(date: Date, lat: number, lng: number): number {
-  const rad = Math.PI / 180;
-  const J1970 = 2440588, J2000 = 2451545;
-  const toJulian = (d: Date) => d.valueOf() / 86400000 - 0.5 + J1970;
-  const n = toJulian(date) - J2000;
-  const M = (357.5291 + 0.98560028 * n) * rad;
-  const C = (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M)) * rad;
-  const P = 102.9372 * rad;
-  const lambda = M + C + P + Math.PI;
-  const sinD = Math.sin(lambda) * Math.sin(23.45 * rad);
-  const cosD = Math.cos(Math.asin(sinD));
-  const lw = -lng * rad;
-  const phi = lat * rad;
-  const J = toJulian(date);
-  const Jtransit = J2000 + 0.0009 + (lw / (2 * Math.PI)) + Math.round(J - J2000 - 0.0009 - lw / (2 * Math.PI));
-  const H = (J - Jtransit) * 2 * Math.PI;
-  const altitude = Math.asin(Math.sin(phi) * sinD + Math.cos(phi) * cosD * Math.cos(H));
-  return altitude / rad;
-}
-
-// ── Sun Arc Widget ───────────────────────────────────────
 function drawSunArc() {
   const canvas = document.getElementById('sun-arc') as HTMLCanvasElement;
   if (!canvas) return;
   const ctx = canvas.getContext('2d')!;
   const now = new Date();
-  const { sunrise, sunset } = getSunTimes(now, LAT, LNG);
   const dark = isDark();
+  const { sunrise, sunset } = getSunTimes(now, LAT, LNG);
 
-  const W = 160, H = 52;
+  // Yesterday daylength for comparison
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const { sunrise: ysr, sunset: yss } = getSunTimes(yesterday, LAT, LNG);
+  const todayLen = sunset.getTime() - sunrise.getTime();
+  const yestLen  = yss.getTime() - ysr.getTime();
+  const diff     = todayLen - yestLen; // ms, positive = longer
+
+  const W = 280, H = 52, cx = W / 2, cy = H + 6, r = H - 4;
   ctx.clearRect(0, 0, W, H);
 
-  const margin = 12;
-  const cx = W / 2;
-  const cy = H + 8;
-  const r = H - 4;
+  const steps = 120;
+  // Dim full arc
+  for (let i = 0; i < steps; i++) {
+    const a1 = Math.PI + (i / steps) * Math.PI;
+    const a2 = Math.PI + ((i + 1) / steps) * Math.PI;
+    const f = i / steps;
+    let rc, gc, bc;
+    if      (f < 0.20) { rc=255; gc=120; bc=60;  }
+    else if (f < 0.45) { rc=255; gc=200; bc=70;  }
+    else if (f < 0.55) { rc=140; gc=200; bc=255; }
+    else if (f < 0.80) { rc=255; gc=190; bc=70;  }
+    else               { rc=220; gc=80;  bc=150; }
+    ctx.beginPath(); ctx.arc(cx, cy, r, a1, a2);
+    ctx.strokeStyle = `rgba(${rc},${gc},${bc},${dark ? 0.18 : 0.22})`;
+    ctx.lineWidth = 2; ctx.stroke();
+  }
 
-  // Background arc (full path)
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, Math.PI, 0);
-  ctx.strokeStyle = dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
-
-  // Progress arc
-  const total = sunset.getTime() - sunrise.getTime();
+  // Bright progress arc
+  const total   = sunset.getTime() - sunrise.getTime();
   const elapsed = Math.max(0, Math.min(total, now.getTime() - sunrise.getTime()));
-  const progress = elapsed / total; // 0 to 1
-  const startAngle = Math.PI;
-  const endAngle = Math.PI + progress * Math.PI;
+  const prog    = elapsed / total;
+  const pSteps  = Math.round(prog * steps);
+  for (let i = 0; i < pSteps; i++) {
+    const a1 = Math.PI + (i / steps) * Math.PI;
+    const a2 = Math.PI + ((i + 1) / steps) * Math.PI;
+    const f = i / steps;
+    let rc, gc, bc;
+    if      (f < 0.20) { rc=255; gc=130; bc=50;  }
+    else if (f < 0.45) { rc=255; gc=210; bc=80;  }
+    else if (f < 0.55) { rc=160; gc=215; bc=255; }
+    else if (f < 0.80) { rc=255; gc=200; bc=85;  }
+    else               { rc=230; gc=100; bc=160; }
+    ctx.beginPath(); ctx.arc(cx, cy, r, a1, a2);
+    ctx.strokeStyle = `rgba(${rc},${gc},${bc},${dark ? 0.70 : 0.85})`;
+    ctx.lineWidth = 2; ctx.stroke();
+  }
 
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, startAngle, endAngle);
-  ctx.strokeStyle = dark ? 'rgba(255,210,100,0.55)' : 'rgba(220,140,30,0.60)';
-  ctx.lineWidth = 1.2;
-  ctx.stroke();
-
-  // Sun dot at current position
-  const sunAngle = startAngle + progress * Math.PI;
-  const sx = cx + Math.cos(sunAngle) * r;
-  const sy = cy + Math.sin(sunAngle) * r;
-
-  const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, 7);
-  glow.addColorStop(0, dark ? 'rgba(255,220,100,0.95)' : 'rgba(255,180,0,0.95)');
-  glow.addColorStop(1, 'rgba(255,200,50,0)');
+  // Sun dot + glow
+  const sa = Math.PI + prog * Math.PI;
+  const sx = cx + Math.cos(sa) * r;
+  const sy = cy + Math.sin(sa) * r;
+  const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, 13);
+  glow.addColorStop(0,   'rgba(255,215,80,0.95)');
+  glow.addColorStop(0.5, 'rgba(255,160,40,0.40)');
+  glow.addColorStop(1,   'rgba(255,100,20,0)');
   ctx.fillStyle = glow;
-  ctx.beginPath();
-  ctx.arc(sx, sy, 7, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.beginPath(); ctx.arc(sx, sy, 13, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI * 2);
+  ctx.fillStyle = dark ? '#fff5cc' : '#ff9500'; ctx.fill();
 
-  // Dot center
-  ctx.beginPath();
-  ctx.arc(sx, sy, 2.5, 0, Math.PI * 2);
-  ctx.fillStyle = dark ? '#ffe066' : '#e08000';
-  ctx.fill();
+  // Text updates
+  const tEl  = document.getElementById('sun-times');
+  const dlEl = document.getElementById('sun-daylength');
+  const cdEl = document.getElementById('sun-countdown');
 
-  // Times label
-  const timesEl = document.getElementById('sun-times');
-  if (timesEl) {
-    timesEl.textContent = `Aufgang ${fmt(sunrise)} · Untergang ${fmt(sunset)}`;
+  if (tEl) tEl.textContent = `Aufgang ${fmt(sunrise)} · Untergang ${fmt(sunset)}`;
+
+  if (dlEl) {
+    const { h, m } = fmtDuration(todayLen);
+    const dSec = Math.round(diff / 1000);
+    const sign = dSec >= 0 ? '+' : '−';
+    const absSec = Math.abs(dSec);
+    const dm = Math.floor(absSec / 60);
+    const ds = absSec % 60;
+    const diffStr = dm > 0 ? `${sign}${dm}min ${ds}sek` : `${sign}${ds}sek`;
+    dlEl.textContent = `Tageslänge ${h}h ${m}min · ${diffStr} gegenüber gestern`;
+  }
+
+  if (cdEl) {
+    const msLeft = sunset.getTime() - now.getTime();
+    if (msLeft > 0) {
+      const { h, m } = fmtDuration(msLeft);
+      cdEl.textContent = h > 0
+        ? `Untergang in ${h}h ${m}min`
+        : `Untergang in ${m}min`;
+    } else {
+      const msToRise = sunrise.getTime() + 86400000 - now.getTime();
+      const { h, m } = fmtDuration(msToRise);
+      cdEl.textContent = `Aufgang in ${h}h ${m}min`;
+    }
   }
 }
 
-// ── Moon Phase Widget ────────────────────────────────────
-function getMoonPhase(date: Date): { phase: number; name: string } {
-  const known = new Date(2000, 0, 6, 18, 14, 0); // known new moon
-  const synodic = 29.530588853;
+function getMoonPhase(date: Date) {
+  const known = new Date(2000, 0, 6, 18, 14, 0);
+  const syn = 29.530588853;
   const diff = (date.getTime() - known.getTime()) / (1000 * 60 * 60 * 24);
-  const phase = ((diff % synodic) + synodic) % synodic;
-  const frac = phase / synodic;
-
+  const frac = ((diff % syn) + syn) % syn / syn;
   let name = '';
-  if (frac < 0.03 || frac > 0.97) name = 'Neumond';
-  else if (frac < 0.22) name = 'Zunehmend';
+  if      (frac < 0.03 || frac > 0.97) name = 'Neumond';
+  else if (frac < 0.22) name = 'Zunehmende Sichel';
   else if (frac < 0.28) name = 'Erstes Viertel';
-  else if (frac < 0.47) name = 'Zunehmend (Gibbous)';
+  else if (frac < 0.47) name = 'Zunehmender Mond';
   else if (frac < 0.53) name = 'Vollmond';
-  else if (frac < 0.72) name = 'Abnehmend (Gibbous)';
+  else if (frac < 0.72) name = 'Abnehmender Mond';
   else if (frac < 0.78) name = 'Letztes Viertel';
-  else name = 'Abnehmend';
-
-  return { phase: frac, name };
+  else                  name = 'Abnehmende Sichel';
+  return { frac, name };
 }
 
 function drawMoon() {
   const canvas = document.getElementById('moon-canvas') as HTMLCanvasElement;
   if (!canvas) return;
   const ctx = canvas.getContext('2d')!;
-  const { phase, name } = getMoonPhase(new Date());
+  const { frac, name } = getMoonPhase(new Date());
   const dark = isDark();
-  const size = 28, r = 11, cx = 14, cy = 14;
-
-  ctx.clearRect(0, 0, size, size);
-
-  // Moon body
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  const r = 13, cx = 16, cy = 16;
+  ctx.clearRect(0, 0, 32, 32);
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.fillStyle = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
   ctx.fill();
-  ctx.strokeStyle = dark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.18)';
-  ctx.lineWidth = 0.8;
-  ctx.stroke();
-
-  // Illuminated portion
-  const angle = phase * Math.PI * 2;
-  const illuminated = Math.cos(angle);
+  ctx.strokeStyle = dark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.14)';
+  ctx.lineWidth = 0.8; ctx.stroke();
+  const angle = frac * Math.PI * 2;
+  const ill = Math.cos(angle);
   ctx.save();
   ctx.beginPath();
   ctx.arc(cx, cy, r, Math.PI / 2, -Math.PI / 2, false);
-  ctx.ellipse(cx, cy, Math.abs(r * illuminated), r, 0, -Math.PI / 2, Math.PI / 2, illuminated < 0);
+  ctx.ellipse(cx, cy, Math.abs(r * ill), r, 0, -Math.PI / 2, Math.PI / 2, ill < 0);
   ctx.closePath();
-  ctx.fillStyle = dark ? 'rgba(255,255,220,0.70)' : 'rgba(255,240,150,0.80)';
+  ctx.fillStyle = dark ? 'rgba(255,255,200,0.72)' : 'rgba(255,235,120,0.85)';
   ctx.fill();
   ctx.restore();
 
-  const label = document.getElementById('moon-label');
-  if (label) label.textContent = name;
+  const nameEl = document.getElementById('moon-name');
+  const pctEl  = document.getElementById('moon-pct');
+  if (nameEl) nameEl.textContent = name;
+  if (pctEl)  pctEl.textContent  = `${Math.round(Math.abs(Math.cos(frac * Math.PI * 2)) * 100)}% beleuchtet`;
 }
 
-// ── Air Quality ──────────────────────────────────────────
 async function fetchAQI() {
   try {
-    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LNG}&current=european_aqi`;
-    const res = await fetch(url);
+    const res  = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LNG}&current=european_aqi`);
     const data = await res.json();
-    const aqi = data?.current?.european_aqi;
-
+    const aqi  = data?.current?.european_aqi;
     const valEl = document.getElementById('aqi-value');
     const lblEl = document.getElementById('aqi-label');
     if (!valEl || !lblEl || aqi == null) return;
-
     valEl.textContent = `AQI ${aqi}`;
-
     let label = '', color = '';
-    if (aqi <= 20)      { label = 'Sehr gut';    color = '#4caf7d'; }
-    else if (aqi <= 40) { label = 'Gut';          color = '#8bc34a'; }
-    else if (aqi <= 60) { label = 'Mäßig';        color = '#ffc107'; }
-    else if (aqi <= 80) { label = 'Schlecht';     color = '#ff7043'; }
+    if      (aqi <= 20) { label = 'Sehr gut';     color = '#4caf7d'; }
+    else if (aqi <= 40) { label = 'Gut';           color = '#8bc34a'; }
+    else if (aqi <= 60) { label = 'Mäßig';         color = '#ffc107'; }
+    else if (aqi <= 80) { label = 'Schlecht';      color = '#ff7043'; }
     else                { label = 'Sehr schlecht'; color = '#e53935'; }
-
     lblEl.textContent = label;
     lblEl.style.color = color;
   } catch {
@@ -355,21 +380,20 @@ async function fetchAQI() {
   }
 }
 
-// ── Init ─────────────────────────────────────────────────
+// Init
 drawSunArc();
 drawMoon();
 fetchAQI();
 
-// Redraw sun arc every minute
+// Countdown tickt jede Minute
 setInterval(drawSunArc, 60000);
 
-// Redraw on dark mode toggle
-const dmBtn = document.getElementById('dm-btn');
-dmBtn?.addEventListener('click', () => {
+// Dark mode redraw
+document.getElementById('dm-btn')?.addEventListener('click', () => {
   setTimeout(() => { drawSunArc(); drawMoon(); }, 50);
 });
 
-// ── Infinite Circles Canvas ───────────────────────────────
+// ── Infinite Circles Canvas ──────────────────────────────
 const canvas = document.getElementById('circle-canvas') as HTMLCanvasElement;
 if (canvas) {
   const ctx = canvas.getContext('2d')!;
@@ -389,7 +413,6 @@ if (canvas) {
   ];
 
   let t = 0;
-
   const draw = () => {
     ctx.clearRect(0, 0, W, H);
     const dark = isDark();
@@ -401,12 +424,9 @@ if (canvas) {
     for (let i = 0; i < rings.length; i++) {
       const ring = rings[i];
       const r = base * ring.rf;
-
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.strokeStyle = `rgba(255,255,255,${ringAlphaBase - i * 0.01})`;
-      ctx.lineWidth = 0.8;
-      ctx.stroke();
+      ctx.lineWidth = 0.8; ctx.stroke();
 
       const angle = t * ring.speed + ring.offset;
       const dotX = cx + Math.cos(angle) * r;
@@ -424,30 +444,24 @@ if (canvas) {
         glow.addColorStop(1,   'rgba(220,235,255,0)');
       }
       ctx.fillStyle = glow;
-      ctx.beginPath();
-      ctx.arc(dotX, dotY, dotSize, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(dotX, dotY, dotSize, 0, Math.PI * 2); ctx.fill();
 
       const trailLength = Math.PI * 0.35;
       const trailStart = angle - trailLength;
       const trail = ctx.createLinearGradient(
-        cx + Math.cos(trailStart) * r, cy + Math.sin(trailStart) * r,
-        dotX, dotY
+        cx + Math.cos(trailStart) * r, cy + Math.sin(trailStart) * r, dotX, dotY
       );
-      const trailColor = dark ? '200,225,255' : '255,255,255';
-      trail.addColorStop(0, `rgba(${trailColor},0)`);
-      trail.addColorStop(1, `rgba(${trailColor},${dark ? 0.18 : 0.22})`);
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, trailStart, angle);
+      const tc = dark ? '200,225,255' : '255,255,255';
+      trail.addColorStop(0, `rgba(${tc},0)`);
+      trail.addColorStop(1, `rgba(${tc},${dark ? 0.18 : 0.22})`);
+      ctx.beginPath(); ctx.arc(cx, cy, r, trailStart, angle);
       ctx.strokeStyle = trail;
-      ctx.lineWidth = dark ? 1.2 : 1.4;
-      ctx.stroke();
+      ctx.lineWidth = dark ? 1.2 : 1.4; ctx.stroke();
     }
 
     t++;
     requestAnimationFrame(draw);
   };
-
   draw();
 }
 </script>
