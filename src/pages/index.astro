@@ -15,44 +15,48 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
       <div class="signal-panel">
         <div class="panel-header">Signal · 52°N 9°E</div>
-        <div class="signal-grid">
 
-          <!-- SUN – wide -->
-          <div class="cell wide">
-            <div class="cell-label">Sonne</div>
-            <canvas id="sun-arc" width="280" height="52"></canvas>
-            <div class="cell-sub" id="sun-times">—</div>
-            <div class="cell-sub" id="sun-daylength">—</div>
-            <div class="cell-sub" id="sun-countdown">—</div>
-          </div>
+        <!-- SUN -->
+        <div class="sig-block">
+          <div class="sig-label">Sonne</div>
+          <canvas id="sun-arc" width="280" height="52"></canvas>
+          <div class="sig-val" id="sun-times">—</div>
+          <div class="sig-val" id="sun-daylength">—</div>
+          <div class="sig-val" id="sun-countdown">—</div>
+        </div>
 
-          <!-- MOON -->
-          <div class="cell">
-            <div class="cell-label">Mond</div>
-            <div class="moon-wrap">
-              <canvas id="moon-canvas" width="32" height="32"></canvas>
-              <div>
-                <div class="cell-value" id="moon-name">—</div>
-                <div class="cell-sub" id="moon-pct">—</div>
-              </div>
+        <div class="sig-divider"></div>
+
+        <!-- MOON -->
+        <div class="sig-block">
+          <div class="sig-label">Mond</div>
+          <div class="moon-wrap">
+            <canvas id="moon-canvas" width="32" height="32"></canvas>
+            <div>
+              <div class="sig-val" id="moon-name">—</div>
+              <div class="sig-val" id="moon-pct">—</div>
             </div>
           </div>
-
-          <!-- AQI -->
-          <div class="cell">
-            <div class="cell-label">Luftqualität</div>
-            <div class="cell-value" id="aqi-value">—</div>
-            <div class="cell-sub" id="aqi-label">wird geladen…</div>
-          </div>
-
-          <!-- POSITION -->
-          <div class="cell wide">
-            <div class="cell-label">Position</div>
-            <div class="cell-value mono">52.3759° N &nbsp; 9.7320° E</div>
-            <div class="cell-sub">Hannover · UTC+2 · CEST</div>
-          </div>
-
         </div>
+
+        <div class="sig-divider"></div>
+
+        <!-- AQI -->
+        <div class="sig-block">
+          <div class="sig-label">Luftqualität</div>
+          <div class="sig-val" id="aqi-value">—</div>
+          <div class="sig-val" id="aqi-label">wird geladen…</div>
+        </div>
+
+        <div class="sig-divider"></div>
+
+        <!-- POSITION -->
+        <div class="sig-block">
+          <div class="sig-label">Position</div>
+          <div class="sig-val">52.3759° N &nbsp; 9.7320° E</div>
+          <div class="sig-val">Hannover · UTC+2 · CEST</div>
+        </div>
+
       </div>
 
     </div>
@@ -92,67 +96,59 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   max-width: 340px;
 }
 
-/* SIGNAL PANEL */
+/* SIGNAL PANEL — vollständig transparent, kein Box-Rahmen */
 .signal-panel {
-  background: var(--glass-bg);
-  border: 0.5px solid var(--glass-border);
-  border-radius: 16px;
-  padding: 1.25rem;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
+
 .panel-header {
   font-size: 8px;
   letter-spacing: .18em;
   text-transform: uppercase;
   color: var(--text-dim);
   font-family: var(--font-mono);
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
-.signal-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
-}
-.cell {
-  background: var(--glass-bg);
-  border: 0.5px solid var(--glass-border-dim);
-  border-radius: 10px;
-  padding: 0.75rem;
+
+.sig-block {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.25rem;
+  padding: 0.75rem 0;
 }
-.cell.wide { grid-column: 1 / -1; }
-.cell-label {
+
+.sig-divider {
+  width: 32px;
+  height: 0.5px;
+  background: var(--glass-border);
+  opacity: 0.5;
+}
+
+.sig-label {
   font-size: 8px;
   letter-spacing: .16em;
   text-transform: uppercase;
   color: var(--text-dim);
   font-family: var(--font-mono);
+  margin-bottom: 0.2rem;
 }
-.cell-value {
-  font-family: var(--font-serif);
-  font-size: 15px;
-  font-weight: 300;
+
+/* Einheitliche Schriftgröße für alle Werte — alles Mono */
+.sig-val {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
   color: var(--text-deep);
-  line-height: 1.2;
-}
-.cell-value.mono {
-  font-family: var(--font-mono);
-  font-size: 11px;
-}
-.cell-sub {
-  font-size: 9px;
-  color: var(--text-mid);
-  font-family: var(--font-mono);
+  line-height: 1.7;
   letter-spacing: .04em;
-  line-height: 1.6;
 }
+
 .moon-wrap {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin-top: 4px;
 }
 #moon-canvas { display: block; }
@@ -216,19 +212,17 @@ function drawSunArc() {
   const dark = isDark();
   const { sunrise, sunset } = getSunTimes(now, LAT, LNG);
 
-  // Yesterday daylength for comparison
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
   const { sunrise: ysr, sunset: yss } = getSunTimes(yesterday, LAT, LNG);
   const todayLen = sunset.getTime() - sunrise.getTime();
   const yestLen  = yss.getTime() - ysr.getTime();
-  const diff     = todayLen - yestLen; // ms, positive = longer
+  const diff     = todayLen - yestLen;
 
   const W = 280, H = 52, cx = W / 2, cy = H + 6, r = H - 4;
   ctx.clearRect(0, 0, W, H);
 
   const steps = 120;
-  // Dim full arc
   for (let i = 0; i < steps; i++) {
     const a1 = Math.PI + (i / steps) * Math.PI;
     const a2 = Math.PI + ((i + 1) / steps) * Math.PI;
@@ -244,7 +238,6 @@ function drawSunArc() {
     ctx.lineWidth = 2; ctx.stroke();
   }
 
-  // Bright progress arc
   const total   = sunset.getTime() - sunrise.getTime();
   const elapsed = Math.max(0, Math.min(total, now.getTime() - sunrise.getTime()));
   const prog    = elapsed / total;
@@ -264,7 +257,6 @@ function drawSunArc() {
     ctx.lineWidth = 2; ctx.stroke();
   }
 
-  // Sun dot + glow
   const sa = Math.PI + prog * Math.PI;
   const sx = cx + Math.cos(sa) * r;
   const sy = cy + Math.sin(sa) * r;
@@ -277,7 +269,6 @@ function drawSunArc() {
   ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI * 2);
   ctx.fillStyle = dark ? '#fff5cc' : '#ff9500'; ctx.fill();
 
-  // Text updates
   const tEl  = document.getElementById('sun-times');
   const dlEl = document.getElementById('sun-daylength');
   const cdEl = document.getElementById('sun-countdown');
@@ -373,7 +364,7 @@ async function fetchAQI() {
     else if (aqi <= 80) { label = 'Schlecht';      color = '#ff7043'; }
     else                { label = 'Sehr schlecht'; color = '#e53935'; }
     lblEl.textContent = label;
-    lblEl.style.color = color;
+    (lblEl as HTMLElement).style.color = color;
   } catch {
     const lblEl = document.getElementById('aqi-label');
     if (lblEl) lblEl.textContent = 'Nicht verfügbar';
@@ -384,11 +375,8 @@ async function fetchAQI() {
 drawSunArc();
 drawMoon();
 fetchAQI();
-
-// Countdown tickt jede Minute
 setInterval(drawSunArc, 60000);
 
-// Dark mode redraw
 document.getElementById('dm-btn')?.addEventListener('click', () => {
   setTimeout(() => { drawSunArc(); drawMoon(); }, 50);
 });
