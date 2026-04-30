@@ -1,15 +1,5 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getCollection } from 'astro:content';
-
-function getYouTubeId(url: string): string | null {
-  const m = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-  return m ? m[1] : null;
-}
-
-const sotdEntries = await getCollection('sotd');
-const latestSotd = sotdEntries.sort((a, b) => b.data.date.localeCompare(a.data.date))[0];
-const videoId = latestSotd?.data.link ? getYouTubeId(latestSotd.data.link) : null;
 ---
 
 <BaseLayout title="Infinite Circles — Dejan">
@@ -21,150 +11,35 @@ const videoId = latestSotd?.data.link ? getYouTubeId(latestSotd.data.link) : nul
     <div class="cloud" style="width:260px;height:65px;top:20%;right:20%;animation-duration:13s;animation-direction:alternate-reverse"></div>
   </div>
 
-  <div id="page-home">
-
-    <!-- HERO -->
-    <section class="hero">
-      <div>
-        <h1 class="reveal">A place for<br><em>thoughts,</em><br>links &amp; things.</h1>
-        <p class="hero-desc reveal" style="transition-delay:.1s">Personal site of Dejan. Curator, internet wanderer, play-to-earn explorer. Based in Hannover, Germany.</p>
-      </div>
-      <div class="hero-right reveal" style="transition-delay:.2s">
-        <div class="tag-cloud">
-          <span class="tag">Music Journal</span>
-          <span class="tag">Writing</span>
-          <span class="tag">Curation</span>
-          <span class="tag">Play to Earn</span>
-          <span class="tag">Experiments</span>
-        </div>
-        <div class="hero-meta">infinite-circles.de &ensp;—&ensp; est. 2026</div>
-        <a href="/journal" class="btn btn-dark">Open music journal &rarr;</a>
-      </div>
-    </section>
-
-    <!-- SOTD -->
-    <section class="section">
-      <div class="sotd-home reveal">
-        <div class="sotd-left">
-          <div class="section-label">Song of the Day</div>
-          <div class="sotd-title">Today's<br><em>pick</em></div>
-          {latestSotd && (
-            <div class="sotd-info">
-              <div class="sotd-track">{latestSotd.data.title}</div>
-              <div class="sotd-artist-name">{latestSotd.data.artist}</div>
-              {latestSotd.data.note && <div class="sotd-note">{latestSotd.data.note}</div>}
-              <a href="/sotd" class="sotd-archive">All songs →</a>
-            </div>
-          )}
-        </div>
-
-        <div class="sotd-right">
-          {videoId ? (
-            <div class="yt-wrap" data-vid={videoId}>
-              <div class="yt-card" id="home-yt-card">
-                <img src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`} alt={latestSotd?.data.title} />
-                <div class="yt-card-play">
-                  <div class="yt-card-play-btn"><div class="yt-card-tri"></div></div>
-                </div>
-                <div class="yt-card-label">{latestSotd?.data.title} — {latestSotd?.data.artist}</div>
-              </div>
-              <div class="yt-player" id="home-yt-player"></div>
-            </div>
-          ) : (
-            <div class="sotd-empty">
-              <div class="sotd-empty-txt">No song yet —<br/>add one in the journal.</div>
-              <a href="/journal" class="btn">Open Journal →</a>
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
-
-    <!-- LINKS STRIP -->
-    <div class="links-strip">
-      <a class="strip-link" href="https://everynoise.com" target="_blank" rel="noopener">Every Noise at Once<span>Music discovery</span></a>
-      <a class="strip-link" href="https://radio.garden" target="_blank" rel="noopener">Radio Garden<span>Live global radio</span></a>
-      <a class="strip-link" href="https://are.na" target="_blank" rel="noopener">Are.na<span>Visual research</span></a>
-      <a class="strip-link" href="https://soundcloud.com" target="_blank" rel="noopener">SoundCloud<span>Music</span></a>
-      <a class="strip-link" href="https://neal.fun" target="_blank" rel="noopener">Neal.fun<span>Wonderful internet</span></a>
-      <a class="strip-link" href="https://archive.org" target="_blank" rel="noopener">Archive.org<span>Internet memory</span></a>
-      <a class="strip-link" href="https://listen.hatnote.com" target="_blank" rel="noopener">Listen to Wikipedia<span>Live data art</span></a>
-      <a class="strip-link" href="https://thetruesize.com" target="_blank" rel="noopener">True Size<span>Geography</span></a>
-      <a class="strip-link" href="https://windows93.net" target="_blank" rel="noopener">Windows 93<span>Internet art</span></a>
-      <a class="strip-link" href="https://bsky.app" target="_blank" rel="noopener">Bluesky<span>Open social</span></a>
-      <a class="strip-link" href="https://obsidian.md" target="_blank" rel="noopener">Obsidian<span>Notes</span></a>
-      <a class="strip-link" href="https://raindrop.io" target="_blank" rel="noopener">Raindrop<span>Bookmarks</span></a>
+  <!-- HERO -->
+  <section class="hero">
+    <div>
+      <h1 class="reveal">Listening,<br><em>thinking,</em><br>making.</h1>
+      <p class="hero-desc reveal" style="transition-delay:.1s">Personal site of Dejan. Curator, Explorer, Builder. Music as a starting point. Writing as a way through. Based in Hannover, Germany.</p>
     </div>
-
-    <!-- RECENT WRITING -->
-    <section class="section">
-      <div class="section-label">Recent writing</div>
-      <div class="cards-grid">
-        <a href="/writing/daily-internet-routine" class="card reveal">
-          <div class="card-type">Essay</div>
-          <div class="card-title">On building a daily internet routine</div>
-          <div class="card-meta">Apr 2026 &middot; 4 min</div>
-        </a>
-        <a href="/writing/reset-skill-tree" class="card reveal" style="transition-delay:.08s">
-          <div class="card-type">Note</div>
-          <div class="card-title">Why I reset my skill tree</div>
-          <div class="card-meta">Mar 2026 &middot; 4 min</div>
-        </a>
-        <a href="/writing/p2e-getting-started" class="card reveal" style="transition-delay:.16s">
-          <div class="card-type">Guide</div>
-          <div class="card-title">Getting started with P2E in 2026</div>
-          <div class="card-meta">Feb 2026 &middot; 5 min</div>
-        </a>
+    <div class="hero-right reveal" style="transition-delay:.2s">
+      <div class="tag-cloud">
+        <span class="tag">Music</span>
+        <span class="tag">Writing</span>
+        <span class="tag">Curation</span>
+        <span class="tag">52°N 9°E</span>
       </div>
-    </section>
-
-    <!-- LAB PREVIEW -->
-    <section class="section">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center" class="reveal">
-        <div>
-          <div class="section-label">The Lab</div>
-          <div class="lab-title">Experiments in<br><em>code &amp; form</em></div>
-          <p style="font-size:11px;color:var(--text-mid);line-height:2;margin-bottom:1.5rem;max-width:340px">Music visualisers, generative art, live weather poetry, particle fields.</p>
-          <a href="/lab" class="btn btn-dark">Enter the Lab &rarr;</a>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <a href="/lab" class="glass lab-card"><div class="lab-num">01</div><div class="lab-name">Music Visualiser</div></a>
-          <a href="/lab" class="glass lab-card"><div class="lab-num">02</div><div class="lab-name">Live Weather</div></a>
-          <a href="/lab" class="glass lab-card"><div class="lab-num">03</div><div class="lab-name">Generative Art</div></a>
-          <a href="/lab" class="glass lab-card"><div class="lab-num">04</div><div class="lab-name">Particle Field</div></a>
-        </div>
-      </div>
-    </section>
-
-  </div>
+      <div class="hero-meta">infinite-circles.de &ensp;—&ensp; est. 2026</div>
+    </div>
+  </section>
 
 </BaseLayout>
 
-<style>
-body { background: var(--sky-top); position: relative; }
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 40%, var(--sky-bot) 100%);
-  z-index: -2;
-  pointer-events: none;
-}
+<style is:global>
 #rainbow-canvas {
-  position: fixed;
-  top: 0; left: 0;
+  position: fixed; top: 0; left: 0;
   width: 100%; height: 100%;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.55;
+  z-index: -1; pointer-events: none; opacity: 0.55;
 }
 .cloud-layer {
-  position: fixed;
-  top: 0; left: 0;
+  position: fixed; top: 0; left: 0;
   width: 100%; height: 100%;
-  z-index: -1;
-  pointer-events: none;
-  overflow: hidden;
+  z-index: -1; pointer-events: none; overflow: hidden;
 }
 .cloud {
   position: absolute;
@@ -178,14 +53,12 @@ body::before {
   to   { transform: translateX(10px); }
 }
 
-/* HERO */
 .hero {
   padding: 5.5rem 4rem 4rem;
   display: grid;
   grid-template-columns: 1.15fr 1fr;
   gap: 6rem;
   align-items: end;
-  border-bottom: 0.5px solid var(--border-light);
 }
 .hero h1 {
   font-family: var(--font-serif);
@@ -206,249 +79,18 @@ body::before {
 .hero-right { display: flex; flex-direction: column; gap: 1.25rem; }
 .tag-cloud { display: flex; gap: .5rem; flex-wrap: wrap; }
 .tag {
-  font-size: 9px;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  padding: 5px 12px;
-  background: var(--glass-bg);
-  border: 0.5px solid var(--glass-border);
-  color: var(--text-mid);
-  border-radius: 20px;
-  transition: var(--t);
-  backdrop-filter: blur(10px);
+  font-size: 9px; letter-spacing: .12em; text-transform: uppercase;
+  padding: 5px 12px; background: var(--glass-bg);
+  border: 0.5px solid var(--glass-border); color: var(--text-mid);
+  border-radius: 20px; backdrop-filter: blur(10px);
 }
 .hero-meta { font-size: 10px; color: var(--text-dim); letter-spacing: .08em; }
 
-/* SECTION */
-.section {
-  padding: 3.5rem 4rem;
-  border-bottom: 0.5px solid var(--border-light);
-}
-.section-label {
-  font-size: 9px;
-  letter-spacing: .22em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 1.5rem;
-}
-.section-label::before { content: '·'; margin-right: .45em; font-size: 1.4em; line-height: 0; vertical-align: middle; }
-
-/* BTN */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 10px;
-  letter-spacing: .13em;
-  text-transform: uppercase;
-  padding: 9px 20px;
-  border: 0.5px solid var(--glass-border);
-  color: var(--text-mid);
-  background: var(--glass-bg);
-  border-radius: 20px;
-  transition: var(--t);
-  cursor: pointer;
-  font-family: var(--font-mono);
-  backdrop-filter: blur(12px);
-  text-decoration: none;
-}
-.btn-dark { background: var(--accent); color: #fff; border-color: var(--accent); }
-.btn-dark:hover { background: var(--accent2); border-color: var(--accent2); }
-
-/* GLASS */
-.glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px) saturate(150%);
-  border: 0.5px solid var(--glass-border);
-  border-radius: 14px;
-}
-
-/* REVEAL */
 .reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
 .reveal.in { opacity: 1; transform: translateY(0); }
 
-/* SOTD */
-.sotd-home {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 4rem;
-  align-items: center;
-}
-.sotd-left { }
-.sotd-title {
-  font-family: var(--font-serif);
-  font-size: 42px;
-  font-weight: 300;
-  line-height: 1.1;
-  color: var(--text-deep);
-  margin-bottom: 1.5rem;
-}
-.sotd-title em { font-style: italic; color: var(--accent); }
-.sotd-track {
-  font-family: var(--font-serif);
-  font-size: 20px;
-  font-weight: 300;
-  font-style: italic;
-  color: var(--text-deep);
-  margin-bottom: .3rem;
-}
-.sotd-artist-name {
-  font-size: 10px;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: .5rem;
-}
-.sotd-note {
-  font-size: 11px;
-  color: var(--text-mid);
-  line-height: 1.8;
-  margin-bottom: .75rem;
-}
-.sotd-archive {
-  font-size: 10px;
-  letter-spacing: .1em;
-  color: var(--text-dim);
-  text-decoration: none;
-  transition: var(--t);
-}
-.sotd-archive:hover { color: var(--accent); }
-.sotd-right {
-  border-left: 0.5px solid var(--border-light);
-  padding-left: 4rem;
-}
-.sotd-empty {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-.sotd-empty-txt {
-  font-size: 11px;
-  color: var(--text-dim);
-  line-height: 1.8;
-}
-
-/* YouTube */
-.yt-wrap { width: 100%; }
-.yt-card {
-  position: relative;
-  border-radius: 10px;
-  overflow: hidden;
-  cursor: pointer;
-  background: #000;
-  width: 100%;
-  aspect-ratio: 16/9;
-  border: 0.5px solid var(--glass-border);
-}
-.yt-card img {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: opacity .2s;
-}
-.yt-card:hover img { opacity: .75; }
-.yt-card-play {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  pointer-events: none;
-}
-.yt-card-play-btn {
-  width: 56px; height: 56px; border-radius: 50%;
-  background: rgba(255,255,255,.92);
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 2px 12px rgba(0,0,0,.35);
-  transition: transform .15s;
-}
-.yt-card:hover .yt-card-play-btn { transform: scale(1.1); }
-.yt-card-tri {
-  width: 0; height: 0; border-style: solid;
-  border-width: 8px 0 8px 15px;
-  border-color: transparent transparent transparent #1a1a1a;
-  margin-left: 3px;
-}
-.yt-card-label {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  padding: 6px 10px;
-  background: linear-gradient(transparent, rgba(0,0,0,.55));
-  font-size: 9px; letter-spacing: .06em; color: rgba(255,255,255,.8);
-}
-.yt-player {
-  display: none;
-  width: 100%;
-  aspect-ratio: 16/9;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #000;
-}
-.yt-player.open { display: block; }
-.yt-player iframe { width: 100%; height: 100%; border: none; display: block; }
-
-/* LINKS STRIP */
-.links-strip { display: flex; overflow-x: auto; border-bottom: 0.5px solid var(--border-light); }
-.links-strip::-webkit-scrollbar { display: none; }
-.strip-link {
-  flex: 0 0 auto;
-  padding: 1rem 1.5rem;
-  border-right: 0.5px solid var(--border-light);
-  font-size: 10px;
-  letter-spacing: .09em;
-  color: var(--text-mid);
-  transition: var(--t);
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  background: var(--glass-bg);
-  text-decoration: none;
-}
-.strip-link:hover { background: var(--glass-bg-strong); color: var(--text-deep); }
-.strip-link span { font-size: 8px; color: var(--text-dim); letter-spacing: .11em; }
-
-/* CARDS */
-.cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.card {
-  background: var(--glass-bg);
-  border: 0.5px solid var(--glass-border);
-  border-radius: 14px;
-  padding: 2rem;
-  transition: var(--t);
-  backdrop-filter: blur(16px);
-  text-decoration: none;
-  display: block;
-}
-.card:hover { background: var(--glass-bg-strong); transform: translateY(-2px); border-color: var(--accent2); }
-.card-type { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); margin-bottom: .8rem; }
-.card-title { font-family: var(--font-serif); font-size: 21px; font-weight: 300; line-height: 1.3; color: var(--text-deep); margin-bottom: .5rem; }
-.card-meta { font-size: 10px; color: var(--text-dim); }
-
-/* LAB */
-.lab-title {
-  font-family: var(--font-serif);
-  font-size: 38px;
-  font-weight: 300;
-  line-height: 1.1;
-  margin-bottom: 1rem;
-  color: var(--text-deep);
-}
-.lab-title em { font-style: italic; color: var(--accent); }
-.lab-card {
-  padding: 1.35rem;
-  cursor: pointer;
-  transition: var(--t);
-  text-decoration: none;
-  display: block;
-}
-.lab-num { font-size: 8px; letter-spacing: .16em; color: var(--text-dim); margin-bottom: .35rem; }
-.lab-name { font-family: var(--font-serif); font-size: 16px; font-weight: 300; color: var(--text-deep); }
-
-/* MOBILE */
 @media (max-width: 768px) {
   .hero { grid-template-columns: 1fr; gap: 2rem; padding: 3rem 1.5rem 2.5rem; }
-  .section { padding: 2.5rem 1.5rem; }
-  .cards-grid { grid-template-columns: 1fr; }
-  .sotd-home { grid-template-columns: 1fr; gap: 2rem; }
-  .sotd-right { border-left: none; border-top: 0.5px solid var(--border-light); padding-left: 0; padding-top: 2rem; }
 }
 </style>
 
@@ -459,7 +101,6 @@ const observer = new IntersectionObserver(
 );
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-// Rainbow canvas
 const canvas = document.getElementById('rainbow-canvas') as HTMLCanvasElement;
 if (canvas) {
   const ctx = canvas.getContext('2d')!;
@@ -484,22 +125,5 @@ if (canvas) {
     requestAnimationFrame(draw);
   };
   draw();
-}
-
-// SOTD YouTube inline player
-const ytCard = document.getElementById('home-yt-card');
-const ytPlayer = document.getElementById('home-yt-player');
-if (ytCard && ytPlayer) {
-  ytCard.addEventListener('click', () => {
-    const wrap = ytCard.closest('.yt-wrap') as HTMLElement;
-    const id = wrap?.dataset.vid;
-    if (!id) return;
-    const width = wrap.offsetWidth;
-    const height = Math.round(width * 9 / 16);
-    ytPlayer.style.height = height + 'px';
-    ytPlayer.innerHTML = `<iframe width="${width}" height="${height}" src="https://www.youtube.com/embed/${id}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-    ytPlayer.classList.add('open');
-    ytCard.style.display = 'none';
-  });
 }
 </script>
