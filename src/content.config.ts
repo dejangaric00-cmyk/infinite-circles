@@ -21,6 +21,7 @@ const sotd = defineCollection({
     link: z.string().url().optional(),
     mood: z.string().optional(),
     note: z.string().optional(),
+    tags: z.array(z.string()).optional(),
   }),
 });
 

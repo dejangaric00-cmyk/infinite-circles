@@ -3,47 +3,312 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
 <BaseLayout title="Now – Infinite Circles">
-  <main style="max-width: 680px; margin: 4rem auto; padding: 0 2rem;">
-    <h1 style="font-family: var(--font-serif); font-size: 2.5rem; font-weight: 300; margin-bottom: 0.5rem; color: var(--text-deep);">Now</h1>
-    <p style="font-size: 11px; color: var(--text-dim); letter-spacing: .08em; margin-bottom: 3rem;">Updated April 2026 · Hannover</p>
 
-    <section style="margin-bottom: 2.5rem;">
-      <h2 style="font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem;">Listening</h2>
-      <p style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 300; line-height: 1.9; color: var(--text-deep);">One song a day on display.</p>
-    </section>
+  <main style="max-width: 680px; margin: 5rem auto; padding: 0 2rem; text-align: center;">
 
-    <section style="margin-bottom: 2.5rem;">
-      <h2 style="font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem;">Playing</h2>
-      <p style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 300; line-height: 1.9; color: var(--text-deep);">Pixels</p>
-    </section>
+    <div style="font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); margin-bottom: 2rem; font-family: var(--font-mono);">Now — Dejan</div>
 
-    <section style="margin-bottom: 2.5rem;">
-      <h2 style="font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem;">Building</h2>
-      <p style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 300; line-height: 1.9; color: var(--text-deep);">Slowly figuring out my personal context window.</p>
-    </section>
+    <h1 class="now-title">Now.</h1>
 
-    <section style="margin-bottom: 2.5rem;">
-      <h2 style="font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem;">Context Window</h2>
-      <p style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 300; line-height: 1.9; color: var(--text-deep);">47K tokens · <em>expanding</em></p>
-    </section>
+    <p class="updated-line" id="updated-line" style="font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; color: var(--text-dim); margin-bottom: 4rem;">Updated April 2026 · Hannover</p>
 
-    <section style="margin-bottom: 2.5rem;">
-      <h2 style="font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem;">Reading</h2>
-      <p style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 300; line-height: 1.9; color: var(--text-deep);">The Web. Favourites and books coming — the good ones take time to surface.</p>
-    </section>
+    <!-- TIMELINE -->
+    <div class="timeline" style="text-align: left; max-width: 480px; margin: 0 auto;">
 
-    <p style="font-size: 10px; color: var(--text-dim); margin-top: 3rem;">This is a <a href="https://nownownow.com/about" target="_blank" style="color: var(--accent); text-decoration: none;">/now page</a>. Updated manually when things change.</p>
+      <div class="tl-item">
+        <div class="tl-spine">
+          <div class="tl-dot"></div>
+          <div class="tl-line"></div>
+        </div>
+        <div class="tl-content">
+          <div class="tl-label">Listening</div>
+          <div class="tl-text">One song a day on display.</div>
+          <div class="chips">
+            <a href="/journal" class="chip chip-accent">→ SOTD</a>
+            <span class="chip">Daily · seit Jan 2025</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-spine">
+          <div class="tl-dot"></div>
+          <div class="tl-line"></div>
+        </div>
+        <div class="tl-content">
+          <div class="tl-label">Playing</div>
+          <div class="tl-text">Pixels</div>
+          <div class="chips">
+            <a href="/works" class="chip chip-accent">→ Works</a>
+            <span class="chip">Browser</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-spine">
+          <div class="tl-dot"></div>
+          <div class="tl-line"></div>
+        </div>
+        <div class="tl-content">
+          <div class="tl-label">Building</div>
+          <div class="tl-text">Slowly figuring out my personal context window.</div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-spine">
+          <div class="tl-dot"></div>
+          <div class="tl-line"></div>
+        </div>
+        <div class="tl-content">
+          <div class="tl-label">Context Window</div>
+          <div class="tl-text">47K tokens · <em>expanding</em></div>
+          <div class="prog-wrap">
+            <div class="prog-bar">
+              <div class="prog-fill" style="width: 47%"></div>
+            </div>
+            <span class="prog-label">47 / 100K</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item tl-last">
+        <div class="tl-spine">
+          <div class="tl-dot"></div>
+        </div>
+        <div class="tl-content">
+          <div class="tl-label">Reading</div>
+          <div class="tl-text">The Web. · <span class="more-soon">more soon</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <p style="font-family: var(--font-mono); font-size: 9px; letter-spacing: .05em; color: var(--text-dim); margin-top: 4rem; text-align: center;">
+      This is a <a href="https://nownownow.com/about" target="_blank" rel="noopener" style="color: var(--accent); text-decoration: none; border-bottom: 0.5px solid currentColor; padding-bottom: 1px;">/now page</a>. Updated manually when things change.
+    </p>
+
   </main>
+
 </BaseLayout>
 
-<style>
-body { background: var(--sky-top); position: relative; }
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 40%, var(--sky-bot) 100%);
-  z-index: -2;
-  pointer-events: none;
+<style is:global>
+
+:root {
+  --dot-color-deep:  #1a6bb5;
+  --dot-color-light: #87ceeb;
+  --dot-glow-deep:   rgba(26, 107, 181, 0.18);
+  --dot-glow-light:  rgba(135, 206, 235, 0.28);
+}
+
+html.dark {
+  --dot-color-deep:  #7ab8f0;
+  --dot-color-light: #b8dff8;
+  --dot-glow-deep:   rgba(122, 184, 240, 0.22);
+  --dot-glow-light:  rgba(184, 223, 248, 0.32);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not(.light) {
+    --dot-color-deep:  #7ab8f0;
+    --dot-color-light: #b8dff8;
+    --dot-glow-deep:   rgba(122, 184, 240, 0.22);
+    --dot-glow-light:  rgba(184, 223, 248, 0.32);
+  }
+}
+
+@keyframes color-breathe {
+  0%   { color: var(--dot-color-deep); }
+  50%  { color: var(--dot-color-light); }
+  100% { color: var(--dot-color-deep); }
+}
+
+@keyframes dot-breathe {
+  0%   { background: var(--dot-color-deep); box-shadow: 0 0 0 3px var(--dot-glow-deep); }
+  50%  { background: var(--dot-color-light); box-shadow: 0 0 0 5px var(--dot-glow-light); }
+  100% { background: var(--dot-color-deep); box-shadow: 0 0 0 3px var(--dot-glow-deep); }
+}
+
+.now-title {
+  font-family: var(--font-serif);
+  font-size: clamp(48px, 6vw, 80px);
+  font-weight: 300;
+  line-height: 1.05;
+  margin-bottom: 2rem;
+  animation: color-breathe 3.8s ease-in-out infinite;
+  animation-delay: 0.35s;
+}
+
+/* Timeline */
+.timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.tl-item {
+  display: flex;
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.tl-spine {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 12px;
+  padding-top: 2px;
+}
+
+.tl-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: dot-breathe 3.8s ease-in-out infinite;
+}
+
+.tl-item:nth-child(1) .tl-dot { animation-delay: 0s; }
+.tl-item:nth-child(2) .tl-dot { animation-delay: 0.7s; }
+.tl-item:nth-child(3) .tl-dot { animation-delay: 1.4s; }
+.tl-item:nth-child(4) .tl-dot { animation-delay: 2.1s; }
+.tl-item:nth-child(5) .tl-dot { animation-delay: 2.8s; }
+
+.tl-line {
+  width: 0.5px;
+  flex: 1;
+  background: var(--border-mid);
+  margin-top: 6px;
+  min-height: 1.8rem;
+}
+
+.tl-content {
+  padding-bottom: 2.4rem;
+  flex: 1;
+}
+
+.tl-last .tl-content {
+  padding-bottom: 0;
+}
+
+.tl-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.4rem;
+  line-height: 1.5;
+}
+
+.tl-text {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 300;
+  line-height: 1.75;
+  color: var(--text-deep);
+}
+
+.tl-text em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.more-soon {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: .06em;
+  color: var(--text-dim);
+  font-style: normal;
+}
+
+/* Chips */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 0.55rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: .04em;
+  padding: 3px 9px;
+  border-radius: 4px;
+  background: var(--glass-bg);
+  color: var(--text-dim);
+  border: 0.5px solid var(--border-mid);
+  text-decoration: none;
+  transition: var(--t);
+  line-height: 1;
+}
+
+.chip-accent {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: transparent;
+}
+
+.chip-accent:hover {
+  background: var(--glass-bg);
+}
+
+/* Progress bar */
+.prog-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 0.6rem;
+}
+
+.prog-bar {
+  flex: 1;
+  max-width: 140px;
+  height: 2px;
+  background: var(--border-mid);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.prog-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  opacity: 0.6;
+}
+
+.prog-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: .04em;
+  color: var(--text-dim);
+}
+
+@media (max-width: 768px) {
+  main { margin-top: 3rem !important; }
+  .tl-item { gap: 1rem; }
 }
 </style>
+
+<script>
+  // Relative "Updated"-Zeitangabe
+  const el = document.getElementById('updated-line');
+  if (el) {
+    const updated = new Date('2026-04-01');
+    const now = new Date();
+    const days = Math.floor((now.getTime() - updated.getTime()) / (1000 * 60 * 60 * 24));
+    let rel = '';
+    if (days === 0)       rel = 'heute';
+    else if (days === 1)  rel = 'gestern';
+    else if (days < 7)   rel = `vor ${days} Tagen`;
+    else if (days < 14)  rel = 'vor einer Woche';
+    else if (days < 30)  rel = `vor ${Math.floor(days / 7)} Wochen`;
+    else if (days < 60)  rel = 'vor einem Monat';
+    else                  rel = `vor ${Math.floor(days / 30)} Monaten`;
+    el.textContent = `Zuletzt aktualisiert ${rel} · Hannover`;
+  }
+</script>
