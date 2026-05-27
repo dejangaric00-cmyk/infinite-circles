@@ -8,13 +8,30 @@ import ArchiveRadio from '../components/ArchiveRadio.astro';
   <main class="music-page">
 
     <!-- HEADER -->
-    <header class="music-header reveal" style="--d:0s">
-      <div class="music-eyebrow">
-        <span class="eyebrow-dot"></span>
-        Infinite Circles / Music
+    <header class="music-header">
+      <canvas class="music-bg-canvas" id="music-bg-canvas" aria-hidden="true"></canvas>
+      <div class="music-header-inner">
+        <div class="music-eyebrow">
+          <span class="eyebrow-dot"></span>
+          <span>Infinite Circles / Music</span>
+          <span class="eyebrow-freq" id="eyebrow-freq">— 138 BPM</span>
+        </div>
+        <h1 class="music-title">
+          <span class="mt-line1">Grooves</span>
+          <span class="mt-amp">&amp;</span>
+          <br>
+          <span class="mt-line2">Rhythms.</span>
+        </h1>
+        <div class="music-tags">
+          <span class="mtag">House</span>
+          <span class="mtag-sep">·</span>
+          <span class="mtag">Tech House</span>
+          <span class="mtag-sep">·</span>
+          <span class="mtag">Minimal</span>
+          <span class="mtag-sep">·</span>
+          <span class="mtag">Dub Techno</span>
+        </div>
       </div>
-      <h1 class="music-title">Grooves &amp;<br><em>Rhythms.</em></h1>
-      <p class="music-sub">House. Tech House. Minimal. Dub Techno.</p>
     </header>
 
     <!-- RADIO -->
@@ -24,94 +41,33 @@ import ArchiveRadio from '../components/ArchiveRadio.astro';
         <span class="label-text">Live Radio</span>
         <span class="label-line"></span>
       </div>
-      <div class="radio-col">
-        <div class="radio-sub-label">Soma FM</div>
-        <SomaPlayer />
-      </div>
-      <div class="radio-col" style="margin-top:0.75rem">
-        <div class="radio-sub-label">Archive.org — zufällig</div>
-        <ArchiveRadio />
-      </div>
+      <div class="radio-sub-label">Soma FM</div>
+      <SomaPlayer />
+      <div class="radio-sub-label" style="margin-top:0.75rem">Archive.org — zufällig</div>
+      <ArchiveRadio />
     </section>
 
-    <!-- DISCOVER -->
+    <!-- UNDERGROUND STATIONS -->
     <section class="music-section reveal" style="--d:.2s">
       <div class="section-label">
         <span class="label-line"></span>
-        <span class="label-text">Entdecken</span>
+        <span class="label-text">Underground Stations</span>
         <span class="label-line"></span>
       </div>
+      <p class="stations-intro">Klick — stream startet direkt.</p>
 
-      <!-- Bandcamp embeds — echte funktionierende IDs -->
-      <div class="bc-grid">
-        <div class="bc-card">
-          <div class="bc-label">Dub Techno</div>
-          <iframe
-            style="border:0;width:100%;height:120px;display:block;"
-            src="https://bandcamp.com/EmbedPlayer/album=1371998633/size=large/bgcol=ffffff/linkcol=1a6bb5/tracklist=false/artwork=small/transparent=true/"
-            seamless
-            title="Deepchord — Functional Designs"
-          ></iframe>
+      <div class="stations-grid" id="stations-grid">
+        <!-- Cards werden per JS gerendert -->
+      </div>
+
+      <!-- Shared audio player bar -->
+      <div class="station-player" id="station-player">
+        <div class="sp-dot" id="sp-dot"></div>
+        <div class="sp-info">
+          <span class="sp-name" id="sp-name">—</span>
+          <span class="sp-genre" id="sp-genre">—</span>
         </div>
-        <div class="bc-card">
-          <div class="bc-label">Dub Techno / Echospace</div>
-          <iframe
-            style="border:0;width:100%;height:120px;display:block;"
-            src="https://bandcamp.com/EmbedPlayer/album=1846240522/size=large/bgcol=ffffff/linkcol=1a6bb5/tracklist=false/artwork=small/transparent=true/"
-            seamless
-            title="Echospace — Spatial Dimension"
-          ></iframe>
-        </div>
-      </div>
-
-      <!-- Links -->
-      <div class="section-label" style="margin-top:1.75rem">
-        <span class="label-line"></span>
-        <span class="label-text">Labels &amp; Ressourcen</span>
-        <span class="label-line"></span>
-      </div>
-
-      <div class="links-grid">
-        <a href="https://basicchannel.bandcamp.com" target="_blank" rel="noopener" class="link-card">
-          <span class="lc-name">Basic Channel</span>
-          <span class="lc-desc">Das Original. Dub Techno aus Berlin.</span>
-          <span class="lc-tag">Label · Bandcamp</span>
-        </a>
-        <a href="https://www.residentadvisor.net" target="_blank" rel="noopener" class="link-card">
-          <span class="lc-name">Resident Advisor</span>
-          <span class="lc-desc">Reviews, Mixes, Szene-News.</span>
-          <span class="lc-tag">Magazin</span>
-        </a>
-        <a href="https://bandcamp.com/tag/dub-techno" target="_blank" rel="noopener" class="link-card">
-          <span class="lc-name">Bandcamp · Dub Techno</span>
-          <span class="lc-desc">Neue Releases entdecken.</span>
-          <span class="lc-tag">Bandcamp</span>
-        </a>
-        <a href="https://bandcamp.com/tag/deep-house" target="_blank" rel="noopener" class="link-card">
-          <span class="lc-name">Bandcamp · Deep House</span>
-          <span class="lc-desc">Neue Releases entdecken.</span>
-          <span class="lc-tag">Bandcamp</span>
-        </a>
-        <a href="https://ra.co/podcasts" target="_blank" rel="noopener" class="link-card">
-          <span class="lc-name">RA Exchange</span>
-          <span class="lc-desc">DJ-Mixes von den Besten der Szene.</span>
-          <span class="lc-tag">Podcast</span>
-        </a>
-        <a href="https://www.mixcloud.com/search/?q=dub+techno&type=cloudcast" target="_blank" rel="noopener" class="link-card">
-          <span class="lc-name">Mixcloud · Dub Techno</span>
-          <span class="lc-desc">Sets, Mixes, Radiosendungen.</span>
-          <span class="lc-tag">Mixcloud</span>
-        </a>
-        <a href="https://soma.fm" target="_blank" rel="noopener" class="link-card">
-          <span class="lc-name">Soma FM</span>
-          <span class="lc-desc">Community Radio, 30+ Sender.</span>
-          <span class="lc-tag">Radio</span>
-        </a>
-        <a href="https://www.discogs.com/genre/Electronic" target="_blank" rel="noopener" class="link-card">
-          <span class="lc-name">Discogs Electronic</span>
-          <span class="lc-desc">Releases, Labels, Künstler.</span>
-          <span class="lc-tag">Datenbank</span>
-        </a>
+        <button class="sp-stop" id="sp-stop" aria-label="Stop">■ stop</button>
       </div>
     </section>
 
@@ -126,8 +82,37 @@ import ArchiveRadio from '../components/ArchiveRadio.astro';
   padding: 0 2rem;
 }
 
-/* Header */
-.music-header { margin-bottom: 3.5rem; }
+.music-header {
+  margin-bottom: 3.5rem;
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.music-bg-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+.music-header-inner {
+  position: relative;
+  z-index: 1;
+  padding: 2rem 2rem 1.75rem;
+  background: linear-gradient(
+    135deg,
+    rgba(4, 8, 40, 0.82) 0%,
+    rgba(6, 14, 60, 0.75) 50%,
+    rgba(10, 20, 80, 0.70) 100%
+  );
+  border-radius: 12px;
+  border: 0.5px solid rgba(80, 120, 255, 0.25);
+  backdrop-filter: blur(2px);
+}
 
 .music-eyebrow {
   display: flex;
@@ -137,48 +122,107 @@ import ArchiveRadio from '../components/ArchiveRadio.astro';
   font-size: 8px;
   letter-spacing: .22em;
   text-transform: uppercase;
-  color: var(--text-dim);
-  margin-bottom: 1.25rem;
+  color: rgba(140, 170, 255, 0.6);
+  margin-bottom: 1.5rem;
 }
 
 .eyebrow-dot {
   width: 6px; height: 6px; border-radius: 50%;
-  background: #00ff87; box-shadow: 0 0 8px #00ff87;
+  background: #4d7fff;
   flex-shrink: 0;
   animation: dot-glow 2.5s ease-in-out infinite;
+  box-shadow: 0 0 8px #4d7fff;
 }
 
 @keyframes dot-glow {
-  0%, 100% { box-shadow: 0 0 6px #00ff87; opacity: 1; }
-  50%       { box-shadow: 0 0 18px #00ff87; opacity: 0.7; }
+  0%, 100% { box-shadow: 0 0 6px #4d7fff; opacity: 1; }
+  50%       { box-shadow: 0 0 20px #7aa0ff; opacity: 0.7; }
+}
+
+.eyebrow-freq {
+  margin-left: auto;
+  color: #7aa0ff;
+  opacity: 0.7;
+  font-size: 8px;
+  letter-spacing: .1em;
+  animation: freq-flicker 4s ease-in-out infinite;
+}
+
+@keyframes freq-flicker {
+  0%, 90%, 100% { opacity: 0.7; }
+  95%           { opacity: 0.2; }
 }
 
 .music-title {
   font-family: var(--font-serif);
-  font-size: clamp(44px, 6vw, 76px);
+  font-size: clamp(52px, 7.5vw, 96px);
   font-weight: 300;
-  line-height: 1.0;
-  color: var(--text-deep);
-  margin-bottom: 1rem;
-  letter-spacing: -.01em;
+  line-height: 0.95;
+  margin-bottom: 1.5rem;
+  letter-spacing: -.02em;
 }
 
-.music-title em {
-  font-style: italic;
-  background: linear-gradient(110deg, #00ff87 0%, #4dfff3 45%, #ff6ef7 90%);
+.mt-line1 {
+  display: inline-block;
+  color: #e8f0ff;
+  text-shadow: 0 0 40px rgba(100, 140, 255, 0.4);
+}
+
+.mt-amp {
+  display: inline-block;
+  font-style: normal;
+  background: linear-gradient(110deg, #4d7fff, #a0c0ff, #ffffff, #a0c0ff, #4d7fff);
+  background-size: 300% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  animation: gradient-shift 4s linear infinite;
+  margin: 0 0.15em;
+  filter: drop-shadow(0 0 12px rgba(100,160,255,0.6));
 }
 
-.music-sub {
+@keyframes gradient-shift {
+  0%   { background-position: 0% center; }
+  100% { background-position: 300% center; }
+}
+
+.mt-line2 {
+  display: inline-block;
+  font-style: italic;
+  background: linear-gradient(110deg, #ffffff 0%, #c0d8ff 35%, #6090ff 65%, #3060e0 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift-rev 7s linear infinite;
+  filter: drop-shadow(0 0 16px rgba(80,130,255,0.5));
+}
+
+@keyframes gradient-shift-rev {
+  0%   { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+.music-tags {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.mtag {
   font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: .08em;
-  color: var(--text-dim);
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: rgba(160, 190, 255, 0.55);
 }
 
-/* Sections */
+.mtag-sep {
+  color: rgba(100, 130, 255, 0.25);
+  font-size: 10px;
+}
+
 .music-section { margin-bottom: 3.5rem; }
 
 .section-label {
@@ -214,81 +258,180 @@ import ArchiveRadio from '../components/ArchiveRadio.astro';
   opacity: 0.7;
 }
 
-/* Bandcamp grid */
-.bc-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.bc-card {
-  border: 0.5px solid var(--border-mid);
-  border-radius: 6px;
-  overflow: hidden;
-  background: var(--glass-bg);
-}
-
-.bc-label {
+/* ── Stations ── */
+.stations-intro {
   font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: .14em;
-  text-transform: uppercase;
+  font-size: 9px;
+  letter-spacing: .06em;
   color: var(--text-dim);
-  padding: 0.45rem 0.75rem;
-  border-bottom: 0.5px solid var(--border-mid);
+  margin-bottom: 1rem;
 }
 
-/* Links grid */
-.links-grid {
+.stations-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
-.link-card {
+.st-card {
+  all: unset;
+  cursor: pointer;
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 0.75rem 0.9rem;
-  border: 0.5px solid var(--border-mid);
+  justify-content: space-between;
+  padding: 0.85rem 0.9rem 0.75rem;
   border-radius: 6px;
+  border: 0.5px solid transparent;
   background: var(--glass-bg);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  text-decoration: none;
-  transition: border-color 0.15s, background 0.15s;
+  overflow: hidden;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  min-height: 90px;
 }
 
-.link-card:hover {
-  border-color: var(--accent);
-  background: var(--glass-bg-strong);
+.st-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2.5px;
+  background: var(--c);
+  opacity: 0.75;
+  transition: opacity 0.15s;
 }
 
-.lc-name {
+.st-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px color-mix(in srgb, var(--c) 18%, transparent);
+  border-color: color-mix(in srgb, var(--c) 35%, transparent);
+}
+
+.st-card:hover::before { opacity: 1; }
+
+.st-card.playing {
+  border-color: color-mix(in srgb, var(--c) 55%, transparent);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--c) 22%, transparent);
+}
+
+.st-card.playing::before {
+  opacity: 1;
+  animation: st-bar-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes st-bar-glow {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.st-genre {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--c);
+  opacity: 0.85;
+  margin-bottom: 4px;
+}
+
+.st-name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-deep);
+  letter-spacing: .02em;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.st-desc {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--text-dim);
+  letter-spacing: .02em;
+  line-height: 1.4;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.st-play-icon {
+  font-size: 10px;
+  color: var(--c);
+  opacity: 0;
+  margin-top: 6px;
+  transition: opacity 0.15s;
+}
+
+.st-card:hover .st-play-icon { opacity: 0.8; }
+.st-card.playing .st-play-icon { opacity: 1; content: '■'; }
+
+/* ── Shared player bar ── */
+.station-player {
+  display: none;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  border: 0.5px solid var(--border-mid);
+  border-radius: 6px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+}
+
+.station-player.visible { display: flex; }
+
+.sp-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #00ff87;
+  box-shadow: 0 0 8px #00ff87;
+  flex-shrink: 0;
+  animation: sp-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes sp-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px #00ff87; }
+  50%       { opacity: 0.4; box-shadow: 0 0 2px #00ff87; }
+}
+
+.sp-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sp-name {
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--text-deep);
-  letter-spacing: .03em;
+  letter-spacing: .04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.lc-desc {
+.sp-genre {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 8px;
   color: var(--text-dim);
-  letter-spacing: .02em;
-  line-height: 1.5;
+  letter-spacing: .06em;
 }
 
-.lc-tag {
+.sp-stop {
+  all: unset;
+  cursor: pointer;
   font-family: var(--font-mono);
-  font-size: 7.5px;
+  font-size: 8px;
   letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--accent);
-  opacity: 0.7;
-  margin-top: 2px;
+  color: var(--text-dim);
+  padding: 4px 10px;
+  border: 0.5px solid var(--border-mid);
+  border-radius: 20px;
+  flex-shrink: 0;
+  transition: color 0.15s, border-color 0.15s;
 }
+
+.sp-stop:hover { color: #ff6ef7; border-color: #ff6ef7; }
 
 /* Reveal */
 .reveal {
@@ -301,15 +444,287 @@ import ArchiveRadio from '../components/ArchiveRadio.astro';
 
 @media (max-width: 600px) {
   .music-page { margin-top: 3rem; }
-  .bc-grid    { grid-template-columns: 1fr; }
-  .links-grid { grid-template-columns: 1fr; }
+  .stations-grid { grid-template-columns: 1fr 1fr; }
 }
 </style>
 
 <script>
-  const observer = new IntersectionObserver(
-    (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }),
-    { threshold: 0.06 }
-  );
-  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+// ── Background: floating ovals / note shapes ─────────────────────
+const bgCanvas = document.getElementById('music-bg-canvas') as HTMLCanvasElement | null;
+if (bgCanvas) {
+  const bctx = bgCanvas.getContext('2d')!;
+  const dpr = devicePixelRatio || 1;
+
+  function resizeBg() {
+    const rect = bgCanvas!.parentElement!.getBoundingClientRect();
+    bgCanvas!.width  = rect.width  * dpr;
+    bgCanvas!.height = rect.height * dpr;
+    bgCanvas!.style.width  = rect.width  + 'px';
+    bgCanvas!.style.height = rect.height + 'px';
+    bctx.scale(dpr, dpr);
+  }
+  resizeBg();
+
+  // Ovals — inspired by musical notation shapes
+  const NUM = 28;
+  type Oval = {
+    x: number; y: number; rx: number; ry: number;
+    angle: number; vx: number; vy: number; va: number;
+    alpha: number; da: number; hue: number;
+  };
+
+  const W = () => bgCanvas!.width  / dpr;
+  const H = () => bgCanvas!.height / dpr;
+
+  const ovals: Oval[] = Array.from({ length: NUM }, () => ({
+    x: Math.random() * 700,
+    y: Math.random() * 220,
+    rx: 18 + Math.random() * 60,
+    ry: 8  + Math.random() * 22,
+    angle: Math.random() * Math.PI * 2,
+    vx: (Math.random() - 0.5) * 0.18,
+    vy: (Math.random() - 0.5) * 0.10,
+    va: (Math.random() - 0.5) * 0.003,
+    alpha: 0.04 + Math.random() * 0.10,
+    da: (Math.random() - 0.5) * 0.0004,
+    hue: 210 + Math.random() * 60, // ultramarine to blue range
+  }));
+
+  function drawBg() {
+    const w = W(), h = H();
+    bctx.clearRect(0, 0, w, h);
+
+    // Deep dark blue background
+    const grad = bctx.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0,   'rgba(4, 8, 48, 1)');
+    grad.addColorStop(0.4, 'rgba(6, 14, 72, 1)');
+    grad.addColorStop(1,   'rgba(10, 22, 90, 1)');
+    bctx.fillStyle = grad;
+    bctx.fillRect(0, 0, w, h);
+
+    // Plasma glow — central radial
+    const plasma = bctx.createRadialGradient(w * 0.35, h * 0.5, 0, w * 0.35, h * 0.5, w * 0.7);
+    plasma.addColorStop(0,   'rgba(60, 90, 255, 0.18)');
+    plasma.addColorStop(0.4, 'rgba(30, 60, 200, 0.08)');
+    plasma.addColorStop(1,   'rgba(0, 20, 80, 0)');
+    bctx.fillStyle = plasma;
+    bctx.fillRect(0, 0, w, h);
+
+    // Ovals
+    ovals.forEach(o => {
+      o.x += o.vx; o.y += o.vy; o.angle += o.va;
+      o.alpha += o.da;
+      if (o.alpha < 0.02) o.da =  Math.abs(o.da);
+      if (o.alpha > 0.14) o.da = -Math.abs(o.da);
+      if (o.x < -o.rx * 2) o.x = w + o.rx;
+      if (o.x > w + o.rx * 2) o.x = -o.rx;
+      if (o.y < -o.ry * 2) o.y = h + o.ry;
+      if (o.y > h + o.ry * 2) o.y = -o.ry;
+
+      bctx.save();
+      bctx.translate(o.x, o.y);
+      bctx.rotate(o.angle);
+      bctx.globalAlpha = o.alpha;
+
+      // Oval stroke — note-head style
+      bctx.beginPath();
+      bctx.ellipse(0, 0, o.rx, o.ry, 0, 0, Math.PI * 2);
+      bctx.strokeStyle = `hsl(${o.hue}, 80%, 72%)`;
+      bctx.lineWidth = 0.75;
+      bctx.stroke();
+
+      // Occasional filled note-head (smaller, denser)
+      if (o.rx < 30) {
+        bctx.globalAlpha = o.alpha * 0.4;
+        bctx.fillStyle = `hsl(${o.hue}, 70%, 65%)`;
+        bctx.fill();
+      }
+
+      bctx.restore();
+    });
+
+    requestAnimationFrame(drawBg);
+  }
+  drawBg();
+  window.addEventListener('resize', () => {
+    bctx.resetTransform();
+    resizeBg();
+  });
+}
+
+// BPM flicker
+const bpmEl = document.getElementById('eyebrow-freq');
+const bpms = ['— 120 BPM', '— 128 BPM', '— 133 BPM', '— 138 BPM', '— 140 BPM', '— 145 BPM'];
+if (bpmEl) setInterval(() => {
+  bpmEl.textContent = bpms[Math.floor(Math.random() * bpms.length)];
+}, 3000);
+
+// ── Underground Radio Stations ──────────────────────────────────
+// Alle Streams sind direkte MP3/AAC URLs — spielen sofort ohne CORS-Probleme
+const STATIONS = [
+  // Verifizierte, direkte Stream-URLs
+  {
+    name: 'NTS Radio 1',
+    genre: 'Underground / Experimental',
+    desc: 'London. Always surprising.',
+    stream: 'https://stream-relay-geo.ntslive.net/stream',
+    color: '#ff6ef7',
+  },
+  {
+    name: 'NTS Radio 2',
+    genre: 'Underground / Eclectic',
+    desc: 'Second channel. Weirder.',
+    stream: 'https://stream-relay-geo.ntslive.net/stream2',
+    color: '#ff884d',
+  },
+  {
+    name: 'Intergalactic FM',
+    genre: 'Techno / Electro / Italo',
+    desc: 'The Hague. Pure cult.',
+    stream: 'http://radio.intergalactic.fm/x',
+    color: '#4dfff3',
+  },
+  {
+    name: 'Cashmere Radio',
+    genre: 'Berlin Experimental',
+    desc: 'Lichtenberg. Always live.',
+    stream: 'https://cashmereradio.out.airtime.pro/cashmereradio_a',
+    color: '#00ff87',
+  },
+  {
+    name: 'Fnoob Techno',
+    genre: 'Underground Techno',
+    desc: 'London. 400+ residents. Raw.',
+    stream: 'https://stream.zeno.fm/q9fd3xmhflhvv',
+    color: '#ffe44d',
+  },
+  {
+    name: 'Aaja Music',
+    genre: 'Electronic / Experimental',
+    desc: 'Deptford railway arch, London.',
+    stream: 'https://aaja.out.airtime.pro/aaja_a',
+    color: '#ff884d',
+  },
+  {
+    name: 'Worldwide FM',
+    genre: 'Global Underground',
+    desc: 'Gilles Peterson. World sounds.',
+    stream: 'https://worldwidefm.out.airtime.pro/worldwidefm_a',
+    color: '#4dfff3',
+  },
+  {
+    name: 'Rinse FM',
+    genre: 'UK Electronic',
+    desc: 'London pirate legacy.',
+    stream: 'https://media.rinse.fm/rinse/rinse.mp3',
+    color: '#ffe44d',
+  },
+  {
+    name: 'Refuge Worldwide',
+    genre: 'Berlin Community',
+    desc: 'Diverse. Political. Free.',
+    stream: 'https://refugeworldwide.radioca.st/stream',
+    color: '#ff884d',
+  },
+  {
+    name: 'Noods Radio',
+    genre: 'Bristol Underground',
+    desc: 'Eclectic. Raw. Honest.',
+    stream: 'https://noods.out.airtime.pro/noods_a',
+    color: '#ff6ef7',
+  },
+  {
+    name: 'Radio Quantica',
+    genre: 'Experimental / Lisbon',
+    desc: 'Portugal underground.',
+    stream: 'https://s3.radio.co/s9b3d98a2e/listen',
+    color: '#ff6ef7',
+  },
+  {
+    name: 'Threads Radio',
+    genre: 'Experimental / London',
+    desc: 'Always on the edge.',
+    stream: 'https://threads.out.airtime.pro/threads_a',
+    color: '#4dfff3',
+  },
+];
+
+let currentAudio: HTMLAudioElement | null = null;
+let currentIdx = -1;
+
+const grid = document.getElementById('stations-grid')!;
+const player = document.getElementById('station-player')!;
+const spName = document.getElementById('sp-name')!;
+const spGenre = document.getElementById('sp-genre')!;
+const spStop = document.getElementById('sp-stop')!;
+
+// Render cards
+STATIONS.forEach((s, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'st-card';
+  btn.style.setProperty('--c', s.color);
+  btn.dataset.idx = String(i);
+  btn.innerHTML = `
+    <div>
+      <div class="st-genre">${s.genre}</div>
+      <div class="st-name">${s.name}</div>
+      <div class="st-desc">${s.desc}</div>
+    </div>
+    <div class="st-play-icon">▶ play</div>
+  `;
+  btn.addEventListener('click', () => toggleStation(i, btn));
+  grid.appendChild(btn);
+});
+
+function toggleStation(idx: number, btn: HTMLButtonElement) {
+  // Gleiche Station nochmal geklickt = stop
+  if (currentIdx === idx && currentAudio) {
+    stopAll();
+    return;
+  }
+
+  stopAll();
+
+  const s = STATIONS[idx];
+  currentIdx = idx;
+  currentAudio = new Audio(s.stream);
+  currentAudio.play().catch(() => {});
+
+  btn.classList.add('playing');
+  const icon = btn.querySelector('.st-play-icon') as HTMLElement;
+  if (icon) icon.textContent = '■ stop';
+
+  spName.textContent = s.name;
+  spGenre.textContent = s.genre;
+  player.classList.add('visible');
+
+  currentAudio.onerror = () => {
+    // Stream nicht erreichbar — zeige Hinweis im Player
+    const nameEl = document.getElementById('sp-name')!;
+    nameEl.textContent = `${s.name} — nicht erreichbar ✕`;
+    setTimeout(() => {
+      stopAll();
+    }, 2500);
+  };
+}
+
+function stopAll() {
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  currentIdx = -1;
+  document.querySelectorAll<HTMLButtonElement>('.st-card').forEach(b => {
+    b.classList.remove('playing');
+    const icon = b.querySelector('.st-play-icon') as HTMLElement;
+    if (icon) icon.textContent = '▶ play';
+  });
+  player.classList.remove('visible');
+}
+
+spStop.addEventListener('click', stopAll);
+
+// Reveal observer
+const observer = new IntersectionObserver(
+  (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }),
+  { threshold: 0.06 }
+);
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
