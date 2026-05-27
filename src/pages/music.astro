@@ -1,0 +1,315 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SomaPlayer from '../components/SomaPlayer.astro';
+import ArchiveRadio from '../components/ArchiveRadio.astro';
+---
+
+<BaseLayout title="Grooves & Rhythms — Infinite Circles">
+  <main class="music-page">
+
+    <!-- HEADER -->
+    <header class="music-header reveal" style="--d:0s">
+      <div class="music-eyebrow">
+        <span class="eyebrow-dot"></span>
+        Infinite Circles / Music
+      </div>
+      <h1 class="music-title">Grooves &amp;<br><em>Rhythms.</em></h1>
+      <p class="music-sub">House. Tech House. Minimal. Dub Techno.</p>
+    </header>
+
+    <!-- RADIO -->
+    <section class="music-section reveal" style="--d:.1s">
+      <div class="section-label">
+        <span class="label-line"></span>
+        <span class="label-text">Live Radio</span>
+        <span class="label-line"></span>
+      </div>
+      <div class="radio-col">
+        <div class="radio-sub-label">Soma FM</div>
+        <SomaPlayer />
+      </div>
+      <div class="radio-col" style="margin-top:0.75rem">
+        <div class="radio-sub-label">Archive.org — zufällig</div>
+        <ArchiveRadio />
+      </div>
+    </section>
+
+    <!-- DISCOVER -->
+    <section class="music-section reveal" style="--d:.2s">
+      <div class="section-label">
+        <span class="label-line"></span>
+        <span class="label-text">Entdecken</span>
+        <span class="label-line"></span>
+      </div>
+
+      <!-- Bandcamp embeds — echte funktionierende IDs -->
+      <div class="bc-grid">
+        <div class="bc-card">
+          <div class="bc-label">Dub Techno</div>
+          <iframe
+            style="border:0;width:100%;height:120px;display:block;"
+            src="https://bandcamp.com/EmbedPlayer/album=1371998633/size=large/bgcol=ffffff/linkcol=1a6bb5/tracklist=false/artwork=small/transparent=true/"
+            seamless
+            title="Deepchord — Functional Designs"
+          ></iframe>
+        </div>
+        <div class="bc-card">
+          <div class="bc-label">Dub Techno / Echospace</div>
+          <iframe
+            style="border:0;width:100%;height:120px;display:block;"
+            src="https://bandcamp.com/EmbedPlayer/album=1846240522/size=large/bgcol=ffffff/linkcol=1a6bb5/tracklist=false/artwork=small/transparent=true/"
+            seamless
+            title="Echospace — Spatial Dimension"
+          ></iframe>
+        </div>
+      </div>
+
+      <!-- Links -->
+      <div class="section-label" style="margin-top:1.75rem">
+        <span class="label-line"></span>
+        <span class="label-text">Labels &amp; Ressourcen</span>
+        <span class="label-line"></span>
+      </div>
+
+      <div class="links-grid">
+        <a href="https://basicchannel.bandcamp.com" target="_blank" rel="noopener" class="link-card">
+          <span class="lc-name">Basic Channel</span>
+          <span class="lc-desc">Das Original. Dub Techno aus Berlin.</span>
+          <span class="lc-tag">Label · Bandcamp</span>
+        </a>
+        <a href="https://www.residentadvisor.net" target="_blank" rel="noopener" class="link-card">
+          <span class="lc-name">Resident Advisor</span>
+          <span class="lc-desc">Reviews, Mixes, Szene-News.</span>
+          <span class="lc-tag">Magazin</span>
+        </a>
+        <a href="https://bandcamp.com/tag/dub-techno" target="_blank" rel="noopener" class="link-card">
+          <span class="lc-name">Bandcamp · Dub Techno</span>
+          <span class="lc-desc">Neue Releases entdecken.</span>
+          <span class="lc-tag">Bandcamp</span>
+        </a>
+        <a href="https://bandcamp.com/tag/deep-house" target="_blank" rel="noopener" class="link-card">
+          <span class="lc-name">Bandcamp · Deep House</span>
+          <span class="lc-desc">Neue Releases entdecken.</span>
+          <span class="lc-tag">Bandcamp</span>
+        </a>
+        <a href="https://ra.co/podcasts" target="_blank" rel="noopener" class="link-card">
+          <span class="lc-name">RA Exchange</span>
+          <span class="lc-desc">DJ-Mixes von den Besten der Szene.</span>
+          <span class="lc-tag">Podcast</span>
+        </a>
+        <a href="https://www.mixcloud.com/search/?q=dub+techno&type=cloudcast" target="_blank" rel="noopener" class="link-card">
+          <span class="lc-name">Mixcloud · Dub Techno</span>
+          <span class="lc-desc">Sets, Mixes, Radiosendungen.</span>
+          <span class="lc-tag">Mixcloud</span>
+        </a>
+        <a href="https://soma.fm" target="_blank" rel="noopener" class="link-card">
+          <span class="lc-name">Soma FM</span>
+          <span class="lc-desc">Community Radio, 30+ Sender.</span>
+          <span class="lc-tag">Radio</span>
+        </a>
+        <a href="https://www.discogs.com/genre/Electronic" target="_blank" rel="noopener" class="link-card">
+          <span class="lc-name">Discogs Electronic</span>
+          <span class="lc-desc">Releases, Labels, Künstler.</span>
+          <span class="lc-tag">Datenbank</span>
+        </a>
+      </div>
+    </section>
+
+  </main>
+</BaseLayout>
+
+<style is:global>
+
+.music-page {
+  max-width: 660px;
+  margin: 4.5rem auto 6rem;
+  padding: 0 2rem;
+}
+
+/* Header */
+.music-header { margin-bottom: 3.5rem; }
+
+.music-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 1.25rem;
+}
+
+.eyebrow-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #00ff87; box-shadow: 0 0 8px #00ff87;
+  flex-shrink: 0;
+  animation: dot-glow 2.5s ease-in-out infinite;
+}
+
+@keyframes dot-glow {
+  0%, 100% { box-shadow: 0 0 6px #00ff87; opacity: 1; }
+  50%       { box-shadow: 0 0 18px #00ff87; opacity: 0.7; }
+}
+
+.music-title {
+  font-family: var(--font-serif);
+  font-size: clamp(44px, 6vw, 76px);
+  font-weight: 300;
+  line-height: 1.0;
+  color: var(--text-deep);
+  margin-bottom: 1rem;
+  letter-spacing: -.01em;
+}
+
+.music-title em {
+  font-style: italic;
+  background: linear-gradient(110deg, #00ff87 0%, #4dfff3 45%, #ff6ef7 90%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.music-sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .08em;
+  color: var(--text-dim);
+}
+
+/* Sections */
+.music-section { margin-bottom: 3.5rem; }
+
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.1rem;
+}
+
+.label-text {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.label-line {
+  flex: 1;
+  height: 0.5px;
+  background: var(--border-mid);
+}
+
+.radio-sub-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 0.45rem;
+  opacity: 0.7;
+}
+
+/* Bandcamp grid */
+.bc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.bc-card {
+  border: 0.5px solid var(--border-mid);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--glass-bg);
+}
+
+.bc-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 0.45rem 0.75rem;
+  border-bottom: 0.5px solid var(--border-mid);
+}
+
+/* Links grid */
+.links-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.link-card {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0.75rem 0.9rem;
+  border: 0.5px solid var(--border-mid);
+  border-radius: 6px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.link-card:hover {
+  border-color: var(--accent);
+  background: var(--glass-bg-strong);
+}
+
+.lc-name {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-deep);
+  letter-spacing: .03em;
+}
+
+.lc-desc {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: .02em;
+  line-height: 1.5;
+}
+
+.lc-tag {
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+/* Reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity .5s ease, transform .5s ease;
+  transition-delay: var(--d, 0s);
+}
+.reveal.in { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 600px) {
+  .music-page { margin-top: 3rem; }
+  .bc-grid    { grid-template-columns: 1fr; }
+  .links-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<script>
+  const observer = new IntersectionObserver(
+    (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }),
+    { threshold: 0.06 }
+  );
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>

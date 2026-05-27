@@ -1,0 +1,310 @@
+---
+// src/components/SomaPlayer.astro
+---
+
+<div class="soma-wrap">
+  <div class="soma-header">
+    <span class="soma-badge"><span class="live-dot" id="live-dot"></span>live</span>
+    <span class="soma-source">soma fm · community radio</span>
+  </div>
+
+  <div class="station-grid">
+    <button class="station-btn active" data-stream="https://ice1.somafm.com/dronezone-128-mp3" data-name="drone zone">
+      <span class="station-name">Drone Zone</span>
+      <span class="station-genre">ambient · dub · space</span>
+    </button>
+    <button class="station-btn" data-stream="https://ice1.somafm.com/deepspaceone-128-mp3" data-name="deep space one">
+      <span class="station-name">Deep Space One</span>
+      <span class="station-genre">deep ambient · experimental</span>
+    </button>
+    <button class="station-btn" data-stream="https://ice1.somafm.com/groovesalad-128-mp3" data-name="groove salad">
+      <span class="station-name">Groove Salad</span>
+      <span class="station-genre">ambient groove · downtempo</span>
+    </button>
+    <button class="station-btn" data-stream="https://ice1.somafm.com/thetrip-128-mp3" data-name="the trip">
+      <span class="station-name">The Trip</span>
+      <span class="station-genre">psychedelic · progressive</span>
+    </button>
+  </div>
+
+  <div class="player-bar">
+    <button class="play-btn" id="play-btn" aria-label="Play/Pause">
+      <svg id="icon-play" width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><polygon points="2,1 11,6 2,11"/></svg>
+      <svg id="icon-pause" width="12" height="12" viewBox="0 0 12 12" fill="currentColor" style="display:none"><rect x="1.5" y="1" width="3" height="10" rx="1"/><rect x="7.5" y="1" width="3" height="10" rx="1"/></svg>
+    </button>
+    <div class="now-info">
+      <span class="now-label">// now</span>
+      <span class="now-station" id="now-station">drone zone</span>
+    </div>
+    <div class="volume-wrap">
+      <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true" style="opacity:.4"><path d="M1 4h2l3-3v10L3 8H1V4zm7.5.5a3 3 0 010 3"/></svg>
+      <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.8" aria-label="Lautstärke">
+    </div>
+  </div>
+
+  <audio id="soma-audio" preload="none"></audio>
+</div>
+
+<style>
+.soma-wrap {
+  border: 0.5px solid var(--border-mid);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.soma-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 1rem;
+  border-bottom: 0.5px solid var(--border-mid);
+}
+
+.soma-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.35;
+  transition: opacity 0.3s;
+}
+
+.live-dot.active {
+  opacity: 1;
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.soma-source {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: .08em;
+  color: var(--text-dim);
+}
+
+.station-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 0.5px solid var(--border-mid);
+}
+
+.station-btn {
+  all: unset;
+  cursor: pointer;
+  padding: 0.7rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-right: 0.5px solid var(--border-mid);
+  border-bottom: 0.5px solid var(--border-mid);
+  transition: background 0.15s;
+}
+
+.station-btn:nth-child(even) { border-right: none; }
+.station-btn:nth-child(3),
+.station-btn:nth-child(4) { border-bottom: none; }
+
+.station-btn:hover {
+  background: var(--glass-bg-strong);
+}
+
+.station-btn.active {
+  background: var(--glass-bg-strong);
+}
+
+.station-name {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: .04em;
+  transition: color 0.15s;
+}
+
+.station-btn.active .station-name {
+  color: var(--accent);
+}
+
+.station-genre {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: .03em;
+  opacity: 0.7;
+}
+
+.player-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+}
+
+.play-btn {
+  all: unset;
+  cursor: pointer;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 0.5px solid var(--border-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-deep);
+  flex-shrink: 0;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.play-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.play-btn.playing {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.now-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.now-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: .12em;
+  color: var(--accent);
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.now-station {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-deep);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: .04em;
+}
+
+.volume-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 60px;
+  height: 2px;
+  background: var(--border-mid);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+}
+
+@media (max-width: 500px) {
+  .station-grid { grid-template-columns: 1fr; }
+  .station-btn { border-right: none !important; }
+  .station-btn:nth-child(3) { border-bottom: 0.5px solid var(--border-mid) !important; }
+  .station-btn:last-child { border-bottom: none !important; }
+}
+</style>
+
+<script>
+  const audio = document.getElementById('soma-audio') as HTMLAudioElement;
+  const playBtn = document.getElementById('play-btn') as HTMLButtonElement;
+  const iconPlay = document.getElementById('icon-play') as SVGElement;
+  const iconPause = document.getElementById('icon-pause') as SVGElement;
+  const nowStation = document.getElementById('now-station') as HTMLSpanElement;
+  const liveDot = document.getElementById('live-dot') as HTMLSpanElement;
+  const volumeSlider = document.getElementById('volume-slider') as HTMLInputElement;
+  const stationBtns = document.querySelectorAll<HTMLButtonElement>('.station-btn');
+
+  let isPlaying = false;
+
+  audio.volume = 0.8;
+
+  function setPlaying(playing: boolean) {
+    isPlaying = playing;
+    playBtn.classList.toggle('playing', playing);
+    iconPlay.style.display = playing ? 'none' : 'block';
+    iconPause.style.display = playing ? 'block' : 'none';
+    liveDot.classList.toggle('active', playing);
+  }
+
+  playBtn.addEventListener('click', () => {
+    if (!isPlaying) {
+      const active = document.querySelector<HTMLButtonElement>('.station-btn.active');
+      if (active && (!audio.src || audio.src === window.location.href)) {
+        audio.src = active.dataset.stream ?? '';
+        audio.load();
+      }
+      audio.play().then(() => setPlaying(true)).catch(() => {});
+    } else {
+      audio.pause();
+      setPlaying(false);
+    }
+  });
+
+  stationBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      stationBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      audio.src = btn.dataset.stream ?? '';
+      audio.load();
+      nowStation.textContent = btn.dataset.name ?? '';
+      audio.play().then(() => setPlaying(true)).catch(() => {});
+    });
+  });
+
+  volumeSlider.addEventListener('input', () => {
+    audio.volume = parseFloat(volumeSlider.value);
+  });
+
+  audio.addEventListener('play', () => setPlaying(true));
+  audio.addEventListener('pause', () => setPlaying(false));
+  audio.addEventListener('error', () => setPlaying(false));
+</script>
