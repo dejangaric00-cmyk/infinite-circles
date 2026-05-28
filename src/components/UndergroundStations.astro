@@ -1,0 +1,867 @@
+---
+// src/components/UndergroundStations.astro
+// Underground Radio Stations — kuratierte Streams für elektronische Musik
+//
+// STREAM-STATUS LEGENDE:
+//  ✅ verified  = URL aus offizieller Quelle bestätigt, funktioniert im Browser
+//  ⚡ airtime   = Airtime-Pro-Muster, funktioniert meist — bei Fehler: Website öffnen
+//  ⚠  http-only = Nur HTTP (blockiert auf HTTPS-Seiten in Produktion; lokal ok)
+//
+// STREAMS AKTUALISIEREN: Öffne die Station-Website, öffne DevTools → Network → Media,
+// drücke Play → kopiere die .mp3 / .aac URL.
+
+interface Station {
+  id: string;
+  name: string;
+  city: string;
+  flag: string;
+  genre: string[];
+  url: string;
+  site: string;
+  color: string;     // Accent-Farbe der Karte (für Glow & Waveform)
+  status: 'verified' | 'airtime' | 'http-only';
+}
+
+const stations: Station[] = [
+  // ─── TIER 1 — Offiziell verifiziert ───────────────────────────────────────
+  {
+    id: 'nts1',
+    name: 'NTS Radio 1',
+    city: 'London',
+    flag: '🇬🇧',
+    genre: ['Underground', 'Eclectic'],
+    url: 'https://stream-relay-geo.ntslive.net/stream',
+    site: 'https://www.nts.live',
+    color: '#e63946',
+    status: 'verified',
+  },
+  {
+    id: 'nts2',
+    name: 'NTS Radio 2',
+    city: 'London',
+    flag: '🇬🇧',
+    genre: ['Underground', 'Global'],
+    url: 'https://stream-relay-geo.ntslive.net/stream2',
+    site: 'https://www.nts.live/2',
+    color: '#ff6b35',
+    status: 'verified',
+  },
+  {
+    id: 'ifm',
+    name: 'Intergalactic FM',
+    city: 'The Hague',
+    flag: '🇳🇱',
+    genre: ['Electro', 'Acid', 'Cosmic'],
+    url: 'http://radio.intergalactic.fm/1',
+    site: 'https://intergalactic.fm',
+    color: '#7b2fff',
+    status: 'http-only',
+  },
+  {
+    id: 'fnoob',
+    name: 'Fnoob Techno',
+    city: 'UK',
+    flag: '🇬🇧',
+    genre: ['Techno', 'Dark', 'Underground'],
+    url: 'https://streams.radiomast.io/8846a94e-9874-4692-a1a0-ec7aadbe2771',
+    site: 'https://fnoob.com',
+    color: '#333355',
+    status: 'verified',
+  },
+  {
+    id: 'technobase',
+    name: 'TechnoBase.FM',
+    city: 'Germany',
+    flag: '🇩🇪',
+    genre: ['Techno', 'Hard', 'Peak Hour'],
+    url: 'https://listen.technobase.fm/tunein-mp3',
+    site: 'https://www.technobase.fm',
+    color: '#1a73e8',
+    status: 'verified',
+  },
+  {
+    id: 'technofm',
+    name: 'Techno.FM',
+    city: 'Internet',
+    flag: '🌐',
+    genre: ['Techno', 'Classic', '192kbps'],
+    url: 'http://stream.techno.fm/radio1-192k.mp3',
+    site: 'https://techno.fm',
+    color: '#0f4c81',
+    status: 'http-only',
+  },
+  // ─── TIER 2 — Airtime Pro (meistens stabil) ───────────────────────────────
+  {
+    id: 'rinse',
+    name: 'Rinse FM',
+    city: 'London',
+    flag: '🇬🇧',
+    genre: ['House', 'Grime', 'Garage'],
+    url: 'https://rinse.out.airtime.pro/rinse_a',
+    site: 'https://rinse.fm',
+    color: '#ff0055',
+    status: 'airtime',
+  },
+  {
+    id: 'cashmere',
+    name: 'Cashmere Radio',
+    city: 'Berlin',
+    flag: '🇩🇪',
+    genre: ['Experimental', 'Community'],
+    url: 'https://cashmere.out.airtime.pro/cashmere_a',
+    site: 'https://cashmereradio.com',
+    color: '#c9a84c',
+    status: 'airtime',
+  },
+  {
+    id: 'refuge',
+    name: 'Refuge Worldwide',
+    city: 'Berlin',
+    flag: '🇩🇪',
+    genre: ['Dance', 'Techno', 'Community'],
+    url: 'https://refuge.out.airtime.pro/refuge_a',
+    site: 'https://refugeworldwide.com',
+    color: '#2ecc71',
+    status: 'airtime',
+  },
+  {
+    id: 'noods',
+    name: 'Noods Radio',
+    city: 'Bristol',
+    flag: '🇬🇧',
+    genre: ['Deep', 'Rare', 'Eclectic'],
+    url: 'https://noods.out.airtime.pro/noods_a',
+    site: 'https://noodsradio.com',
+    color: '#ff7922',
+    status: 'airtime',
+  },
+  {
+    id: 'frisky',
+    name: 'Frisky Radio',
+    city: 'Internet',
+    flag: '🌐',
+    genre: ['Deep House', 'Tech House'],
+    url: 'https://stream.friskyradio.com/frisky_mp3_hi',
+    site: 'https://www.friskyradio.com',
+    color: '#6c35de',
+    status: 'airtime',
+  },
+  {
+    id: 'dublab',
+    name: 'dublab',
+    city: 'Los Angeles',
+    flag: '🇺🇸',
+    genre: ['Experimental', 'Future Music'],
+    url: 'https://dublab.out.airtime.pro/dublab_a',
+    site: 'https://dublab.com',
+    color: '#00897b',
+    status: 'airtime',
+  },
+];
+---
+
+<section class="underground-section">
+  <!-- Section Header -->
+  <header class="underground-header">
+    <div class="header-eyebrow">
+      <span class="signal-dot"></span>
+      <span>Live Streams</span>
+    </div>
+    <h2 class="underground-title">Underground Stations</h2>
+    <p class="underground-desc">
+      Handverlesene Streams — Techno, Electro, House, Experimental. 
+      Klick, hör rein, entdeck etwas Neues.
+    </p>
+  </header>
+
+  <!-- Now Playing Bar (hidden until a station plays) -->
+  <div class="now-playing-bar" id="ugNowBar" hidden>
+    <div class="npb-left">
+      <span class="npb-dot"></span>
+      <span class="npb-label">Now Tuned:</span>
+      <strong class="npb-name" id="ugNowName">—</strong>
+    </div>
+    <button class="npb-stop" id="ugStopAll" type="button" aria-label="Stop playback">
+      ■ Stop
+    </button>
+  </div>
+
+  <!-- Station Grid -->
+  <div class="stations-grid" role="list">
+    {stations.map((s) => (
+      <article
+        class="station-card"
+        data-station-id={s.id}
+        data-url={s.url}
+        data-site={s.site}
+        data-name={s.name}
+        data-state="idle"
+        style={`--sc: ${s.color}`}
+        role="listitem"
+      >
+        <!-- Top Row: Location + Status -->
+        <div class="card-top">
+          <span class="location-badge">
+            <span class="location-flag" aria-hidden="true">{s.flag}</span>
+            <span class="location-city">{s.city}</span>
+          </span>
+          <div class="live-badge" aria-hidden="true">
+            <span class="live-dot-anim"></span>
+            <span>LIVE</span>
+          </div>
+        </div>
+
+        <!-- Station Name -->
+        <h3 class="station-name">{s.name}</h3>
+
+        <!-- Genre Pills -->
+        <div class="genre-pills" aria-label={`Genre: ${s.genre.join(', ')}`}>
+          {s.genre.map((g) => (
+            <span class="genre-pill">{g}</span>
+          ))}
+        </div>
+
+        <!-- Waveform (animated when playing) -->
+        <div class="waveform" aria-hidden="true">
+          <span></span><span></span><span></span>
+          <span></span><span></span><span></span>
+        </div>
+
+        <!-- Error Message -->
+        <p class="error-msg" aria-live="polite">
+          Stream nicht erreichbar —{' '}
+          <a href={s.site} target="_blank" rel="noopener noreferrer">
+            Website öffnen ↗
+          </a>
+        </p>
+
+        <!-- Card Footer: Play + Site Link -->
+        <div class="card-footer">
+          <button class="play-btn" type="button" aria-pressed="false">
+            <span class="btn-icon" aria-hidden="true">▶</span>
+            <span class="btn-label">Play</span>
+          </button>
+          <a
+            class="site-link"
+            href={s.site}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`${s.name} Website öffnen`}
+            aria-label={`${s.name} Website`}
+          >
+            ↗
+          </a>
+        </div>
+      </article>
+    ))}
+  </div>
+
+  <!-- Footnote -->
+  <p class="streams-note">
+    <span>ℹ</span>
+    Stream-URLs können sich ändern. Bei dauerhaften Fehlern: Station-Website öffnen und
+    via Browser-DevTools → Network → Media die aktuelle URL kopieren.
+  </p>
+</section>
+
+<style>
+  /* ─── Section Layout ────────────────────────────────────────────────────── */
+  .underground-section {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 4rem;
+  }
+
+  /* ─── Header ────────────────────────────────────────────────────────────── */
+  .underground-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .header-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono, 'DM Mono', monospace);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.75rem;
+  }
+
+  .signal-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: signal-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes signal-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  .underground-title {
+    font-family: var(--font-serif, 'Cormorant Garamond', serif);
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 600;
+    color: var(--text-deep);
+    margin: 0 0 0.75rem;
+    line-height: 1.15;
+  }
+
+  .underground-desc {
+    font-family: var(--font-mono, 'DM Mono', monospace);
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* ─── Now Playing Bar ───────────────────────────────────────────────────── */
+  .now-playing-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1.25rem;
+    margin-bottom: 1.5rem;
+    background: var(--glass-bg-strong, rgba(255,255,255,0.08));
+    border: 1px solid var(--border-mid, rgba(255,255,255,0.1));
+    border-radius: 0.625rem;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .npb-left {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-mono, 'DM Mono', monospace);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+
+  .npb-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+
+  .npb-name {
+    color: var(--text-deep);
+    font-weight: 500;
+  }
+
+  .npb-stop {
+    font-family: var(--font-mono, 'DM Mono', monospace);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    padding: 0.3rem 0.8rem;
+    border: 1px solid var(--border-mid);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .npb-stop:hover {
+    background: rgba(255, 100, 100, 0.15);
+    border-color: rgba(255, 100, 100, 0.5);
+    color: #ff7777;
+  }
+
+  /* ─── Station Grid ──────────────────────────────────────────────────────── */
+  .stations-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+
+  @media (max-width: 1100px) {
+    .stations-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 720px) {
+    .stations-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 440px) {
+    .stations-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ─── Station Card ──────────────────────────────────────────────────────── */
+  .station-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1.25rem;
+    background: var(--glass-bg, rgba(255,255,255,0.04));
+    border: 1px solid var(--border-mid, rgba(255,255,255,0.08));
+    border-radius: 1rem;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+    overflow: hidden;
+  }
+
+  /* Subtle colored stripe on left edge */
+  .station-card::before {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    width: 2px;
+    background: var(--sc, var(--accent));
+    opacity: 0.5;
+    border-radius: 0 1px 1px 0;
+    transition: opacity 0.25s ease;
+  }
+
+  .station-card:hover {
+    border-color: rgba(from var(--sc, #fff) r g b / 0.3);
+    background: var(--glass-bg-strong, rgba(255,255,255,0.07));
+    box-shadow: 0 4px 24px -8px rgba(0,0,0,0.3);
+  }
+
+  .station-card:hover::before {
+    opacity: 1;
+  }
+
+  /* Playing state */
+  .station-card[data-state="playing"] {
+    border-color: var(--sc, var(--accent));
+    background: var(--glass-bg-strong, rgba(255,255,255,0.08));
+    box-shadow:
+      0 0 0 1px var(--sc, var(--accent)),
+      0 0 24px -4px var(--sc, var(--accent)),
+      0 8px 32px -8px rgba(0,0,0,0.4);
+  }
+
+  .station-card[data-state="playing"]::before {
+    opacity: 1;
+    width: 3px;
+  }
+
+  /* Error state */
+  .station-card[data-state="error"] {
+    border-color: rgba(255, 100, 100, 0.3);
+  }
+
+  /* ─── Card Top Row ──────────────────────────────────────────────────────── */
+  .card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+  }
+
+  .location-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-family: var(--font-mono, 'DM Mono', monospace);
+    font-size: 0.68rem;
+    color: var(--text-dim);
+  }
+
+  .location-flag { font-size: 0.8rem; }
+
+  .live-badge {
+    display: none; /* hidden until playing */
+    align-items: center;
+    gap: 0.3rem;
+    font-family: var(--font-mono, 'DM Mono', monospace);
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    color: var(--sc, var(--accent));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  [data-state="playing"] .live-badge {
+    display: flex;
+    opacity: 1;
+  }
+
+  .live-dot-anim {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--sc, var(--accent));
+    animation: blink 1s step-end infinite;
+  }
+
+  /* ─── Station Name ──────────────────────────────────────────────────────── */
+  .station-name {
+    font-family: var(--font-mono, 'DM Mono', monospace);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-deep);
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  /* ─── Genre Pills ───────────────────────────────────────────────────────── */
+  .genre-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  .genre-pill {
+    font-family: var(--font-mono, 'DM Mono', monospace);
+    font-size: 0.58rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-mid, rgba(255,255,255,0.1));
+    color: var(--text-dim);
+    transition: border-color 0.25s, color 0.25s;
+  }
+
+  [data-state="playing"] .genre-pill {
+    border-color: rgba(from var(--sc, #fff) r g b / 0.4);
+    color: var(--text-deep);
+  }
+
+  /* ─── Waveform ──────────────────────────────────────────────────────────── */
+  .waveform {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 28px;
+    margin: 0.25rem 0;
+  }
+
+  .waveform span {
+    flex: 0 0 3px;
+    height: 100%;
+    background: var(--sc, var(--accent));
+    border-radius: 2px;
+    transform: scaleY(0.2);
+    transform-origin: center;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 0.3;
+  }
+
+  /* Loading — gentle pulse */
+  [data-state="loading"] .waveform span {
+    opacity: 0.6;
+    animation: wave-idle 1.6s ease-in-out infinite;
+  }
+
+  [data-state="loading"] .waveform span:nth-child(1) { animation-delay: 0s; }
+  [data-state="loading"] .waveform span:nth-child(2) { animation-delay: 0.15s; }
+  [data-state="loading"] .waveform span:nth-child(3) { animation-delay: 0.3s; }
+  [data-state="loading"] .waveform span:nth-child(4) { animation-delay: 0.45s; }
+  [data-state="loading"] .waveform span:nth-child(5) { animation-delay: 0.6s; }
+  [data-state="loading"] .waveform span:nth-child(6) { animation-delay: 0.75s; }
+
+  @keyframes wave-idle {
+    0%, 100% { transform: scaleY(0.25); }
+    50% { transform: scaleY(0.6); }
+  }
+
+  /* Playing — full animated waveform */
+  [data-state="playing"] .waveform span {
+    opacity: 1;
+    animation: wave-play 0.9s ease-in-out infinite alternate;
+  }
+
+  [data-state="playing"] .waveform span:nth-child(1) { animation-delay: 0s;    animation-duration: 0.8s; }
+  [data-state="playing"] .waveform span:nth-child(2) { animation-delay: 0.12s; animation-duration: 0.95s; }
+  [data-state="playing"] .waveform span:nth-child(3) { animation-delay: 0.24s; animation-duration: 0.7s; }
+  [data-state="playing"] .waveform span:nth-child(4) { animation-delay: 0.36s; animation-duration: 1.0s; }
+  [data-state="playing"] .waveform span:nth-child(5) { animation-delay: 0.18s; animation-duration: 0.85s; }
+  [data-state="playing"] .waveform span:nth-child(6) { animation-delay: 0.06s; animation-duration: 0.75s; }
+
+  @keyframes wave-play {
+    from { transform: scaleY(0.3); }
+    to   { transform: scaleY(1); }
+  }
+
+  /* ─── Error Message ─────────────────────────────────────────────────────── */
+  .error-msg {
+    display: none;
+    font-family: var(--font-mono, 'DM Mono', monospace);
+    font-size: 0.65rem;
+    color: #ff7777;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .error-msg a {
+    color: #ff9999;
+    text-decoration: underline;
+  }
+
+  [data-state="error"] .error-msg {
+    display: block;
+  }
+
+  /* ─── Card Footer ───────────────────────────────────────────────────────── */
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 0.5rem;
+  }
+
+  /* Play / Stop Button */
+  .play-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.9rem;
+    border: 1px solid var(--border-mid, rgba(255,255,255,0.12));
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: var(--font-mono, 'DM Mono', monospace);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .play-btn:hover {
+    background: var(--glass-bg-strong, rgba(255,255,255,0.07));
+    border-color: var(--sc, var(--accent));
+    color: var(--text-deep);
+  }
+
+  [data-state="loading"] .play-btn {
+    color: var(--text-dim);
+    border-color: var(--sc, var(--accent));
+    cursor: wait;
+  }
+
+  [data-state="playing"] .play-btn {
+    background: var(--sc, var(--accent));
+    border-color: var(--sc, var(--accent));
+    color: #ffffff;
+  }
+
+  [data-state="error"] .play-btn {
+    color: #ff7777;
+    border-color: rgba(255, 100, 100, 0.3);
+    cursor: not-allowed;
+  }
+
+  .btn-icon { font-size: 0.65rem; }
+
+  /* Site link */
+  .site-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border-mid, rgba(255,255,255,0.1));
+    border-radius: 50%;
+    color: var(--text-dim);
+    font-size: 0.7rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .site-link:hover {
+    background: var(--glass-bg-strong);
+    border-color: var(--sc, var(--accent));
+    color: var(--text-deep);
+  }
+
+  /* ─── Footnote ──────────────────────────────────────────────────────────── */
+  .streams-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-top: 1.75rem;
+    font-family: var(--font-mono, 'DM Mono', monospace);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    opacity: 0.6;
+    line-height: 1.6;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+  }
+
+  /* ─── Dark/Light mode tweaks ────────────────────────────────────────────── */
+  :global([data-theme="light"]) .station-card {
+    background: rgba(255,255,255,0.6);
+    border-color: rgba(0,0,0,0.08);
+  }
+
+  :global([data-theme="light"]) .station-card:hover {
+    background: rgba(255,255,255,0.85);
+  }
+
+  /* ─── CSS relative color fallback for older browsers ───────────────────── */
+  /* (border-color: rgba(from var(...) r g b / 0.4) not universally supported) */
+  /* Workaround: use opacity on pseudo-element instead */
+</style>
+
+<script>
+  // ─── Underground Stations Audio Controller ────────────────────────────────
+  // Nur eine Station spielt gleichzeitig. Klick auf spielende Karte → Stop.
+
+  let activeAudio: HTMLAudioElement | null = null;
+  let activeCard: HTMLElement | null = null;
+
+  const nowBar = document.getElementById('ugNowBar') as HTMLElement;
+  const nowName = document.getElementById('ugNowName') as HTMLElement;
+  const stopAllBtn = document.getElementById('ugStopAll') as HTMLButtonElement;
+
+  function setCardState(
+    card: HTMLElement,
+    state: 'idle' | 'loading' | 'playing' | 'error',
+    label?: string
+  ) {
+    card.dataset.state = state;
+    const btn = card.querySelector<HTMLButtonElement>('.play-btn');
+    const btnIcon = card.querySelector<HTMLElement>('.btn-icon');
+    const btnLabel = card.querySelector<HTMLElement>('.btn-label');
+    if (!btn || !btnIcon || !btnLabel) return;
+
+    btn.setAttribute('aria-pressed', state === 'playing' ? 'true' : 'false');
+
+    switch (state) {
+      case 'idle':
+        btnIcon.textContent = '▶';
+        btnLabel.textContent = 'Play';
+        break;
+      case 'loading':
+        btnIcon.textContent = '…';
+        btnLabel.textContent = 'Loading';
+        break;
+      case 'playing':
+        btnIcon.textContent = '■';
+        btnLabel.textContent = 'Stop';
+        break;
+      case 'error':
+        btnIcon.textContent = '✕';
+        btnLabel.textContent = 'Error';
+        break;
+    }
+  }
+
+  function stopAll() {
+    if (activeAudio) {
+      activeAudio.pause();
+      activeAudio.src = '';
+      activeAudio = null;
+    }
+    if (activeCard) {
+      setCardState(activeCard, 'idle');
+      activeCard = null;
+    }
+    if (nowBar) nowBar.hidden = true;
+  }
+
+  function playStation(card: HTMLElement) {
+    const url = card.dataset.url ?? '';
+    const name = card.dataset.name ?? '';
+
+    // If same card → toggle off
+    if (activeCard === card) {
+      stopAll();
+      return;
+    }
+
+    // Stop previous
+    stopAll();
+
+    setCardState(card, 'loading');
+    activeCard = card;
+
+    // Show now-playing bar
+    if (nowBar && nowName) {
+      nowName.textContent = name;
+      nowBar.hidden = false;
+    }
+
+    const audio = new Audio();
+    // Don't set crossOrigin — many streams block it
+    audio.volume = 0.8;
+    activeAudio = audio;
+
+    let loadingTimeout: ReturnType<typeof setTimeout>;
+
+    const cleanup = () => clearTimeout(loadingTimeout);
+
+    audio.addEventListener('canplay', () => {
+      if (activeAudio !== audio) { cleanup(); return; }
+      setCardState(card, 'playing');
+      audio.play().catch(() => {
+        if (activeAudio !== audio) return;
+        setCardState(card, 'error');
+        activeAudio = null;
+        activeCard = null;
+        if (nowBar) nowBar.hidden = true;
+        cleanup();
+      });
+    }, { once: true });
+
+    audio.addEventListener('error', () => {
+      if (activeAudio !== audio) { cleanup(); return; }
+      setCardState(card, 'error');
+      activeAudio = null;
+      activeCard = null;
+      if (nowBar) nowBar.hidden = true;
+      cleanup();
+    }, { once: true });
+
+    // Timeout: wenn nach 12s noch kein canplay → trotzdem versuchen
+    loadingTimeout = setTimeout(() => {
+      if (activeAudio === audio && card.dataset.state === 'loading') {
+        setCardState(card, 'playing');
+        audio.play().catch(() => {
+          if (activeAudio !== audio) return;
+          setCardState(card, 'error');
+          activeAudio = null;
+          activeCard = null;
+          if (nowBar) nowBar.hidden = true;
+        });
+      }
+    }, 12000);
+
+    audio.src = url;
+    audio.load();
+  }
+
+  // Attach play button listeners
+  document.querySelectorAll<HTMLElement>('.station-card').forEach((card) => {
+    const btn = card.querySelector<HTMLButtonElement>('.play-btn');
+    btn?.addEventListener('click', () => {
+      if (card.dataset.state === 'error') {
+        // Reset error → allow retry
+        setCardState(card, 'idle');
+        return;
+      }
+      playStation(card);
+    });
+  });
+
+  // Stop All button
+  stopAllBtn?.addEventListener('click', stopAll);
+
+  // Cleanup on page hide (SPA navigation)
+  document.addEventListener('astro:before-swap', stopAll);
+</script>
