@@ -9,19 +9,19 @@
   </div>
 
   <div class="station-grid">
-    <button class="station-btn active" data-stream="https://ice1.somafm.com/dronezone-128-mp3" data-name="drone zone">
+    <button class="station-btn active" data-stream="https://ice4.somafm.com/dronezone-128-mp3" data-name="drone zone">
       <span class="station-name">Drone Zone</span>
       <span class="station-genre">ambient · dub · space</span>
     </button>
-    <button class="station-btn" data-stream="https://ice1.somafm.com/deepspaceone-128-mp3" data-name="deep space one">
+    <button class="station-btn" data-stream="https://ice4.somafm.com/deepspaceone-128-mp3" data-name="deep space one">
       <span class="station-name">Deep Space One</span>
       <span class="station-genre">deep ambient · experimental</span>
     </button>
-    <button class="station-btn" data-stream="https://ice1.somafm.com/groovesalad-128-mp3" data-name="groove salad">
+    <button class="station-btn" data-stream="https://ice4.somafm.com/groovesalad-128-mp3" data-name="groove salad">
       <span class="station-name">Groove Salad</span>
       <span class="station-genre">ambient groove · downtempo</span>
     </button>
-    <button class="station-btn" data-stream="https://ice1.somafm.com/thetrip-128-mp3" data-name="the trip">
+    <button class="station-btn" data-stream="https://ice4.somafm.com/thetrip-128-mp3" data-name="the trip">
       <span class="station-name">The Trip</span>
       <span class="station-genre">psychedelic · progressive</span>
     </button>
@@ -53,7 +53,7 @@
     </div>
   </div>
 
-  <audio id="soma-audio" preload="none"></audio>
+  <audio id="soma-audio" preload="none" crossorigin="anonymous"></audio>
 </div>
 
 <style>
@@ -531,10 +531,10 @@ input[type="range"]::-moz-range-thumb {
   // ── SomaFM Now Playing API ────────────────────────────────────────────────
   // https://somafm.com/channels.json → channels[].lastPlaying
   const SOMA_CHANNEL_MAP: Record<string, string> = {
-    'https://ice1.somafm.com/dronezone-128-mp3':   'dronezone',
-    'https://ice1.somafm.com/deepspaceone-128-mp3': 'deepspaceone',
-    'https://ice1.somafm.com/groovesalad-128-mp3':  'groovesalad',
-    'https://ice1.somafm.com/thetrip-128-mp3':      'thetrip',
+    'https://ice4.somafm.com/dronezone-128-mp3':   'dronezone',
+    'https://ice4.somafm.com/deepspaceone-128-mp3': 'deepspaceone',
+    'https://ice4.somafm.com/groovesalad-128-mp3':  'groovesalad',
+    'https://ice4.somafm.com/thetrip-128-mp3':      'thetrip',
   };
 
   const npTrack  = document.getElementById('soma-np-track')  as HTMLElement;
