@@ -5,249 +5,122 @@ import ArchiveRadio from '../components/ArchiveRadio.astro';
 import UndergroundStations from '../components/UndergroundStations.astro';
 ---
 
-<BaseLayout title="Infinite Circles — Dejan">
+<BaseLayout title="Grooves & Rhythms — Infinite Circles">
 
-  <!-- Infinite Circles Hintergrund-Canvas (bleibt erhalten) -->
-  <canvas id="circle-canvas"></canvas>
+  <!-- Infinite Circles Ringe — subtiler Hintergrund -->
+  <canvas id="circle-canvas" aria-hidden="true"></canvas>
 
-  <!-- ═══════════════════════════════════════════════════════════════════════
-       HERO — Noten-Ovale Canvas + Titel
-       ══════════════════════════════════════════════════════════════════════ -->
-  <section class="music-hero" aria-label="Grooves & Rhythms Header">
-    <canvas id="musicCanvas" class="hero-canvas" aria-hidden="true"></canvas>
-    <div class="hero-content">
+  <!-- ══ HERO ══════════════════════════════════════════════════════════════ -->
+  <section class="music-hero">
+    <div class="hero-inner">
       <p class="hero-eyebrow">
         <span class="eyebrow-dot"></span>
-        infinite-circles.de
+        infinite&#8209;circles.de&nbsp;/&nbsp;music
       </p>
-      <h1 class="hero-title" aria-label="Grooves & Rhythms.">
-        <span class="tl" style="animation-delay:0s,0s">G</span><span class="tl" style="animation-delay:0s,.05s">r</span><span class="tl" style="animation-delay:0s,.10s">o</span><span class="tl" style="animation-delay:0s,.15s">o</span><span class="tl" style="animation-delay:0s,.20s">v</span><span class="tl" style="animation-delay:0s,.25s">e</span><span class="tl" style="animation-delay:0s,.30s">s</span><span class="tl" style="animation-delay:0s,.35s">&nbsp;</span><span class="tl" style="animation-delay:0s,.40s">&amp;</span><span class="tl" style="animation-delay:0s,.45s">&nbsp;</span><span class="tl" style="animation-delay:0s,.50s">R</span><span class="tl" style="animation-delay:0s,.55s">h</span><span class="tl" style="animation-delay:0s,.60s">y</span><span class="tl" style="animation-delay:0s,.65s">t</span><span class="tl" style="animation-delay:0s,.70s">h</span><span class="tl" style="animation-delay:0s,.75s">m</span><span class="tl" style="animation-delay:0s,.80s">s</span><span class="tl" style="animation-delay:0s,.85s">.</span>
+      <h1 class="hero-title">
+        Grooves &amp;&nbsp;<em>Rhythms.</em>
       </h1>
-      <p class="hero-sub">
-        Klang als Kompass — SomaFM, Archive.org und Live-Streams aus dem Underground.
-      </p>
+      <p class="hero-sub">House. Tech House. Minimal. Dub Techno.</p>
     </div>
-    <div class="hero-fade" aria-hidden="true"></div>
   </section>
 
-  <!-- ═══════════════════════════════════════════════════════════════════════
-       PLAYERS
-       ══════════════════════════════════════════════════════════════════════ -->
-  <div class="players-wrapper">
-    <div class="section-divider" aria-hidden="true">
-      <span class="divider-line"></span>
-      <span class="divider-label">SomaFM</span>
-      <span class="divider-line"></span>
-    </div>
+  <!-- ══ PLAYERS ═══════════════════════════════════════════════════════════ -->
+  <div class="content-wrap">
 
-    <div class="player-section">
-      <SomaPlayer />
-    </div>
+    <div class="section-label">Live Radio</div>
+    <div class="card-label">soma fm</div>
+    <SomaPlayer />
 
-    <div class="section-divider" aria-hidden="true">
-      <span class="divider-line"></span>
-      <span class="divider-label">Archive.org · Random</span>
-      <span class="divider-line"></span>
-    </div>
+    <div class="section-label" style="margin-top: 2rem;">Archive.org · Top Public</div>
+    <ArchiveRadio />
 
-    <div class="player-section">
-      <ArchiveRadio />
-    </div>
-
-    <div class="section-divider" aria-hidden="true">
-      <span class="divider-line"></span>
-      <span class="divider-label">Live Stations</span>
-      <span class="divider-line"></span>
-    </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════════════════
-       UNDERGROUND STATIONS
-       ══════════════════════════════════════════════════════════════════════ -->
+  <!-- UndergroundStations bringt ihr eigenes "Entdecken"-Label mit -->
   <UndergroundStations />
 
 </BaseLayout>
 
-<!-- ─────────────────────────────────────────────────────────────────────────
-     NOTEN-OVALE CANVAS ANIMATION
-     ───────────────────────────────────────────────────────────────────────── -->
+<!-- ── Ringe Canvas ────────────────────────────────────────────────────────── -->
 <script>
-  // ── Noten-Ovale Canvas ────────────────────────────────────────────────────
-  const musicCanvas = document.getElementById('musicCanvas') as HTMLCanvasElement;
-  if (musicCanvas) {
-    const ctx = musicCanvas.getContext('2d')!;
-
-    function resize() {
-      const rect = musicCanvas.parentElement!.getBoundingClientRect();
-      musicCanvas.width = rect.width;
-      musicCanvas.height = Math.max(340, Math.min(480, window.innerHeight * 0.5));
-    }
+  const bgCanvas = document.getElementById('circle-canvas') as HTMLCanvasElement;
+  if (bgCanvas) {
+    const ctx = bgCanvas.getContext('2d')!;
+    let W = 0, H = 0;
+    const resize = () => { W = bgCanvas.width = window.innerWidth; H = bgCanvas.height = window.innerHeight; };
     resize();
     window.addEventListener('resize', resize, { passive: true });
 
-    const NOTES = ['♩', '♪', '♫', '♬', '♭', '♮'];
-
-    interface Blob { x:number; y:number; r:number; dx:number; dy:number; hue:number; opacity:number; rx:number; ry:number; angle:number; }
-    interface Oval { x:number; y:number; w:number; h:number; dx:number; dy:number; angle:number; dAngle:number; note:string; fontSize:number; opacity:number; }
-
-    const makeBlob = (): Blob => ({
-      x: Math.random() * musicCanvas.width, y: Math.random() * musicCanvas.height,
-      r: 100 + Math.random() * 140, dx: (Math.random() - 0.5) * 0.25, dy: (Math.random() - 0.5) * 0.25,
-      hue: 200 + Math.random() * 60,  // Blue range: 200–260 (cyan → blue → violet)
-      opacity: 0.05 + Math.random() * 0.06,
-      rx: 1.2 + Math.random() * 0.6, ry: 0.7 + Math.random() * 0.5, angle: Math.random() * Math.PI * 2,
-    });
-
-    // ── Starfield ────────────────────────────────────────────────────────────
-    interface Star { x:number; y:number; z:number; px:number; py:number; speed:number; r:number; g:number; b:number; }
-    const NUM_STARS = 280;
-    function makeStar(): Star {
-      const x = (Math.random() - 0.5) * musicCanvas.width;
-      const y = (Math.random() - 0.5) * musicCanvas.height;
-      const z = Math.random() * musicCanvas.width;
-      // Mostly white/blue-white, occasional cyan or violet tint
-      const tint = Math.random();
-      const r2 = tint < 0.6 ? 200 + Math.floor(Math.random()*55) : tint < 0.8 ? 150 : 200;
-      const g2 = tint < 0.6 ? 210 + Math.floor(Math.random()*45) : tint < 0.8 ? 220 : 180;
-      const b2 = 220 + Math.floor(Math.random()*35);
-      return { x, y, z, px: x, py: y, speed: 0.8 + Math.random() * 2.2, r: r2, g: g2, b: b2 };
-    }
-    const stars: Star[] = Array.from({ length: NUM_STARS }, makeStar);
-
-    // Initial black fill (stars need motion blur via low-alpha fill in drawFrame)
-    ctx.fillStyle = '#040614';
-    ctx.fillRect(0, 0, musicCanvas.width, musicCanvas.height);
-
-    const makeOval = (): Oval => ({
-      x: Math.random() * musicCanvas.width, y: Math.random() * musicCanvas.height,
-      w: 32 + Math.random() * 28, h: 18 + Math.random() * 14,
-      dx: (Math.random() - 0.5) * 0.35, dy: (Math.random() - 0.5) * 0.35,
-      angle: (Math.random() - 0.5) * 0.4, dAngle: (Math.random() - 0.5) * 0.0015,
-      note: NOTES[Math.floor(Math.random() * NOTES.length)],
-      fontSize: 9 + Math.random() * 5, opacity: 0.07 + Math.random() * 0.10,
-    });
-
-    const blobs: Blob[] = Array.from({ length: 6 }, makeBlob);
-    const ovals: Oval[] = Array.from({ length: 18 }, makeOval);
-
-    function drawFrame() {
-      // Deep space background — near-black with slight blue tint
-      ctx.fillStyle = 'rgba(4, 6, 20, 0.18)';
-      ctx.fillRect(0, 0, musicCanvas.width, musicCanvas.height);
-
-      // Stars — update and draw
-      stars.forEach(s => {
-        s.z -= s.speed;
-        if (s.z <= 0) {
-          s.x = (Math.random() - 0.5) * musicCanvas.width;
-          s.y = (Math.random() - 0.5) * musicCanvas.height;
-          s.z = musicCanvas.width;
-          s.px = s.x; s.py = s.y;
-        }
-        const cx2 = musicCanvas.width / 2, cy2 = musicCanvas.height / 2;
-        const sx = (s.x / s.z) * musicCanvas.width + cx2;
-        const sy = (s.y / s.z) * musicCanvas.height * 0.5 + cy2;
-        const px2 = (s.px / (s.z + s.speed)) * musicCanvas.width + cx2;
-        const py2 = (s.py / (s.z + s.speed)) * musicCanvas.height * 0.5 + cy2;
-        const size = Math.max(0.3, (1 - s.z / musicCanvas.width) * 2.5);
-        const brightness = Math.min(1, (1 - s.z / musicCanvas.width) * 1.4);
-        // Trail
-        ctx.beginPath();
-        ctx.moveTo(px2, py2);
-        ctx.lineTo(sx, sy);
-        ctx.strokeStyle = `rgba(${s.r},${s.g},${s.b},${brightness * 0.7})`;
-        ctx.lineWidth = size * 0.7;
-        ctx.stroke();
-        // Star dot
-        ctx.beginPath();
-        ctx.arc(sx, sy, size * 0.6, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${s.r},${s.g},${s.b},${brightness})`;
-        ctx.fill();
-      });
-
-      // Plasma blobs on top
-      blobs.forEach(b => {
-        b.x += b.dx; b.y += b.dy; b.angle += 0.003;
-        if (b.x < -b.r*2 || b.x > musicCanvas.width+b.r*2) b.dx *= -1;
-        if (b.y < -b.r*2 || b.y > musicCanvas.height+b.r*2) b.dy *= -1;
-        const grd = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
-        grd.addColorStop(0,   `hsla(${b.hue},85%,65%,${b.opacity})`);
-        grd.addColorStop(0.5, `hsla(${b.hue+20},75%,50%,${b.opacity*0.4})`);
-        grd.addColorStop(1, 'transparent');
-        ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.angle); ctx.scale(b.rx, b.ry); ctx.translate(-b.x, -b.y);
-        ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill(); ctx.restore();
-      });
-
-      // Note ovals
-      ovals.forEach(o => {
-        o.x += o.dx; o.y += o.dy; o.angle += o.dAngle;
-        if (o.x < -60) o.x = musicCanvas.width + 40;
-        if (o.x > musicCanvas.width + 60) o.x = -40;
-        if (o.y < -40) o.y = musicCanvas.height + 30;
-        if (o.y > musicCanvas.height + 40) o.y = -30;
-        ctx.save(); ctx.translate(o.x, o.y); ctx.rotate(o.angle);
-        ctx.beginPath(); ctx.ellipse(0, 0, o.w, o.h, 0, 0, Math.PI*2);
-        ctx.strokeStyle = `rgba(120,180,255,${o.opacity})`; ctx.lineWidth = 0.8; ctx.stroke();
-        const ig = ctx.createRadialGradient(0,0,0,0,0,o.w);
-        ig.addColorStop(0, `rgba(80,150,255,${o.opacity*0.25})`); ig.addColorStop(1,'transparent');
-        ctx.fillStyle = ig; ctx.fill();
-        ctx.fillStyle = `rgba(180,220,255,${o.opacity*1.8})`;
-        ctx.font = `${o.fontSize}px Georgia,serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.fillText(o.note, 0, 0); ctx.restore();
-      });
-
-      requestAnimationFrame(drawFrame);
-    }
-    drawFrame();
-  }
-
-  // ── Infinite Circles Hintergrund-Canvas ───────────────────────────────────
-  const bgCanvas = document.getElementById('circle-canvas') as HTMLCanvasElement;
-  if (bgCanvas) {
-    const ctx2 = bgCanvas.getContext('2d')!;
-    let W = 0, H = 0;
-    const resize2 = () => { W = bgCanvas.width = window.innerWidth; H = bgCanvas.height = window.innerHeight; };
-    resize2();
-    window.addEventListener('resize', resize2);
     const isDark = () => document.documentElement.classList.contains('dark');
+
     const rings = [
-      { rf:0.10, speed:0.0018, offset:0.00 }, { rf:0.18, speed:0.0014, offset:0.90 },
-      { rf:0.27, speed:0.0011, offset:1.80 }, { rf:0.37, speed:0.0009, offset:2.70 },
-      { rf:0.47, speed:0.0007, offset:3.60 }, { rf:0.58, speed:0.0005, offset:4.50 },
-      { rf:0.70, speed:0.0004, offset:5.40 },
+      { rf: 0.10, speed: 0.0018, offset: 0.00 },
+      { rf: 0.18, speed: 0.0014, offset: 0.90 },
+      { rf: 0.27, speed: 0.0011, offset: 1.80 },
+      { rf: 0.37, speed: 0.0009, offset: 2.70 },
+      { rf: 0.47, speed: 0.0007, offset: 3.60 },
+      { rf: 0.58, speed: 0.0005, offset: 4.50 },
+      { rf: 0.70, speed: 0.0004, offset: 5.40 },
     ];
+
     let t = 0;
-    const drawBg = () => {
-      ctx2.clearRect(0, 0, W, H);
-      const dark = isDark();
-      const cx = W > 768 ? W * 0.72 : W * 0.5;
-      const cy = H * 0.42;
-      const base = Math.min(W, H);
-      const alpha = dark ? 0.12 : 0.18;
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+      const dark  = isDark();
+      const cx    = W > 768 ? W * 0.72 : W * 0.5;
+      const cy    = H * 0.32;
+      const base  = Math.min(W, H);
+      // Light: subtle weiß, Dark: zartes Blau-Weiß, etwas heller
+      const ringAlpha = dark ? 0.13 : 0.14;
+      const dotColor  = dark ? '180,215,255' : '255,255,255';
+      const trailColor= dark ? '160,200,255' : '255,255,255';
+      const trailAlpha= dark ? 0.20 : 0.20;
+
       for (const ring of rings) {
         const r = base * ring.rf;
-        ctx2.beginPath(); ctx2.arc(cx, cy, r, 0, Math.PI*2);
-        ctx2.strokeStyle = `rgba(255,255,255,${alpha})`; ctx2.lineWidth = 0.8; ctx2.stroke();
+
+        // Ring
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.strokeStyle = dark
+          ? `rgba(140,190,255,${ringAlpha})`
+          : `rgba(255,255,255,${ringAlpha})`;
+        ctx.lineWidth = 0.7;
+        ctx.stroke();
+
+        // Glowing dot
         const angle = t * ring.speed + ring.offset;
-        const dotX = cx + Math.cos(angle) * r;
-        const dotY = cy + Math.sin(angle) * r;
-        const dotSize = r * 0.08;
-        const glow = ctx2.createRadialGradient(dotX, dotY, 0, dotX, dotY, dotSize);
-        glow.addColorStop(0, dark ? 'rgba(220,240,255,0.90)' : 'rgba(255,255,255,0.95)');
-        glow.addColorStop(0.3, dark ? 'rgba(180,220,255,0.45)' : 'rgba(220,235,255,0.40)');
-        glow.addColorStop(1, 'rgba(180,220,255,0)');
-        ctx2.fillStyle = glow; ctx2.beginPath(); ctx2.arc(dotX, dotY, dotSize, 0, Math.PI*2); ctx2.fill();
-        const trailLen = Math.PI * 0.35;
+        const dx = cx + Math.cos(angle) * r;
+        const dy = cy + Math.sin(angle) * r;
+        const dotR = r * 0.07;
+        const glow = ctx.createRadialGradient(dx, dy, 0, dx, dy, dotR);
+        glow.addColorStop(0,   `rgba(${dotColor},${dark ? 0.95 : 0.92})`);
+        glow.addColorStop(0.3, `rgba(${dotColor},${dark ? 0.45 : 0.35})`);
+        glow.addColorStop(1,   'rgba(180,220,255,0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(dx, dy, dotR, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Trail
+        const trailLen   = Math.PI * 0.32;
         const trailStart = angle - trailLen;
-        const trail = ctx2.createLinearGradient(cx+Math.cos(trailStart)*r, cy+Math.sin(trailStart)*r, dotX, dotY);
-        const tc = dark ? '200,225,255' : '255,255,255';
-        trail.addColorStop(0, `rgba(${tc},0)`); trail.addColorStop(1, `rgba(${tc},${dark?0.18:0.22})`);
-        ctx2.beginPath(); ctx2.arc(cx, cy, r, trailStart, angle);
-        ctx2.strokeStyle = trail; ctx2.lineWidth = dark ? 1.2 : 1.4; ctx2.stroke();
+        const trail = ctx.createLinearGradient(
+          cx + Math.cos(trailStart) * r, cy + Math.sin(trailStart) * r, dx, dy
+        );
+        trail.addColorStop(0, `rgba(${trailColor},0)`);
+        trail.addColorStop(1, `rgba(${trailColor},${trailAlpha})`);
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, trailStart, angle);
+        ctx.strokeStyle = trail;
+        ctx.lineWidth = dark ? 1.2 : 1.3;
+        ctx.stroke();
       }
-      t++; requestAnimationFrame(drawBg);
+
+      t++;
+      requestAnimationFrame(draw);
     };
-    drawBg();
+    draw();
   }
 </script>
 
@@ -258,136 +131,80 @@ import UndergroundStations from '../components/UndergroundStations.astro';
     width: 100%; height: 100%;
     z-index: -1;
     pointer-events: none;
+    opacity: 0.7;
   }
 
-  /* ─── Music Hero ──────────────────────────────────────────────────────── */
+  /* ── Hero ── */
   .music-hero {
-    position: relative;
     width: 100%;
-    overflow: hidden;
+    padding: 4rem 0 2.5rem;
   }
-  .hero-canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-    min-height: 340px;
-    max-height: 480px;
-  }
-  .hero-content {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 2rem;
-    pointer-events: none;
-  }
-  .hero-eyebrow {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: rgba(140, 200, 255, 0.8);
-    margin-bottom: 1rem;
-  }
-  .eyebrow-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: rgba(100, 180, 255, 1);
-    box-shadow: 0 0 8px rgba(80, 160, 255, 0.9), 0 0 20px rgba(60, 140, 255, 0.4);
-    animation: eyebrow-blink 3s ease-in-out infinite;
-  }
-  @keyframes eyebrow-blink {
-    0%,100% { opacity:1; box-shadow: 0 0 8px rgba(80,160,255,0.9), 0 0 20px rgba(60,140,255,0.4); }
-    50%     { opacity:0.4; box-shadow: 0 0 4px rgba(80,160,255,0.4); }
-  }
-  .hero-title {
-    font-family: var(--font-serif);
-    font-size: clamp(2.8rem, 8vw, 5.5rem);
-    font-weight: 300;
-    font-style: italic;
-    line-height: 1.05;
-    margin: 0 0 1rem;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  .hero-title .tl {
-    display: inline-block;
-    background: linear-gradient(110deg, #4a90e2 0%, #7ab8f0 28%, #e0f0ff 50%, #7ab8f0 72%, #4a90e2 100%);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: tl-shimmer 3s linear infinite, tl-wave 2.5s ease-in-out infinite;
-  }
-  @keyframes tl-shimmer { to { background-position: 200% center; } }
-  @keyframes tl-wave {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-6px); }
-  }
-  .hero-sub {
-    font-family: var(--font-mono);
-    font-size: clamp(0.7rem, 2vw, 0.85rem);
-    color: rgba(160, 210, 255, 0.65);
-    max-width: 420px;
-    line-height: 1.6;
-    margin: 0;
-  }
-  .hero-fade {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 80px;
-    background: linear-gradient(to bottom, transparent, var(--sky-top, #060c1a));
-    pointer-events: none;
-  }
-
-  /* ─── Players Wrapper ─────────────────────────────────────────────────── */
-  .players-wrapper {
+  .hero-inner {
     max-width: 900px;
     margin: 0 auto;
     padding: 0 1.5rem;
   }
-  .player-section { margin-bottom: 0.5rem; }
-
-  /* ─── Section Dividers ────────────────────────────────────────────────── */
-  .section-divider {
+  .hero-eyebrow {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    margin: 2.5rem 0;
-  }
-  .divider-line {
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(to right, transparent, var(--border-mid) 30%, var(--border-mid) 70%, transparent);
-  }
-  .divider-label {
+    gap: 0.45rem;
     font-family: var(--font-mono);
-    font-size: 0.62rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 1rem;
+  }
+  .eyebrow-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent); flex-shrink: 0;
+  }
+  .hero-title {
+    font-family: var(--font-serif);
+    font-size: clamp(3rem, 7vw, 5rem);
+    font-weight: 300;
+    line-height: 1.05;
+    color: var(--text-deep);
+    margin: 0 0 0.75rem;
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .hero-sub {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin: 0;
+  }
+
+  /* ── Content ── */
+  .content-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1.5rem 2rem;
+  }
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--text-dim);
-    white-space: nowrap;
     opacity: 0.6;
+    text-align: center;
+    margin-bottom: 0.9rem;
+  }
+  .card-label {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.35rem;
   }
 
-  /* ─── Light mode ──────────────────────────────────────────────────────── */
-  :global(html:not(.dark)) .hero-title .tl {
-    background: linear-gradient(110deg, #0d4aa8 0%, #1a6fdd 28%, #3a9fff 50%, #1a6fdd 72%, #0d4aa8 100%);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  :global(html:not(.dark)) .hero-sub     { color: rgba(10, 50, 120, 0.65); }
-  :global(html:not(.dark)) .hero-eyebrow { color: rgba(20, 80, 180, 0.75); }
-  :global(html:not(.dark)) .hero-fade {
-    background: linear-gradient(to bottom, transparent, var(--sky-top, #4a90d9));
+  @media (max-width: 600px) {
+    .music-hero { padding: 2.5rem 0 1.5rem; }
   }
 </style>
