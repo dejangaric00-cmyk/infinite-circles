@@ -53,7 +53,7 @@
     </div>
   </div>
 
-  <audio id="soma-audio" preload="none" crossorigin="anonymous"></audio>
+  <audio id="soma-audio" preload="none"></audio>
 </div>
 
 <style>
@@ -413,28 +413,9 @@ input[type="range"]::-moz-range-thumb {
       .getPropertyValue('--accent').trim() || '#1a6bb5';
   }
 
-  // ─ Real AudioContext path ───────────────────────────────────────────
-  let analyser: AnalyserNode | null = null;
-  let freqData: Uint8Array | null   = null;
-  let audioCtx: AudioContext | null = null;
-  let usingRealData = false;
-
-  function tryConnectAnalyser() {
-    if (audioCtx) return; // bereits verbunden — nie ein zweites Mal aufrufen!
-    try {
-      audioCtx  = new AudioContext();
-      const src = audioCtx.createMediaElementSource(audio);
-      analyser  = audioCtx.createAnalyser();
-      analyser.fftSize = BAR_COUNT * 4;
-      analyser.smoothingTimeConstant = 0.82;
-      src.connect(analyser);
-      analyser.connect(audioCtx.destination);
-      freqData = new Uint8Array(analyser.frequencyBinCount);
-      usingRealData = true;
-    } catch {
-      usingRealData = false;
-    }
-  }
+  // Kein AudioContext — Visualizer läuft immer mit Fake-Animation
+  // (SomaFM sendet keine CORS-Header, createMediaElementSource würde den Ton killen)
+  const usingRealData = false;
 
   // ─ Organic fake fallback ───────────────────────────────────────
   // Layered sine waves → feels like real music, not random noise
@@ -484,12 +465,7 @@ input[type="range"]::-moz-range-thumb {
     for (let i = 0; i < BAR_COUNT; i++) {
       let target: number;
 
-      if (playing && usingRealData && analyser && freqData) {
-        analyser.getByteFrequencyData(freqData);
-        // Map bars to frequency bins (log-ish scale, focus on bass/mid)
-        const binIdx = Math.floor(Math.pow(i / BAR_COUNT, 0.7) * freqData.length * 0.75);
-        target = freqData[binIdx] / 255;
-      } else if (playing) {
+      if (playing) {
         target = getFakeBar(i);
       } else {
         target = 0.04; // idle — tiny base line
@@ -518,15 +494,7 @@ input[type="range"]::-moz-range-thumb {
 
   drawViz();
 
-  // Try real analyser when playback starts
-  let analyserConnected = false;
-  audio.addEventListener('play', () => {
-    if (!analyserConnected) {
-      tryConnectAnalyser();
-      analyserConnected = true;
-    }
-    if (audioCtx?.state === 'suspended') audioCtx.resume();
-  });
+  // Kein AudioContext nötig — Fake-Visualizer läuft eigenständig
 
   // ── SomaFM Now Playing API ────────────────────────────────────────────────
   // https://somafm.com/channels.json → channels[].lastPlaying
