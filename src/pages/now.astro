@@ -72,29 +72,6 @@ const NOW_UPDATED = '2026-04-01';
     </div>
   </section>
 
-  <section class="now-section">
-    <div class="zone-label">Site Puls</div>
-    <div class="umami-grid">
-      <div class="umami-card">
-        <div class="umami-val" id="val-views">—</div>
-        <div class="umami-key">Pageviews · 7 Tage</div>
-      </div>
-      <div class="umami-card">
-        <div class="umami-val" id="val-visitors">—</div>
-        <div class="umami-key">Besucher · 7 Tage</div>
-      </div>
-      <div class="umami-card">
-        <div class="umami-val" id="val-sotd">—</div>
-        <div class="umami-key">SOTD-Aufrufe · 7 Tage</div>
-      </div>
-      <div class="umami-card">
-        <div class="umami-val umami-val-sm" id="val-top">—</div>
-        <div class="umami-key">Beliebteste Seite</div>
-      </div>
-    </div>
-    <div class="umami-status" id="umami-status">Lade Daten…</div>
-  </section>
-
   <p class="now-footer">
     Dies ist eine <a href="https://nownownow.com/about" target="_blank" rel="noopener">/now Seite</a>.
     Manuell aktualisiert wenn sich etwas ändert.
@@ -309,51 +286,6 @@ html.dark .now-title {
   line-height: 1.5;
 }
 .now-item-text em { font-style: italic; color: var(--accent); }
-.umami-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border: 0.5px solid var(--border-mid);
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 0.75rem;
-}
-.umami-card {
-  padding: 1.1rem 1.25rem;
-  background: var(--glass-bg);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  border-right: 0.5px solid var(--border-mid);
-  border-bottom: 0.5px solid var(--border-mid);
-}
-.umami-card:nth-child(even) { border-right: none; }
-.umami-card:nth-last-child(1),
-.umami-card:nth-last-child(2) { border-bottom: none; }
-.umami-val {
-  font-family: var(--font-serif);
-  font-size: 2rem;
-  font-weight: 300;
-  color: var(--text-deep);
-  line-height: 1;
-}
-.umami-val-sm {
-  font-size: 1rem;
-  line-height: 1.3;
-}
-.umami-key {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-.umami-status {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--text-dim);
-  opacity: 0.5;
-  text-align: center;
-}
 .now-footer {
   font-family: var(--font-mono);
   font-size: 9px;
@@ -372,9 +304,6 @@ html.dark .now-title {
 }
 @media (max-width: 600px) {
   .now-wrap { padding: 2.5rem 1.5rem 4rem; }
-  .umami-grid { grid-template-columns: 1fr; }
-  .umami-card { border-right: none !important; }
-  .umami-card:nth-last-child(2) { border-bottom: 0.5px solid var(--border-mid) !important; }
   .recent-item { grid-template-columns: 10px 1fr auto; }
   .recent-date { display: none; }
 }
@@ -390,44 +319,5 @@ if (el) {
   el.textContent = `Zuletzt aktualisiert ${rel} · Hannover`;
 }
 
-async function loadUmami() {
-  const status = document.getElementById('umami-status');
-  try {
-    const now = Date.now();
-    const weekAgo = now - 7*24*60*60*1000;
-    const id = '65f41a88-359f-4090-ac4e-82be88099cbd';
-    // NOTE: API key should ideally be proxied via an Astro endpoint.
-    // For now kept client-side; replace with a /api/stats endpoint when possible.
-    const key = 'api_zmZNQXF9MVaQKCIvaPTCobtlYfEwjH6S';
 
-    const [statsRes, pagesRes] = await Promise.all([
-      fetch(`https://api.umami.is/v1/websites/${id}/stats?startAt=${weekAgo}&endAt=${now}`, { headers: { 'x-umami-api-key': key } }),
-      fetch(`https://api.umami.is/v1/websites/${id}/metrics?startAt=${weekAgo}&endAt=${now}&type=url&limit=10`, { headers: { 'x-umami-api-key': key } }),
-    ]);
-
-    if (statsRes.ok) {
-      const stats = await statsRes.json();
-      const vv = document.getElementById('val-views');
-      const vvs = document.getElementById('val-visitors');
-      if (vv)  vv.textContent  = (stats.pageviews?.value  ?? 0).toLocaleString('de-DE');
-      if (vvs) vvs.textContent = (stats.visitors?.value   ?? 0).toLocaleString('de-DE');
-    }
-
-    if (pagesRes.ok) {
-      const pages = await pagesRes.json();
-      const sotd = pages.filter((p) => p.x?.startsWith('/sotd/') && p.x !== '/sotd');
-      const vs = document.getElementById('val-sotd');
-      if (vs) vs.textContent = sotd.reduce((s, p) => s + (p.y ?? 0), 0).toLocaleString('de-DE');
-      const top = pages[0];
-      const vt = document.getElementById('val-top');
-      if (vt && top) vt.textContent = top.x ?? '—';
-    }
-
-    if (status) status.textContent = 'Umami Analytics · letzte 7 Tage';
-  } catch {
-    if (status) status.textContent = 'Statistiken konnten nicht geladen werden.';
-  }
-}
-
-loadUmami();
 </script>
