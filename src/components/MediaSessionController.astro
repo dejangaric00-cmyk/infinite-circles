@@ -1,0 +1,120 @@
+---
+// src/components/MediaSessionController.astro
+// Wires up the browser MediaSession API so that:
+//   - OS media keys (⏯ ⏭) control the active player
+//   - Lockscreen / notification shade shows track info + cover
+//   - Browser tab shows ▶ indicator while playing
+// No service worker needed — MediaSession works in the foreground tab.
+---
+
+<script>
+  // Guard: only run if browser supports MediaSession
+  if (!('mediaSession' in navigator)) {
+    // nothing to do
+  } else {
+    const ms = navigator.mediaSession;
+
+    // ── Helpers to reach player controls ─────────────────────────────────────
+    function somaPlayPause() {
+      (document.getElementById('play-btn') as HTMLButtonElement | null)?.click();
+    }
+    function archivePlayPause() {
+      (document.getElementById('rp-play-btn') as HTMLButtonElement | null)?.click();
+    }
+    function archiveSkip() {
+      (document.getElementById('rp-skip-btn') as HTMLButtonElement | null)?.click();
+    }
+
+    let currentPlayer: 'soma' | 'archive' = 'soma';
+
+    function handlePlayPause() {
+      currentPlayer === 'archive' ? archivePlayPause() : somaPlayPause();
+    }
+
+    // ── Register action handlers ──────────────────────────────────────────────
+    ms.setActionHandler('play',         () => handlePlayPause());
+    ms.setActionHandler('pause',        () => handlePlayPause());
+    ms.setActionHandler('stop',         () => handlePlayPause());
+    ms.setActionHandler('nexttrack',    () => archiveSkip());
+
+    // previoustrack: restart soma or go back — just toggle for now
+    try { ms.setActionHandler('previoustrack', () => somaPlayPause()); } catch {}
+
+    // seekto / seekforward / seekbackward for Archive (has duration)
+    try {
+      ms.setActionHandler('seekforward', (d) => {
+        const a = (window as any).__icArchiveAudio as HTMLAudioElement | null;
+        if (a && isFinite(a.duration)) a.currentTime = Math.min(a.duration, a.currentTime + (d.seekOffset ?? 10));
+      });
+      ms.setActionHandler('seekbackward', (d) => {
+        const a = (window as any).__icArchiveAudio as HTMLAudioElement | null;
+        if (a && isFinite(a.duration)) a.currentTime = Math.max(0, a.currentTime - (d.seekOffset ?? 10));
+      });
+    } catch {}
+
+    // ── Listen to ic:playstate to update metadata ─────────────────────────────
+    window.addEventListener('ic:playstate', (e: Event) => {
+      const { player, playing, title, artist } = (e as CustomEvent).detail as {
+        player: 'soma' | 'archive';
+        playing: boolean;
+        title: string;
+        artist: string;
+      };
+
+      currentPlayer = player;
+      ms.playbackState = playing ? 'playing' : 'paused';
+
+      if (!playing) return; // don't overwrite metadata when pausing
+
+      // Build artwork array
+      const artwork: MediaImage[] = [];
+
+      if (player === 'soma') {
+        // Use the album art that SomaPlayer already loaded, if available
+        const cover = document.getElementById('soma-np-cover') as HTMLImageElement | null;
+        if (cover?.classList.contains('loaded') && cover.src) {
+          artwork.push({ src: cover.src, sizes: '96x96', type: 'image/jpeg' });
+        } else {
+          // Fallback: SomaFM favicon
+          artwork.push({ src: 'https://somafm.com/img/favicon.png', sizes: '32x32', type: 'image/png' });
+        }
+        ms.metadata = new MediaMetadata({
+          title:  title || 'Soma FM',
+          artist: artist || 'Live Radio',
+          album:  'infinite-circles.de',
+          artwork,
+        });
+      } else {
+        // Archive.org — no reliable cover art, use a generic waveform icon
+        artwork.push({ src: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' });
+        ms.metadata = new MediaMetadata({
+          title:  title || 'Archive.org',
+          artist: artist || 'Netlabel',
+          album:  'infinite-circles.de · Archive',
+          artwork,
+        });
+      }
+
+      // For archive: also keep position state updated (lets lock screen show progress)
+      syncPosition();
+    });
+
+    // ── Position state for Archive (has seekable duration) ────────────────────
+    function syncPosition() {
+      const a = (window as any).__icArchiveAudio as HTMLAudioElement | null;
+      if (!a || !isFinite(a.duration) || a.duration <= 0) return;
+      try {
+        ms.setPositionState({
+          duration:     a.duration,
+          playbackRate: a.playbackRate,
+          position:     Math.min(a.currentTime, a.duration),
+        });
+      } catch {}
+    }
+
+    // Update position every 5s while archive is playing
+    setInterval(() => {
+      if ((window as any).__icArchiveAudio) syncPosition();
+    }, 5000);
+  }
+</script>

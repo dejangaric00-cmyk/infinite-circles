@@ -4,14 +4,10 @@ import { getCollection, render } from 'astro:content';
 
 export async function getStaticPaths() {
   const posts = await getCollection('journal', ({ data }) => !data.draft);
-  return posts.map(post => ({ params: { slug: post.id } }));
+  return posts.map(post => ({ params: { slug: post.id }, props: { post } }));
 }
 
-const { slug } = Astro.params;
-const posts = await getCollection('journal');
-const post = posts.find(p => p.id === slug);
-if (!post) return Astro.redirect('/journal');
-
+const { post } = Astro.props;
 const { Content } = await render(post);
 ---
 
@@ -39,16 +35,6 @@ const { Content } = await render(post);
 </BaseLayout>
 
 <style>
-  body { background: var(--sky-top); }
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 40%, var(--sky-bot) 100%);
-    z-index: -2;
-    pointer-events: none;
-  }
-
   .page-post {
     max-width: 680px;
     margin: 0 auto;

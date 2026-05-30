@@ -7,10 +7,33 @@
     <div class="ar-left">
       <span class="ar-badge-row">
         <span class="ar-dot" id="ar-dot"></span>
-        <span class="ar-badge">archive.org · dub-techno · minimal</span>
+        <span class="ar-badge" id="ar-badge">archive.org · netlabels</span>
       </span>
     </div>
     <span class="ar-status" id="rp-status">· Feeds</span>
+  </div>
+
+  <!-- ── Genre Filter ── -->
+  <div class="ar-genres" id="ar-genres">
+    <button class="ar-genre-btn active" data-genre="all">all</button>
+    <button class="ar-genre-btn" data-genre="dub-techno">dub techno</button>
+    <button class="ar-genre-btn" data-genre="minimal">minimal</button>
+    <button class="ar-genre-btn" data-genre="deep-house">deep house</button>
+    <button class="ar-genre-btn" data-genre="ambient">ambient</button>
+    <button class="ar-genre-btn" data-genre="electro">electro</button>
+    <button class="ar-genre-btn" data-genre="netlabels">netlabels</button>
+    <button class="ar-genre-btn" data-genre="drone">drone</button>
+    <button class="ar-genre-btn" data-genre="dark-ambient">dark ambient</button>
+    <button class="ar-genre-btn" data-genre="industrial">industrial</button>
+    <button class="ar-genre-btn" data-genre="idm">IDM</button>
+    <button class="ar-genre-btn" data-genre="breakbeat">breakbeat</button>
+    <button class="ar-genre-btn" data-genre="downtempo">downtempo</button>
+    <button class="ar-genre-btn" data-genre="experimental">experimental</button>
+    <button class="ar-genre-btn" data-genre="noise">noise</button>
+    <button class="ar-genre-btn" data-genre="jungle">jungle</button>
+    <button class="ar-genre-btn" data-genre="acid">acid</button>
+    <button class="ar-genre-btn" data-genre="detroit">detroit techno</button>
+    <button class="ar-genre-btn" data-genre="field-recordings">field recordings</button>
   </div>
 
   <div class="ar-body">
@@ -99,6 +122,37 @@
   cursor: pointer; transition: color 0.15s;
 }
 #rp-status:hover { color: var(--text-deep); }
+
+/* ── Genre Filter ── */
+.ar-genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0.6rem 1rem;
+  border-bottom: 0.5px solid var(--border-mid);
+}
+.ar-genre-btn {
+  all: unset;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: .08em;
+  color: var(--text-dim);
+  padding: 3px 8px;
+  border: 0.5px solid var(--border-mid);
+  border-radius: 20px;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+.ar-genre-btn:hover {
+  color: var(--text-deep);
+  border-color: #00ff87;
+}
+.ar-genre-btn.active {
+  color: #00ff87;
+  border-color: #00ff87;
+  background: rgba(0,255,135,0.06);
+}
 
 .ar-body { padding: 0.85rem 1rem 0.7rem; }
 .ar-loading {
@@ -251,6 +305,134 @@
 const RP_SK = 'ic_rp_liked_v2';
 const HX_SK = 'ic_rp_history_v2';
 
+// ── Genre → query map ─────────────────────────────────────────────────────────
+const GENRE_QUERIES: Record<string, string[]> = {
+  'all': [
+    'subject:(dub+techno)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(minimal+techno)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(deep+house)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(ambient)+mediatype:audio+collection:netlabels',
+    'subject:(electro)+mediatype:audio+collection:netlabels',
+    'subject:(IDM)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(drone)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(downtempo)+mediatype:audio+collection:netlabels',
+  ],
+  'dub-techno': [
+    'subject:(dub+techno)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(dub+techno)+mediatype:audio+collection:netlabels',
+    'subject:(dub)+subject:(techno)+mediatype:audio',
+  ],
+  'minimal': [
+    'subject:(minimal+techno)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(minimal)+mediatype:audio+collection:netlabels',
+    'subject:(minimal+house)+mediatype:audio+licenseurl:*creativecommons*',
+  ],
+  'deep-house': [
+    'subject:(deep+house)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(deep+house)+mediatype:audio+collection:netlabels',
+    'subject:(house)+subject:(deep)+mediatype:audio+licenseurl:*creativecommons*',
+  ],
+  'ambient': [
+    'subject:(ambient)+mediatype:audio+collection:netlabels',
+    'subject:(ambient)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(ambient+electronic)+mediatype:audio+licenseurl:*creativecommons*',
+  ],
+  'electro': [
+    'subject:(electro)+mediatype:audio+collection:netlabels',
+    'subject:(electro)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(electronica)+mediatype:audio+collection:netlabels',
+  ],
+  'netlabels': [
+    'mediatype:audio+collection:netlabels',
+    'subject:(electronic)+mediatype:audio+collection:netlabels',
+    'subject:(dance)+mediatype:audio+collection:netlabels',
+  ],
+  'drone': [
+    'subject:(drone)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(drone+music)+mediatype:audio',
+    'subject:(drone+ambient)+mediatype:audio+licenseurl:*creativecommons*',
+  ],
+  'dark-ambient': [
+    'subject:(dark+ambient)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(dark+ambient)+mediatype:audio+collection:netlabels',
+    'subject:(dark+electronic)+mediatype:audio+licenseurl:*creativecommons*',
+  ],
+  'industrial': [
+    'subject:(industrial)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(industrial)+mediatype:audio+collection:netlabels',
+    'subject:(post-industrial)+mediatype:audio+licenseurl:*creativecommons*',
+  ],
+  'idm': [
+    'subject:(IDM)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(intelligent+dance+music)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(IDM)+mediatype:audio+collection:netlabels',
+  ],
+  'breakbeat': [
+    'subject:(breakbeat)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(breaks)+mediatype:audio+collection:netlabels',
+    'subject:(breakbeat)+mediatype:audio+collection:netlabels',
+  ],
+  'downtempo': [
+    'subject:(downtempo)+mediatype:audio+collection:netlabels',
+    'subject:(downtempo)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(trip-hop)+mediatype:audio+licenseurl:*creativecommons*',
+  ],
+  'experimental': [
+    'subject:(experimental)+mediatype:audio+collection:netlabels',
+    'subject:(experimental+electronic)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(avant-garde)+mediatype:audio+licenseurl:*creativecommons*',
+  ],
+  'noise': [
+    'subject:(noise)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(harsh+noise)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(noise+music)+mediatype:audio+collection:netlabels',
+  ],
+  'jungle': [
+    'subject:(jungle)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(drum+and+bass)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(jungle)+mediatype:audio+collection:netlabels',
+  ],
+  'acid': [
+    'subject:(acid+techno)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(acid+house)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(acid)+mediatype:audio+collection:netlabels',
+  ],
+  'detroit': [
+    'subject:(detroit+techno)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(detroit)+subject:(techno)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(techno)+mediatype:audio+collection:netlabels',
+  ],
+  'field-recordings': [
+    'subject:(field+recordings)+mediatype:audio+licenseurl:*creativecommons*',
+    'subject:(field+recording)+mediatype:audio',
+    'subject:(soundscape)+mediatype:audio+licenseurl:*creativecommons*',
+  ],
+};
+
+const GENRE_LABELS: Record<string, string> = {
+  'all':              'archive.org · netlabels',
+  'dub-techno':       'archive.org · dub techno',
+  'minimal':          'archive.org · minimal',
+  'deep-house':       'archive.org · deep house',
+  'ambient':          'archive.org · ambient',
+  'electro':          'archive.org · electro',
+  'netlabels':        'archive.org · netlabels',
+  'drone':            'archive.org · drone',
+  'dark-ambient':     'archive.org · dark ambient',
+  'industrial':       'archive.org · industrial',
+  'idm':              'archive.org · IDM',
+  'breakbeat':        'archive.org · breakbeat',
+  'downtempo':        'archive.org · downtempo',
+  'experimental':     'archive.org · experimental',
+  'noise':            'archive.org · noise',
+  'jungle':           'archive.org · jungle',
+  'acid':             'archive.org · acid',
+  'detroit':          'archive.org · detroit techno',
+  'field-recordings': 'archive.org · field recordings',
+};
+
+let activeGenre = 'all';
+
 let rpTracks: any[] = [];
 let rpIdx = 0;
 let rpAudio: HTMLAudioElement | null = null;
@@ -275,6 +457,8 @@ const arSeekInput = $('ar-seek')       as HTMLInputElement;
 const arHistory   = $('ar-history')    as HTMLElement;
 const arHistItems = $('ar-history-items') as HTMLElement;
 const arHistClear = $('ar-history-clear') as HTMLButtonElement;
+const arBadge     = $('ar-badge')      as HTMLElement;
+const genreBtns   = document.querySelectorAll<HTMLButtonElement>('.ar-genre-btn');
 
 // ── Storage ──────────────────────────────────────────────────────────────────
 function loadLiked(): any[]   { try { return JSON.parse(localStorage.getItem(RP_SK) || '[]'); } catch { return []; } }
@@ -302,11 +486,26 @@ function setTrack(title: string, artist: string) {
   if (rpArtistEl) rpArtistEl.textContent = artist;
 }
 
+// ── Genre filter ──────────────────────────────────────────────────────────────
+genreBtns.forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const genre = btn.dataset.genre ?? 'all';
+    if (genre === activeGenre) return;
+    activeGenre = genre;
+    genreBtns.forEach(b => b.classList.toggle('active', b.dataset.genre === genre));
+    if (arBadge) arBadge.textContent = GENRE_LABELS[genre] ?? 'archive.org';
+    // Stop current playback and reload with new genre
+    if (rpAudio) { rpAudio.pause(); rpAudio = null; }
+    setPlaying(false);
+    await rpInit();
+  });
+});
+
 // ── History ───────────────────────────────────────────────────────────────────
 function addToHistory(id: string, title: string, artist: string) {
   if (!id || title === '—') return;
   const history = loadHistory();
-  if (history.length && history[0].id === id) return; // no duplicate
+  if (history.length && history[0].id === id) return;
   history.unshift({ id, title, artist, ts: Date.now() });
   if (history.length > 15) history.pop();
   saveHistory(history);
@@ -325,7 +524,6 @@ function renderHistory() {
     </div>
   `).join('');
 
-  // Click on history item → jump to that track
   arHistItems.querySelectorAll<HTMLElement>('.ar-history-item').forEach(el => {
     el.addEventListener('click', () => {
       const id     = el.dataset.id     ?? '';
@@ -359,14 +557,7 @@ arSeekInput?.addEventListener('input', () => {
 
 // ── Fetch ─────────────────────────────────────────────────────────────────────
 async function fetchTracks(): Promise<any[]> {
-  const queries = [
-    'subject:(dub+techno)+mediatype:audio+licenseurl:*creativecommons*',
-    'subject:(minimal+techno)+mediatype:audio+licenseurl:*creativecommons*',
-    'subject:(dub+techno)+mediatype:audio+collection:netlabels',
-    'subject:(deep+house)+mediatype:audio+licenseurl:*creativecommons*',
-    'subject:(ambient+techno)+mediatype:audio+licenseurl:*creativecommons*',
-    'subject:(electro)+mediatype:audio+collection:netlabels',
-  ];
+  const queries = GENRE_QUERIES[activeGenre] ?? GENRE_QUERIES['all'];
   const q     = queries[Math.floor(Math.random() * queries.length)];
   const start = Math.floor(Math.random() * 30);
   const url   = `https://archive.org/advancedsearch.php?q=${q}&fl[]=identifier&fl[]=title&fl[]=creator&rows=40&start=${start}&output=json`;
@@ -396,6 +587,9 @@ function setPlaying(playing: boolean) {
   document.querySelectorAll('.rpwb').forEach(b => b.classList.toggle('active', playing));
   if (rpDot) rpDot.classList.toggle('playing', playing);
   setStatus(playing ? '● Playing' : 'Ready');
+  window.dispatchEvent(new CustomEvent('ic:playstate', {
+    detail: { player: 'archive', playing, title: rpTrackEl?.textContent ?? '—', artist: rpArtistEl?.textContent ?? '' }
+  }));
 }
 
 // ── Load track ────────────────────────────────────────────────────────────────
@@ -423,6 +617,7 @@ async function loadTrack(doc: any, autoplay = false) {
     if (!src) { setStatus('No audio — skip'); return; }
     const audio      = new Audio(src);
     rpAudio          = audio;
+    (window as any).__icArchiveAudio = audio;
     audio.ontimeupdate     = seekUpdate;
     audio.onloadedmetadata = seekUpdate;
     audio.onended          = () => rpNext();
@@ -435,12 +630,14 @@ async function loadTrack(doc: any, autoplay = false) {
   } catch { setStatus('Unavailable'); }
 }
 
-// ── Jump to history item ──────────────────────────────────────────────────────
+// ── Jump to specific track (history / LikeSidebar) ────────────────────────────
 async function rpJumpTo(doc: any) {
   if (rpAudio) { rpAudio.pause(); rpAudio = null; }
   setPlaying(false);
   await loadTrack(doc, true);
 }
+
+(window as any).__icArchiveJumpTo = rpJumpTo;
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function rpInit() {
@@ -504,6 +701,8 @@ function rpLike() {
     if (rpLikeBtn) { rpLikeBtn.textContent = '♥ liked'; rpLikeBtn.className = 'ar-like-btn liked'; }
   }
   saveLiked(liked);
+  // Notify LikeSidebar instantly — replaces the old 1.5s polling loop
+  window.dispatchEvent(new Event('ic:liked-changed'));
 }
 
 // ── Wire up ───────────────────────────────────────────────────────────────────

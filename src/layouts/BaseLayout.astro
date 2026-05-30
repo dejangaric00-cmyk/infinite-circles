@@ -8,6 +8,13 @@ const {
   title = "Infinite Circles",
   description = "Personal site of Dejan. Music journal, writing, experiments and links worth keeping."
 } = Astro.props;
+
+// Server-side active nav — no JS needed, works without hydration
+const currentPath = Astro.url.pathname;
+function isActive(href: string): boolean {
+  if (href === '/') return currentPath === '/';
+  return currentPath === href || currentPath.startsWith(href + '/');
+}
 ---
 
 <!DOCTYPE html>
@@ -20,19 +27,38 @@ const {
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://infinite-circles.de" />
+    <meta property="og:url" content={`https://infinite-circles.de${currentPath}`} />
+    <meta property="og:image" content="https://infinite-circles.de/icon-512.png" />
+    <meta name="theme-color" content="#0a1a2e" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+    <link rel="alternate" type="application/rss+xml" title="Song of the Day — Infinite Circles" href="/sotd/rss.xml" />
     <title>{title}</title>
+    <!-- Favicons -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+    <!-- iOS / Android homescreen -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Infinite Circles" />
     <script defer src="https://cloud.umami.is/script.js" data-website-id="65f41a88-359f-4090-ac4e-82be88099cbd"></script>
     <script>
+      // Dark mode: apply before paint to avoid flash
       try {
         const stored = localStorage.getItem('ic_dark');
         const sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (stored === '1' || (stored === null && sysDark)) document.documentElement.classList.add('dark');
+        const dark = stored === '1' || (stored === null && sysDark);
+        if (dark) {
+          document.documentElement.classList.add('dark');
+        } else {
+          // Explicitly mark as light so media query override is suppressed
+          document.documentElement.classList.add('light');
+        }
       } catch(e) {}
     </script>
   </head>
@@ -40,10 +66,10 @@ const {
     <nav>
       <a class="logo" href="/">Infinite Circles</a>
       <ul class="nav-links">
-        <li><a href="/">Home</a></li>
-        <li><a href="/sotd">Song of the Day</a></li>
-        <li><a href="/now">Now</a></li>
-        <li><a href="/about">About</a></li>
+        <li><a href="/" aria-current={isActive('/') ? 'page' : undefined}>Home</a></li>
+        <li><a href="/sotd" aria-current={isActive('/sotd') ? 'page' : undefined}>Song of the Day</a></li>
+        <li><a href="/now" aria-current={isActive('/now') ? 'page' : undefined}>Now</a></li>
+        <li><a href="/about" aria-current={isActive('/about') ? 'page' : undefined}>About</a></li>
       </ul>
       <button class="dm-btn" id="dm-btn" title="Toggle dark mode">◐</button>
     </nav>
@@ -75,6 +101,13 @@ const {
     --t: all 0.2s ease;
     --font-serif: 'Cormorant Garamond', Georgia, serif;
     --font-mono: 'DM Mono', 'Courier New', monospace;
+
+    /* Mood colors */
+    --mood-ambient:    rgba(100, 160, 220, 0.18);
+    --mood-deep-house: rgba(180, 120, 60,  0.14);
+    --mood-house:      rgba(80,  180, 140, 0.13);
+    --mood-techno:     rgba(160, 80,  200, 0.13);
+    --mood-default:    rgba(100, 100, 120, 0.10);
   }
 
   html.dark {
@@ -113,24 +146,25 @@ const {
     }
   }
 
-body {
-  font-family: var(--font-mono);
-  color: var(--text-deep);
-  line-height: 1.6;
-  overflow-x: hidden;
-  min-height: 100vh;
-  background: var(--sky-top);
-  position: relative;
-}
+  body {
+    font-family: var(--font-mono);
+    color: var(--text-deep);
+    line-height: 1.6;
+    overflow-x: hidden;
+    min-height: 100vh;
+    background: var(--sky-top);
+    position: relative;
+  }
 
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 40%, var(--sky-bot) 100%);
-  z-index: -2;
-  pointer-events: none;
-}
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 40%, var(--sky-bot) 100%);
+    z-index: -2;
+    pointer-events: none;
+  }
+
   /* NAV */
   nav {
     position: sticky;
@@ -189,20 +223,11 @@ body::before {
 </style>
 
 <script>
-  // Dark mode toggle
+  // Dark mode toggle — fixed: properly sets/removes both classes
   const btn = document.getElementById('dm-btn');
   btn?.addEventListener('click', () => {
     const isDark = document.documentElement.classList.toggle('dark');
     document.documentElement.classList.toggle('light', !isDark);
     try { localStorage.setItem('ic_dark', isDark ? '1' : '0'); } catch(e) {}
-  });
-
-  // Active nav link
-  const path = window.location.pathname;
-  document.querySelectorAll('.nav-links a').forEach(a => {
-    const href = a.getAttribute('href');
-    if (href === path || (href !== '/' && path.startsWith(href!))) {
-      a.setAttribute('aria-current', 'page');
-    }
   });
 </script>

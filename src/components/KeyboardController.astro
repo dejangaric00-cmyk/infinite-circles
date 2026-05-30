@@ -1,0 +1,418 @@
+---
+// src/components/KeyboardController.astro
+// Global keyboard shortcuts for Infinite Circles
+// Space → Play/Pause active player
+// → Arrow Right → Skip (ArchiveRadio)
+// ↑ / ↓ → Volume +/- 10%
+// 1–4 → SomaFM station switch
+// ? → Toggle shortcut overlay
+---
+
+<!-- Shortcut Overlay -->
+<div class="kb-overlay" id="kb-overlay" aria-modal="true" role="dialog" aria-label="Keyboard Shortcuts" hidden>
+  <div class="kb-panel">
+    <div class="kb-header">
+      <span class="kb-title">Keyboard Shortcuts</span>
+      <button class="kb-close" id="kb-close" aria-label="Close">✕</button>
+    </div>
+    <div class="kb-rows">
+      <div class="kb-row">
+        <kbd>Space</kbd>
+        <span>Play / Pause</span>
+      </div>
+      <div class="kb-row">
+        <kbd>→</kbd>
+        <span>Skip (Archive.org)</span>
+      </div>
+      <div class="kb-row">
+        <kbd>↑</kbd><kbd>↓</kbd>
+        <span>Lautstärke +/− 10%</span>
+      </div>
+      <div class="kb-row">
+        <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd>
+        <span>SomaFM Station wechseln</span>
+      </div>
+      <div class="kb-row">
+        <kbd>?</kbd>
+        <span>Diese Übersicht öffnen / schließen</span>
+      </div>
+      <div class="kb-row">
+        <kbd>Esc</kbd>
+        <span>Schließen</span>
+      </div>
+    </div>
+    <p class="kb-hint">Shortcuts sind deaktiviert, wenn ein Textfeld aktiv ist.</p>
+  </div>
+</div>
+
+<!-- Shortcut hint badge (bottom-right) -->
+<button class="kb-hint-badge" id="kb-hint-badge" aria-label="Keyboard Shortcuts anzeigen" title="Keyboard Shortcuts">
+  <span class="kb-badge-key">?</span>
+</button>
+
+<!-- Volume toast -->
+<div class="kb-vol-toast" id="kb-vol-toast" aria-live="polite" aria-atomic="true" hidden>
+  <span class="kb-vol-icon" id="kb-vol-icon">🔊</span>
+  <div class="kb-vol-track">
+    <div class="kb-vol-fill" id="kb-vol-fill"></div>
+  </div>
+  <span class="kb-vol-pct" id="kb-vol-pct">80%</span>
+</div>
+
+<style>
+  /* ── Overlay ── */
+  .kb-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+  }
+  .kb-overlay:not([hidden]) {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .kb-overlay[hidden] {
+    display: flex !important;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .kb-panel {
+    background: var(--glass-bg-strong, rgba(10, 18, 35, 0.92));
+    border: 0.5px solid var(--border-mid, rgba(255,255,255,0.12));
+    border-radius: 12px;
+    padding: 1.5rem 1.75rem 1.25rem;
+    min-width: 280px;
+    max-width: 380px;
+    width: calc(100vw - 3rem);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    transform: translateY(8px);
+    transition: transform 0.2s ease;
+  }
+  .kb-overlay:not([hidden]) .kb-panel {
+    transform: translateY(0);
+  }
+
+  .kb-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+  .kb-title {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent, #4a90d9);
+  }
+  .kb-close {
+    all: unset;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-dim, rgba(255,255,255,0.4));
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.15s;
+  }
+  .kb-close:hover { color: var(--text-deep, #fff); }
+
+  .kb-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+  .kb-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .kb-row span {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-dim, rgba(255,255,255,0.5));
+    margin-left: 0.25rem;
+  }
+
+  kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 5px;
+    background: var(--glass-bg, rgba(255,255,255,0.05));
+    border: 0.5px solid var(--border-mid, rgba(255,255,255,0.15));
+    border-bottom-width: 1.5px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-deep, #fff);
+    flex-shrink: 0;
+  }
+
+  .kb-hint {
+    margin-top: 1.1rem;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--text-dim, rgba(255,255,255,0.3));
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+    border-top: 0.5px solid var(--border-mid, rgba(255,255,255,0.08));
+    padding-top: 0.75rem;
+  }
+
+  /* ── Badge ── */
+  .kb-hint-badge {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    z-index: 500;
+    all: unset;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 0.5px solid var(--border-mid, rgba(255,255,255,0.15));
+    background: var(--glass-bg, rgba(10,18,35,0.6));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .kb-hint-badge:hover {
+    border-color: var(--accent, #4a90d9);
+    background: var(--glass-bg-strong, rgba(10,18,35,0.85));
+  }
+  .kb-badge-key {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-dim, rgba(255,255,255,0.4));
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .kb-hint-badge:hover .kb-badge-key { color: var(--accent, #4a90d9); }
+
+  /* ── Volume Toast ── */
+  .kb-vol-toast {
+    position: fixed;
+    top: 1.25rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.9rem;
+    background: var(--glass-bg-strong, rgba(10,18,35,0.92));
+    border: 0.5px solid var(--border-mid, rgba(255,255,255,0.12));
+    border-radius: 20px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    opacity: 0;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    pointer-events: none;
+  }
+  .kb-vol-toast:not([hidden]) {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .kb-vol-toast[hidden] {
+    display: flex !important;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(-8px);
+  }
+  .kb-vol-icon {
+    font-size: 0.75rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .kb-vol-track {
+    width: 80px;
+    height: 3px;
+    background: var(--border-mid, rgba(255,255,255,0.12));
+    border-radius: 2px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .kb-vol-fill {
+    height: 100%;
+    background: var(--accent, #4a90d9);
+    border-radius: 2px;
+    transition: width 0.1s ease;
+  }
+  .kb-vol-pct {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-dim, rgba(255,255,255,0.5));
+    min-width: 28px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 400px) {
+    .kb-hint-badge { bottom: 0.75rem; right: 0.75rem; }
+  }
+</style>
+
+<script>
+  const overlay   = document.getElementById('kb-overlay')    as HTMLElement;
+  const closeBtn  = document.getElementById('kb-close')      as HTMLButtonElement;
+  const hintBadge = document.getElementById('kb-hint-badge') as HTMLButtonElement;
+  const volToast  = document.getElementById('kb-vol-toast')  as HTMLElement;
+  const volFill   = document.getElementById('kb-vol-fill')   as HTMLElement;
+  const volPct    = document.getElementById('kb-vol-pct')    as HTMLElement;
+  const volIcon   = document.getElementById('kb-vol-icon')   as HTMLElement;
+
+  // ── Overlay toggle ──────────────────────────────────────────────────────────
+  function openOverlay() { overlay.hidden = false; closeBtn.focus(); }
+  function closeOverlay() { overlay.hidden = true; hintBadge.focus(); }
+  function toggleOverlay() { overlay.hidden ? openOverlay() : closeOverlay(); }
+
+  closeBtn.addEventListener('click', closeOverlay);
+  hintBadge.addEventListener('click', toggleOverlay);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeOverlay(); });
+
+  // ── Helper: is user typing? ─────────────────────────────────────────────────
+  function isTyping(): boolean {
+    const el = document.activeElement;
+    if (!el) return false;
+    const tag = el.tagName.toLowerCase();
+    return tag === 'input' || tag === 'textarea' || tag === 'select'
+      || (el as HTMLElement).isContentEditable;
+  }
+
+  // ── SomaFM controls ─────────────────────────────────────────────────────────
+  function somaPlayPause() {
+    (document.getElementById('play-btn') as HTMLButtonElement | null)?.click();
+  }
+  function somaStation(n: number) {
+    const btns = document.querySelectorAll<HTMLButtonElement>('.station-btn');
+    btns[n - 1]?.click();
+  }
+
+  // ── ArchiveRadio controls ───────────────────────────────────────────────────
+  function archivePlayPause() {
+    (document.getElementById('rp-play-btn') as HTMLButtonElement | null)?.click();
+  }
+  function archiveSkip() {
+    (document.getElementById('rp-skip-btn') as HTMLButtonElement | null)?.click();
+  }
+
+  // ── Active player detection ─────────────────────────────────────────────────
+  function activePlayer(): 'soma' | 'archive' | 'none' {
+    const somaAudio = document.getElementById('soma-audio') as HTMLAudioElement | null;
+    if (somaAudio && !somaAudio.paused) return 'soma';
+    if (document.getElementById('ar-dot')?.classList.contains('playing')) return 'archive';
+    return 'none';
+  }
+
+  function handleSpace() {
+    activePlayer() === 'archive' ? archivePlayPause() : somaPlayPause();
+  }
+
+  // ── Volume control ──────────────────────────────────────────────────────────
+  let volToastTimer: ReturnType<typeof setTimeout>;
+
+  function getActiveAudio(): HTMLAudioElement | null {
+    const ap = activePlayer();
+    if (ap === 'soma') return document.getElementById('soma-audio') as HTMLAudioElement;
+    // ArchiveRadio doesn't expose its audio element by id — we track it via a
+    // custom property set on window by a small patch, or fall back to soma
+    const w = window as any;
+    if (ap === 'archive' && w.__icArchiveAudio instanceof HTMLAudioElement) return w.__icArchiveAudio;
+    // fallback: if soma audio exists, control that
+    return document.getElementById('soma-audio') as HTMLAudioElement | null;
+  }
+
+  function showVolToast(vol: number) {
+    const pct = Math.round(vol * 100);
+    volFill.style.width = pct + '%';
+    volPct.textContent  = pct + '%';
+    volIcon.textContent = vol === 0 ? '🔇' : vol < 0.4 ? '🔉' : '🔊';
+    volToast.hidden = false;
+    clearTimeout(volToastTimer);
+    volToastTimer = setTimeout(() => { volToast.hidden = true; }, 1400);
+  }
+
+  function adjustVolume(delta: number) {
+    // Adjust soma volume slider (source of truth for soma)
+    const somaSlider = document.getElementById('volume-slider') as HTMLInputElement | null;
+    const somaAudio  = document.getElementById('soma-audio')    as HTMLAudioElement | null;
+
+    // Determine which audio to adjust
+    const ap = activePlayer();
+    const w  = window as any;
+
+    let currentVol = 0.8;
+    if (ap === 'archive' && w.__icArchiveAudio instanceof HTMLAudioElement) {
+      currentVol = w.__icArchiveAudio.volume;
+    } else if (somaAudio) {
+      currentVol = somaAudio.volume;
+    }
+
+    const newVol = Math.min(1, Math.max(0, Math.round((currentVol + delta) * 10) / 10));
+
+    // Apply to archive if active
+    if (ap === 'archive' && w.__icArchiveAudio instanceof HTMLAudioElement) {
+      w.__icArchiveAudio.volume = newVol;
+    }
+    // Always sync soma slider + audio (keeps UI in sync)
+    if (somaAudio)  somaAudio.volume = newVol;
+    if (somaSlider) { somaSlider.value = String(newVol); }
+
+    showVolToast(newVol);
+  }
+
+  // ── Keyboard handler ────────────────────────────────────────────────────────
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      if (!overlay.hidden) { closeOverlay(); e.preventDefault(); }
+      return;
+    }
+    if (isTyping()) return;
+
+    switch (e.key) {
+      case ' ':
+      case 'Spacebar':
+        e.preventDefault();
+        handleSpace();
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        archiveSkip();
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        adjustVolume(0.1);
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        adjustVolume(-0.1);
+        break;
+      case '1': somaStation(1); break;
+      case '2': somaStation(2); break;
+      case '3': somaStation(3); break;
+      case '4': somaStation(4); break;
+      case '?':
+        e.preventDefault();
+        toggleOverlay();
+        break;
+    }
+  });
+</script>

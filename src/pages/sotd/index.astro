@@ -1,17 +1,24 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getCollection } from 'astro:content';
+import { getSortedSotd } from '../../utils/sotd';
+import { getYouTubeId } from '../../utils/youtube';
+import { getMoodColor } from '../../utils/mood';
 
-function getYouTubeId(url: string): string | null {
-  const m = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-  return m ? m[1] : null;
-}
-
-const entries = await getCollection('sotd');
-const sorted = entries.sort((a, b) => b.data.date.localeCompare(a.data.date));
+const sorted = await getSortedSotd();
 
 const moods = [...new Set(sorted.map(e => e.data.mood).filter(Boolean))].sort() as string[];
 const artists = [...new Set(sorted.map(e => e.data.artist))].sort();
+const decades = [...new Set(sorted.map(e => e.data.year).filter(Boolean).map(y => `${Math.floor(y! / 10) * 10}s`))].sort();
+
+// Gruppierung nach Monat
+type SotdEntry = typeof sorted[0];
+const grouped = sorted.reduce<Record<string, SotdEntry[]>>((acc, entry) => {
+  const d = new Date(entry.data.date);
+  const key = d.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+  if (!acc[key]) acc[key] = [];
+  acc[key].push(entry);
+  return acc;
+}, {});
 ---
 
 <BaseLayout title="Song of the Day — Infinite Circles" description="Every day a song.">
@@ -20,7 +27,8 @@ const artists = [...new Set(sorted.map(e => e.data.artist))].sort();
   <section class="sotd-header reveal">
     <div class="section-label">Song of the Day</div>
     <h1>One song,<br><em>every day.</em></h1>
-    <p class="header-desc">{sorted.length} songs so far.</p>
+    <p class="header-desc">{sorted.length} tracks &middot; {[...new Set(sorted.map(e => e.data.label).filter(Boolean))].length} labels &middot; {(() => { const years = sorted.map(e => e.data.year).filter(Boolean) as number[]; return years.length > 0 ? `${Math.min(...years)}–${Math.max(...years)}` : ''; })()}</p>
+    <button class="random-btn" id="random-btn">Zufälliger Track ↝</button>
   </section>
 
   <!-- FEATURED PLAYER -->
@@ -43,8 +51,7 @@ const artists = [...new Set(sorted.map(e => e.data.artist))].sort();
                 <img
                   src={`https://img.youtube.com/vi/${vid}/hqdefault.jpg`}
                   alt={latest.data.title}
-                  data-vid={vid}
-                  onerror={`this.onerror=null;this.src='https://img.youtube.com/vi/${vid}/hqdefault.jpg'`}
+                  width="480" height="360"
                 />
                 <div class="featured-play">
                   <div class="featured-play-btn"><div class="featured-play-tri"></div></div>
@@ -82,46 +89,74 @@ const artists = [...new Set(sorted.map(e => e.data.artist))].sort();
         ))}
       </div>
     </div>
+    {decades.length > 0 && (
+      <div class="filter-group">
+        <span class="filter-label">Dekade</span>
+        <div class="filter-pills" id="decade-pills">
+          <button class="pill pill-active" data-filter="decade" data-value="">Alle</button>
+          {decades.map(d => (
+            <button class="pill" data-filter="decade" data-value={d}>{d}</button>
+          ))}
+        </div>
+      </div>
+    )}
   </div>
 
   <section class="sotd-list" id="sotd-list">
-    {sorted.map((entry, i) => {
-      const vid = entry.data.link ? getYouTubeId(entry.data.link) : null;
-      return (
-        <div
-          class="sotd-item reveal"
-          style={`transition-delay:${i * 0.04}s`}
-          data-mood={entry.data.mood ?? ''}
-          data-artist={entry.data.artist}
-        >
-          <div class="sotd-item-left">
-            <div class="sotd-item-date">{entry.data.date}</div>
-            {vid && (
-              <a href={`/sotd/${entry.id}`} class="yt-thumb-link">
-                <div class="yt-thumb">
-                  <img src={`https://img.youtube.com/vi/${vid}/hqdefault.jpg`} alt={entry.data.title} loading="lazy" />
-                  <div class="yt-thumb-play">
-                    <div class="yt-thumb-btn"><div class="yt-thumb-tri"></div></div>
+    {Object.entries(grouped).map(([month, monthEntries]) => (
+      <div class="sotd-month-group">
+        <div class="sotd-month-label">{month}</div>
+        {monthEntries.map((entry, i) => {
+          const vid = entry.data.link ? getYouTubeId(entry.data.link) : null;
+          return (
+            <div
+              class="sotd-item reveal"
+              style={`transition-delay:${i * 0.04}s`}
+              data-mood={entry.data.mood ?? ''}
+              data-artist={entry.data.artist}
+              data-id={entry.id}
+              data-decade={entry.data.year ? `${Math.floor(entry.data.year / 10) * 10}s` : ''}
+            >
+              <div class="sotd-item-left" style={`background: ${getMoodColor(entry.data.mood)}; border-radius: 8px; padding: 0.75rem;`}>
+                <div class="sotd-item-date">{entry.data.date}</div>
+                {vid && (
+                  <a href={`/sotd/${entry.id}`} class="yt-thumb-link">
+                    <div class="yt-thumb">
+                      <img
+                        src={`https://img.youtube.com/vi/${vid}/mqdefault.jpg`}
+                        alt={entry.data.title}
+                        loading="lazy"
+                        width="320" height="180"
+                      />
+                      <div class="yt-thumb-play">
+                        <div class="yt-thumb-btn"><div class="yt-thumb-tri"></div></div>
+                      </div>
+                    </div>
+                  </a>
+                )}
+              </div>
+              <div class="sotd-item-right">
+                <a href={`/sotd/${entry.id}`} class="sotd-title-link">
+                  <div class="sotd-item-title">{entry.data.title}</div>
+                </a>
+                <div class="sotd-item-artist">{entry.data.artist}</div>
+                {entry.data.album && <div class="sotd-item-album">{entry.data.album}</div>}
+                {(entry.data.year || entry.data.label || entry.data.mood) && (
+                  <div class="sotd-item-meta">
+                    {[entry.data.year, entry.data.label, entry.data.mood].filter(Boolean).join(' · ')}
                   </div>
+                )}
+                <div class="sotd-badges">
+                  {entry.data.mood && <span class="sotd-item-mood">{entry.data.mood}</span>}
+                  {entry.data.tags && entry.data.tags.map(t => <span class="sotd-item-mood sotd-tag">{t}</span>)}
                 </div>
-              </a>
-            )}
-          </div>
-          <div class="sotd-item-right">
-            <a href={`/sotd/${entry.id}`} class="sotd-title-link">
-              <div class="sotd-item-title">{entry.data.title}</div>
-            </a>
-            <div class="sotd-item-artist">{entry.data.artist}</div>
-            {entry.data.album && <div class="sotd-item-album">{entry.data.album}</div>}
-            <div class="sotd-badges">
-              {entry.data.mood && <span class="sotd-item-mood">{entry.data.mood}</span>}
-              {entry.data.tags && entry.data.tags.map(t => <span class="sotd-item-mood sotd-tag">{t}</span>)}
+                {entry.data.note && <p class="sotd-item-note">{entry.data.note}</p>}
+              </div>
             </div>
-            {entry.data.note && <p class="sotd-item-note">{entry.data.note}</p>}
-          </div>
-        </div>
-      );
-    })}
+          );
+        })}
+      </div>
+    ))}
   </section>
 
   <div class="no-results" id="no-results" style="display:none">
@@ -163,12 +198,26 @@ h1 em { font-style: italic; color: var(--accent); }
   font-size: 11px;
   color: var(--text-dim);
   letter-spacing: .06em;
+  margin-bottom: 1.25rem;
 }
+.random-btn {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  padding: 6px 16px;
+  border: 0.5px solid var(--glass-border);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-block;
+}
+.random-btn:hover { color: var(--accent); border-color: var(--accent); }
 
 /* FEATURED */
-.featured {
-  margin-bottom: 2.5rem;
-}
+.featured { margin-bottom: 2.5rem; }
 .featured-inner {
   display: flex;
   flex-direction: column;
@@ -215,248 +264,121 @@ h1 em { font-style: italic; color: var(--accent); }
 .featured-player { display: none; width: 100%; border-radius: 10px; overflow: hidden; background: #000; }
 .featured-player.open { display: block; }
 .featured-player iframe { width: 100%; border: none; display: block; }
-
 .featured-no-video {
-  aspect-ratio: 16/9;
-  border-radius: 10px;
-  background: var(--glass-bg);
-  border: 0.5px solid var(--glass-border);
+  aspect-ratio: 16/9; border-radius: 10px;
+  background: var(--glass-bg); border: 0.5px solid var(--glass-border);
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-serif);
-  font-size: 60px;
-  color: var(--text-dim);
+  font-family: var(--font-serif); font-size: 60px; color: var(--text-dim);
 }
-
 .featured-info {
-  display: flex;
-  flex-direction: row;
-  align-items: baseline;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.5rem;
-  text-align: center;
+  display: flex; flex-direction: row; align-items: baseline;
+  justify-content: center; flex-wrap: wrap; gap: 0.5rem 1.5rem; text-align: center;
 }
 .featured-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: .22em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 0.4rem;
+  font-family: var(--font-mono); font-size: 8px; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem;
 }
 .featured-title-link { text-decoration: none; }
 .featured-title {
-  font-family: var(--font-serif);
-  font-size: 28px;
-  font-weight: 300;
-  line-height: 1.05;
-  color: var(--text-deep);
-  transition: color 0.15s;
+  font-family: var(--font-serif); font-size: 28px; font-weight: 300;
+  line-height: 1.05; color: var(--text-deep); transition: color 0.15s;
 }
 .featured-title-link:hover .featured-title { color: var(--accent); }
-.featured-artist {
-  font-family: var(--font-serif);
-  font-size: 28px;
-  font-weight: 300;
-  font-style: italic;
-  color: var(--text-dim);
-}
-.featured-mood {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  padding: 3px 10px;
-  border: 0.5px solid var(--glass-border);
-  border-radius: 20px;
-  color: var(--text-dim);
-  display: inline-block;
-}
-.featured-note {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--text-dim);
-  width: 100%;
-}
-
-@media (max-width: 768px) {
-  .featured-inner { grid-template-columns: 1fr; gap: 1.25rem; }
-}
 
 /* FILTER */
 .filter-bar {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 3rem;
-  padding-bottom: 2rem;
+  display: flex; flex-direction: column; gap: 0.75rem;
+  margin-bottom: 3rem; padding-bottom: 2rem;
   border-bottom: 0.5px solid var(--border-light);
 }
-.filter-group {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
+.filter-group { display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
 .filter-label {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  padding-top: 4px;
-  min-width: 40px;
+  font-family: var(--font-mono); font-size: 8px; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--text-dim); padding-top: 4px; min-width: 40px;
 }
-.filter-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
+.filter-pills { display: flex; flex-wrap: wrap; gap: 5px; }
 .pill {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: .08em;
-  padding: 3px 11px;
-  border-radius: 20px;
-  border: 0.5px solid var(--glass-border);
-  background: transparent;
-  color: var(--text-dim);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  line-height: 1.6;
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .08em;
+  padding: 3px 11px; border-radius: 20px; border: 0.5px solid var(--glass-border);
+  background: transparent; color: var(--text-dim); cursor: pointer;
+  transition: all 0.15s ease; line-height: 1.6;
 }
 .pill:hover { color: var(--text-deep); border-color: var(--accent); }
-.pill-active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
+.pill-active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 /* List */
-.sotd-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  padding-bottom: 5rem;
+.sotd-list { display: flex; flex-direction: column; gap: 0; padding-bottom: 5rem; }
+.sotd-month-group { margin-bottom: 1rem; }
+.sotd-month-label {
+  font-family: var(--font-mono); font-size: 8px; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--accent); opacity: 0.7;
+  padding: 1.5rem 0 0.75rem; border-top: 0.5px solid var(--border-light);
 }
 .sotd-item {
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 2rem;
-  padding: 2rem 0;
-  border-bottom: 0.5px solid var(--border-light);
+  display: grid; grid-template-columns: 220px 1fr; gap: 2rem;
+  padding: 2rem 0; border-bottom: 0.5px solid var(--border-light);
   transition: opacity 0.2s ease;
 }
 .sotd-item.hidden { display: none; }
-
 .sotd-item-date {
-  font-size: 9px;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  margin-bottom: .75rem;
+  font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--text-dim); margin-bottom: .75rem;
 }
 
-/* Thumbnail */
+/* Thumbnail — mqdefault (320×180) on list, saves ~60% vs hqdefault */
 .yt-thumb-link { display: block; text-decoration: none; }
 .yt-thumb {
-  position: relative;
-  border-radius: 8px;
-  overflow: hidden;
-  cursor: pointer;
-  background: #000;
-  width: 100%;
-  aspect-ratio: 16/9;
-  border: 0.5px solid var(--glass-border);
+  position: relative; border-radius: 8px; overflow: hidden; cursor: pointer;
+  background: #000; width: 100%; aspect-ratio: 16/9; border: 0.5px solid var(--glass-border);
 }
 .yt-thumb img {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: opacity .2s;
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  object-fit: cover; display: block; transition: opacity .2s;
 }
 .yt-thumb:hover img { opacity: .75; }
 .yt-thumb-play {
   position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  pointer-events: none;
+  display: flex; align-items: center; justify-content: center; pointer-events: none;
 }
 .yt-thumb-btn {
-  width: 36px; height: 36px; border-radius: 50%;
-  background: rgba(255,255,255,.9);
+  width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.9);
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,.3);
-  transition: transform .15s;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3); transition: transform .15s;
 }
 .yt-thumb:hover .yt-thumb-btn { transform: scale(1.1); }
 .yt-thumb-tri {
-  width: 0; height: 0; border-style: solid;
-  border-width: 6px 0 6px 11px;
-  border-color: transparent transparent transparent #1a1a1a;
-  margin-left: 2px;
+  width: 0; height: 0; border-style: solid; border-width: 6px 0 6px 11px;
+  border-color: transparent transparent transparent #1a1a1a; margin-left: 2px;
 }
 
 /* Info */
 .sotd-title-link { text-decoration: none; }
 .sotd-item-title {
-  font-family: var(--font-serif);
-  font-size: 26px;
-  font-weight: 300;
-  color: var(--text-deep);
-  line-height: 1.2;
-  margin-bottom: .2rem;
-  transition: color 0.15s;
+  font-family: var(--font-serif); font-size: 26px; font-weight: 300;
+  color: var(--text-deep); line-height: 1.2; margin-bottom: .2rem; transition: color 0.15s;
 }
 .sotd-title-link:hover .sotd-item-title { color: var(--accent); }
-
 .sotd-item-artist {
-  font-size: 10px;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: .2rem;
+  font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: .2rem;
 }
-.sotd-item-album {
-  font-size: 10px;
-  color: var(--text-dim);
-  margin-bottom: .5rem;
+.sotd-item-album { font-size: 10px; color: var(--text-dim); margin-bottom: .5rem; }
+.sotd-item-meta {
+  font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .08em;
+  color: var(--text-dim); opacity: 0.6; margin-bottom: .4rem;
 }
-.sotd-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-bottom: .75rem;
-  margin-top: .4rem;
-}
+.sotd-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: .75rem; margin-top: .4rem; }
 .sotd-item-mood {
-  font-size: 8px;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  padding: 3px 10px;
-  border: 0.5px solid var(--glass-border);
-  border-radius: 20px;
-  color: var(--text-dim);
-  display: inline-block;
+  font-size: 8px; letter-spacing: .12em; text-transform: uppercase;
+  padding: 3px 10px; border: 0.5px solid var(--glass-border); border-radius: 20px;
+  color: var(--text-dim); display: inline-block;
 }
-.sotd-tag {
-  border-color: var(--border-mid);
-}
-.sotd-item-note {
-  font-size: 11px;
-  color: var(--text-mid);
-  line-height: 1.8;
-  margin-top: .5rem;
-}
+.sotd-tag { border-color: var(--border-mid); }
+.sotd-item-note { font-size: 11px; color: var(--text-mid); line-height: 1.8; margin-top: .5rem; }
 
 .no-results {
-  padding: 3rem 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-dim);
-  letter-spacing: .06em;
-  text-align: center;
+  padding: 3rem 0; font-family: var(--font-mono); font-size: 11px;
+  color: var(--text-dim); letter-spacing: .06em; text-align: center;
 }
 
 .reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
@@ -477,7 +399,7 @@ const observer = new IntersectionObserver(
 );
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-// Featured player
+// Featured player — video ID kommt aus data-vid
 const featuredThumb = document.getElementById('featured-thumb') as HTMLElement | null;
 const featuredPlayer = document.getElementById('featured-player') as HTMLElement | null;
 featuredThumb?.addEventListener('click', () => {
@@ -494,39 +416,59 @@ featuredThumb?.addEventListener('click', () => {
 // Filter logic
 let activeMood = '';
 let activeArtist = '';
+let activeDecade = '';
 
 function applyFilter() {
   const items = document.querySelectorAll<HTMLElement>('.sotd-item');
+  const groups = document.querySelectorAll<HTMLElement>('.sotd-month-group');
   let visible = 0;
   items.forEach(item => {
-    const mood = item.dataset.mood ?? '';
+    const mood   = item.dataset.mood   ?? '';
     const artist = item.dataset.artist ?? '';
-    const moodMatch = !activeMood || mood === activeMood;
+    const decade = item.dataset.decade ?? '';
+    const moodMatch   = !activeMood   || mood   === activeMood;
     const artistMatch = !activeArtist || artist === activeArtist;
-    if (moodMatch && artistMatch) {
+    const decadeMatch = !activeDecade || decade === activeDecade;
+    if (moodMatch && artistMatch && decadeMatch) {
       item.classList.remove('hidden');
       visible++;
     } else {
       item.classList.add('hidden');
     }
   });
+  groups.forEach(group => {
+    const hasVisible = group.querySelector('.sotd-item:not(.hidden)');
+    group.style.display = hasVisible ? '' : 'none';
+  });
   const noResults = document.getElementById('no-results');
   if (noResults) noResults.style.display = visible === 0 ? 'block' : 'none';
 }
 
-function bindPills(containerId: string, filterKey: 'mood' | 'artist') {
+function bindPills(containerId: string, filterKey: 'mood' | 'artist' | 'decade') {
   const container = document.getElementById(containerId);
   container?.querySelectorAll<HTMLButtonElement>('.pill').forEach(btn => {
     btn.addEventListener('click', () => {
       container.querySelectorAll('.pill').forEach(p => p.classList.remove('pill-active'));
       btn.classList.add('pill-active');
-      if (filterKey === 'mood') activeMood = btn.dataset.value ?? '';
+      if (filterKey === 'mood')   activeMood   = btn.dataset.value ?? '';
       if (filterKey === 'artist') activeArtist = btn.dataset.value ?? '';
+      if (filterKey === 'decade') activeDecade = btn.dataset.value ?? '';
       applyFilter();
     });
   });
 }
 
-bindPills('mood-pills', 'mood');
+bindPills('mood-pills',   'mood');
 bindPills('artist-pills', 'artist');
+bindPills('decade-pills', 'decade');
+
+// Random track
+const randomBtn = document.getElementById('random-btn');
+randomBtn?.addEventListener('click', () => {
+  const items = Array.from(document.querySelectorAll<HTMLElement>('.sotd-item:not(.hidden)'));
+  if (!items.length) return;
+  const pick = items[Math.floor(Math.random() * items.length)];
+  const id = pick.dataset.id;
+  if (id) window.location.href = `/sotd/${id}`;
+});
 </script>

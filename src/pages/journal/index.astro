@@ -1,19 +1,13 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import { getLatestSotd } from '../../utils/sotd';
+import { getYouTubeId } from '../../utils/youtube';
 
 const posts = (await getCollection('journal', ({ data }) => !data.draft))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 
-const sotdEntries = await getCollection('sotd');
-const latestSotd = sotdEntries
-  .sort((a, b) => b.data.date.localeCompare(a.data.date))[0];
-
-function getYouTubeId(url: string): string | null {
-  const m = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-  return m ? m[1] : null;
-}
-
+const latestSotd = await getLatestSotd();
 const videoId = latestSotd?.data.link ? getYouTubeId(latestSotd.data.link) : null;
 ---
 
@@ -42,9 +36,9 @@ const videoId = latestSotd?.data.link ? getYouTubeId(latestSotd.data.link) : nul
         <div class="yt-wrap" data-vid={videoId}>
           <div class="yt-card" id="sotd-yt-card">
             <img
-              id="sotd-yt-thumb"
               src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
               alt={latestSotd.data.title}
+              width="480" height="360"
             />
             <div class="yt-card-play">
               <div class="yt-card-play-btn">
@@ -78,15 +72,6 @@ const videoId = latestSotd?.data.link ? getYouTubeId(latestSotd.data.link) : nul
 </BaseLayout>
 
 <style>
-body { background: var(--sky-top); }
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 40%, var(--sky-bot) 100%);
-  z-index: -2;
-  pointer-events: none;
-}
 .page-journal {
   max-width: 900px;
   margin: 0 auto;
@@ -167,9 +152,7 @@ h1 em { font-style: italic; color: var(--accent); }
 .sotd-all:hover { color: var(--accent); }
 
 /* YouTube */
-.yt-wrap {
-  width: 100%;
-}
+.yt-wrap { width: 100%; }
 .yt-card {
   position: relative;
   border-radius: 10px;

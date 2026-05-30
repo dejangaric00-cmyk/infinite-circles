@@ -1,0 +1,250 @@
+---
+// src/components/MiniPlayer.astro
+// Sticky bottom bar — shown when scrolled past the players.
+// Listens to ic:playstate events from SomaPlayer and ArchiveRadio.
+// Also listens to the soma-audio element directly for state.
+---
+
+<div class="mini-player" id="mini-player" aria-label="Mini Player" hidden>
+  <div class="mp-left">
+    <div class="mp-dot" id="mp-dot"></div>
+    <div class="mp-info">
+      <span class="mp-source" id="mp-source">soma fm</span>
+      <span class="mp-track" id="mp-track">—</span>
+    </div>
+  </div>
+  <div class="mp-controls">
+    <button class="mp-btn mp-play" id="mp-play" aria-label="Play/Pause">
+      <svg id="mp-icon-play" width="10" height="10" viewBox="0 0 12 12" fill="currentColor"><polygon points="2,1 11,6 2,11"/></svg>
+      <svg id="mp-icon-pause" width="10" height="10" viewBox="0 0 12 12" fill="currentColor" style="display:none"><rect x="1.5" y="1" width="3" height="10" rx="1"/><rect x="7.5" y="1" width="3" height="10" rx="1"/></svg>
+    </button>
+    <button class="mp-btn mp-skip" id="mp-skip" aria-label="Skip" title="Skip (Archive only)">
+      <svg width="10" height="10" viewBox="0 0 12 12" fill="currentColor"><polygon points="2,2 8,6 2,10"/><rect x="9" y="2" width="1.5" height="8" rx="0.5"/></svg>
+    </button>
+    <button class="mp-btn mp-scroll-up" id="mp-scroll-up" aria-label="Zum Player scrollen" title="Zum Player scrollen">
+      <svg width="10" height="10" viewBox="0 0 12 12" fill="currentColor"><polyline points="2,8 6,4 10,8" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<style>
+  .mini-player {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 400;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.55rem 1.25rem;
+    background: var(--glass-bg-strong, rgba(8,14,28,0.94));
+    border-top: 0.5px solid var(--border-mid, rgba(255,255,255,0.1));
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    /* slide in from bottom */
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+    opacity: 0;
+  }
+  .mini-player:not([hidden]) {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  .mini-player[hidden] {
+    display: flex !important;
+    transform: translateY(100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .mp-left {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+    flex: 1;
+  }
+  .mp-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent, #4a90d9);
+    flex-shrink: 0;
+    opacity: 0.4;
+    transition: opacity 0.3s, background 0.3s;
+  }
+  .mp-dot.playing {
+    opacity: 1;
+    animation: mp-pulse 1.8s ease-in-out infinite;
+  }
+  .mp-dot.playing.archive { background: #00ff87; }
+  @keyframes mp-pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .mp-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+  .mp-source {
+    font-family: var(--font-mono);
+    font-size: 7.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent, #4a90d9);
+    opacity: 0.7;
+  }
+  .mp-source.archive { color: #00ff87; }
+  .mp-track {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-deep, #fff);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: min(280px, 55vw);
+  }
+
+  .mp-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+  .mp-btn {
+    all: unset;
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 0.5px solid var(--border-mid, rgba(255,255,255,0.12));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim, rgba(255,255,255,0.4));
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    flex-shrink: 0;
+  }
+  .mp-btn:hover {
+    border-color: var(--accent, #4a90d9);
+    color: var(--text-deep, #fff);
+  }
+  .mp-play.playing {
+    border-color: var(--accent, #4a90d9);
+    color: var(--accent, #4a90d9);
+  }
+  .mp-skip { opacity: 0.5; }
+  .mp-skip.archive-active { opacity: 1; }
+
+  @media (max-width: 400px) {
+    .mini-player { padding: 0.5rem 0.9rem; }
+    .mp-scroll-up { display: none; }
+  }
+</style>
+
+<script>
+  const miniPlayer  = document.getElementById('mini-player')  as HTMLElement;
+  const mpDot       = document.getElementById('mp-dot')       as HTMLElement;
+  const mpSource    = document.getElementById('mp-source')    as HTMLElement;
+  const mpTrack     = document.getElementById('mp-track')     as HTMLElement;
+  const mpPlay      = document.getElementById('mp-play')      as HTMLButtonElement;
+  const mpSkip      = document.getElementById('mp-skip')      as HTMLButtonElement;
+  const mpScrollUp  = document.getElementById('mp-scroll-up') as HTMLButtonElement;
+  const mpIconPlay  = document.getElementById('mp-icon-play') as SVGElement;
+  const mpIconPause = document.getElementById('mp-icon-pause')as SVGElement;
+
+  let currentPlayer: 'soma' | 'archive' = 'soma';
+  let isPlaying = false;
+
+  // ── Show/hide based on scroll ──────────────────────────────────────────────
+  // Show when the soma-wrap + ar-wrap are scrolled out of view
+  const sentinel = document.querySelector('.soma-wrap') as HTMLElement | null;
+
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      // Only show MiniPlayer if something is actually playing
+      if (!entry.isIntersecting && isPlaying) {
+        miniPlayer.hidden = false;
+      } else {
+        miniPlayer.hidden = true;
+      }
+    },
+    { threshold: 0, rootMargin: '0px 0px -80px 0px' }
+  );
+  if (sentinel) observer.observe(sentinel);
+
+  function syncVisibility() {
+    if (!sentinel) { miniPlayer.hidden = !isPlaying; return; }
+    const rect = sentinel.getBoundingClientRect();
+    const outOfView = rect.bottom < 0 || rect.top > window.innerHeight;
+    miniPlayer.hidden = !(isPlaying && outOfView);
+  }
+  window.addEventListener('scroll', syncVisibility, { passive: true });
+
+  // ── Update MiniPlayer UI ───────────────────────────────────────────────────
+  function updateUI(player: 'soma' | 'archive', playing: boolean, track: string, artist: string) {
+    currentPlayer = player;
+    isPlaying = playing;
+
+    const isArchive = player === 'archive';
+    mpDot.classList.toggle('playing', playing);
+    mpDot.classList.toggle('archive', isArchive);
+    mpPlay.classList.toggle('playing', playing);
+    mpSkip.classList.toggle('archive-active', isArchive);
+
+    mpSource.textContent = isArchive ? 'archive.org' : 'soma fm';
+    mpSource.classList.toggle('archive', isArchive);
+
+    // Track display: prefer track name, fall back to artist
+    const label = track && track !== '—' ? track : artist;
+    mpTrack.textContent = label || '—';
+
+    mpIconPlay.style.display  = playing ? 'none'  : 'block';
+    mpIconPause.style.display = playing ? 'block' : 'none';
+
+    syncVisibility();
+  }
+
+  // ── Listen to ic:playstate events ─────────────────────────────────────────
+  window.addEventListener('ic:playstate', (e: Event) => {
+    const { player, playing, title, artist } = (e as CustomEvent).detail;
+    updateUI(player, playing, title, artist);
+  });
+
+  // ── Also poll soma audio directly (in case it was playing before MiniPlayer mounted) ──
+  function pollSoma() {
+    const somaAudio = document.getElementById('soma-audio') as HTMLAudioElement | null;
+    if (!somaAudio) return;
+    const playing = !somaAudio.paused;
+    if (playing && currentPlayer !== 'archive') {
+      const stationEl = document.getElementById('now-station') as HTMLElement | null;
+      const trackEl   = document.getElementById('soma-np-track') as HTMLElement | null;
+      updateUI('soma', true, trackEl?.textContent ?? '—', stationEl?.textContent ?? 'soma fm');
+    }
+  }
+  // Poll once after load in case soma was already playing
+  setTimeout(pollSoma, 1500);
+
+  // ── Controls ───────────────────────────────────────────────────────────────
+  mpPlay.addEventListener('click', () => {
+    if (currentPlayer === 'archive') {
+      (document.getElementById('rp-play-btn') as HTMLButtonElement | null)?.click();
+    } else {
+      (document.getElementById('play-btn') as HTMLButtonElement | null)?.click();
+    }
+  });
+
+  mpSkip.addEventListener('click', () => {
+    // Skip only makes sense for archive
+    (document.getElementById('rp-skip-btn') as HTMLButtonElement | null)?.click();
+  });
+
+  mpScrollUp.addEventListener('click', () => {
+    const target = currentPlayer === 'archive'
+      ? document.querySelector('.ar-wrap')
+      : document.querySelector('.soma-wrap');
+    target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+</script>

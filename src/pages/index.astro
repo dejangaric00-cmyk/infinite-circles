@@ -3,6 +3,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import SomaPlayer from '../components/SomaPlayer.astro';
 import ArchiveRadio from '../components/ArchiveRadio.astro';
 import UndergroundStations from '../components/UndergroundStations.astro';
+import KeyboardController from '../components/KeyboardController.astro';
+import MiniPlayer from '../components/MiniPlayer.astro';
+import LikeSidebar from '../components/LikeSidebar.astro';
+import MediaSessionController from '../components/MediaSessionController.astro';
+import { getLatestSotd } from '../utils/sotd';
+
+const latestSotd = await getLatestSotd();
 ---
 
 <BaseLayout title="Grooves & Rhythms — Infinite Circles">
@@ -21,6 +28,15 @@ import UndergroundStations from '../components/UndergroundStations.astro';
         Grooves &amp;&nbsp;<em>Rhythms.</em>
       </h1>
       <p class="hero-sub">House. Tech House. Minimal. Dub Techno.</p>
+
+      {latestSotd && (
+        <a href={`/sotd/${latestSotd.id}`} class="sotd-hero-card">
+          <span class="sotd-hero-label">· song of the day</span>
+          <span class="sotd-hero-title">{latestSotd.data.title}</span>
+          <span class="sotd-hero-artist">{latestSotd.data.artist}</span>
+          {latestSotd.data.note && <span class="sotd-hero-note">&ldquo;{latestSotd.data.note}&rdquo;</span>}
+        </a>
+      )}
     </div>
   </section>
 
@@ -31,13 +47,19 @@ import UndergroundStations from '../components/UndergroundStations.astro';
     <div class="card-label">soma fm</div>
     <SomaPlayer />
 
-    <div class="section-label" style="margin-top: 2rem;">Archive.org · Top Public</div>
+    <div class="section-label" style="margin-top: 2rem;">Archive.org · Open Radio</div>
     <ArchiveRadio />
 
   </div>
 
   <!-- UndergroundStations bringt ihr eigenes "Entdecken"-Label mit -->
   <UndergroundStations />
+
+  <!-- ══ GLOBAL UI ══════════════════════════════════════════════════════════ -->
+  <KeyboardController />
+  <MiniPlayer />
+  <LikeSidebar />
+  <MediaSessionController />
 
 </BaseLayout>
 
@@ -64,13 +86,14 @@ import UndergroundStations from '../components/UndergroundStations.astro';
     ];
 
     let t = 0;
+    let rafId = 0;
+
     const draw = () => {
       ctx.clearRect(0, 0, W, H);
       const dark  = isDark();
       const cx    = W > 768 ? W * 0.72 : W * 0.5;
       const cy    = H * 0.32;
       const base  = Math.min(W, H);
-      // Light: subtle weiß, Dark: zartes Blau-Weiß, etwas heller
       const ringAlpha = dark ? 0.13 : 0.14;
       const dotColor  = dark ? '180,215,255' : '255,255,255';
       const trailColor= dark ? '160,200,255' : '255,255,255';
@@ -79,7 +102,6 @@ import UndergroundStations from '../components/UndergroundStations.astro';
       for (const ring of rings) {
         const r = base * ring.rf;
 
-        // Ring
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, Math.PI * 2);
         ctx.strokeStyle = dark
@@ -88,7 +110,6 @@ import UndergroundStations from '../components/UndergroundStations.astro';
         ctx.lineWidth = 0.7;
         ctx.stroke();
 
-        // Glowing dot
         const angle = t * ring.speed + ring.offset;
         const dx = cx + Math.cos(angle) * r;
         const dy = cy + Math.sin(angle) * r;
@@ -102,7 +123,6 @@ import UndergroundStations from '../components/UndergroundStations.astro';
         ctx.arc(dx, dy, dotR, 0, Math.PI * 2);
         ctx.fill();
 
-        // Trail
         const trailLen   = Math.PI * 0.32;
         const trailStart = angle - trailLen;
         const trail = ctx.createLinearGradient(
@@ -118,10 +138,27 @@ import UndergroundStations from '../components/UndergroundStations.astro';
       }
 
       t++;
-      requestAnimationFrame(draw);
+      rafId = requestAnimationFrame(draw);
     };
-    draw();
+
+    // Pause rAF when tab is hidden to save CPU/GPU
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        cancelAnimationFrame(rafId);
+      } else {
+        rafId = requestAnimationFrame(draw);
+      }
+    });
+
+    rafId = requestAnimationFrame(draw);
   }
+
+  // ── ic:play-liked → forward to ArchiveRadio rpJumpTo ─────────────────────
+  window.addEventListener('ic:play-liked', (e: Event) => {
+    const doc = (e as CustomEvent).detail;
+    const fn = (window as any).__icArchiveJumpTo;
+    if (typeof fn === 'function') fn(doc);
+  });
 </script>
 
 <style>
@@ -176,7 +213,56 @@ import UndergroundStations from '../components/UndergroundStations.astro';
     font-size: 0.72rem;
     letter-spacing: 0.08em;
     color: var(--text-dim);
-    margin: 0;
+    margin: 0 0 1.5rem;
+  }
+
+  .sotd-hero-card {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 3px;
+    text-decoration: none;
+    padding: 0.75rem 1.1rem;
+    border: 0.5px solid var(--glass-border);
+    border-radius: 10px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: border-color 0.15s, background 0.15s;
+    max-width: 360px;
+  }
+  .sotd-hero-card:hover {
+    border-color: var(--accent);
+    background: var(--glass-bg-strong);
+  }
+  .sotd-hero-label {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.8;
+  }
+  .sotd-hero-title {
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    font-weight: 300;
+    color: var(--text-deep);
+    line-height: 1.2;
+  }
+  .sotd-hero-artist {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.7;
+  }
+  .sotd-hero-note {
+    font-family: var(--font-serif);
+    font-size: 0.85rem;
+    font-style: italic;
+    color: var(--text-dim);
+    margin-top: 2px;
   }
 
   /* ── Content ── */
