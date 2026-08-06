@@ -1,0 +1,141 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getSortedSotd } from '../utils/sotd';
+import { relativeDayLabel } from '../utils/date';
+
+// Offer a way onward instead of a dead end.
+const latest = (await getSortedSotd())[0] ?? null;
+---
+
+<BaseLayout
+  title="Nicht gefunden — Infinite Circles"
+  description="Diese Seite gibt es nicht."
+  noindex={true}
+>
+  <main class="nf-wrap">
+
+    <div class="nf-eyebrow">Fehler 404</div>
+
+    <h1 class="nf-title">Hier ist<br><em>nichts.</em></h1>
+
+    <p class="nf-text">
+      Die Seite gibt es nicht &mdash; oder nicht mehr.
+      Vielleicht ein Tippfehler in der Adresse.
+    </p>
+
+    <div class="nf-links">
+      <a href="/">Zur Startseite</a>
+      <a href="/sotd">Song of the Day</a>
+      <a href="/now">Now</a>
+      <a href="/about">Über mich</a>
+    </div>
+
+    {latest && (
+      <a href={`/sotd/${latest.id}`} class="nf-latest">
+        <span class="nf-latest-label" data-rel-date={latest.data.date}>
+          {relativeDayLabel(latest.data.date)}
+        </span>
+        <span class="nf-latest-title">{latest.data.title}</span>
+        <span class="nf-latest-artist">{latest.data.artist}</span>
+      </a>
+    )}
+
+  </main>
+</BaseLayout>
+
+<style>
+  .nf-wrap {
+    max-width: 680px;
+    margin: 6rem auto;
+    padding: 0 2rem;
+    text-align: center;
+  }
+
+  .nf-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 2rem;
+  }
+
+  .nf-title {
+    font-family: var(--font-serif);
+    font-size: clamp(48px, 6vw, 80px);
+    font-weight: 300;
+    line-height: 1.05;
+    color: var(--text-deep);
+    margin-bottom: 1.5rem;
+  }
+  .nf-title em { font-style: italic; color: var(--accent); }
+
+  .nf-text {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    line-height: 1.8;
+    color: var(--text-mid);
+    margin-bottom: 2.5rem;
+  }
+
+  .nf-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 3rem;
+  }
+  .nf-links a {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: .08em;
+    text-decoration: none;
+    color: var(--text-mid);
+    padding: 0.45rem 0.9rem;
+    border: 1px solid var(--border-mid);
+    border-radius: 999px;
+    background: var(--glass-bg);
+    transition: var(--t);
+  }
+  .nf-links a:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .nf-latest {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    text-decoration: none;
+    padding: 1.1rem 1.6rem;
+    border: 1px solid var(--border-mid);
+    border-radius: 4px;
+    background: var(--glass-bg);
+    transition: var(--t);
+  }
+  .nf-latest:hover { border-color: var(--accent); }
+
+  .nf-latest-label {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.7;
+  }
+  .nf-latest-title {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 300;
+    color: var(--text-deep);
+  }
+  .nf-latest-artist {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--text-dim);
+  }
+
+  @media (max-width: 600px) {
+    .nf-wrap { margin: 3.5rem auto; }
+  }
+</style>

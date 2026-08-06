@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getSortedSotd } from '../../utils/sotd';
 import { getYouTubeId } from '../../utils/youtube';
 import { getMoodColor } from '../../utils/mood';
+import { relativeDayLabel } from '../../utils/date';
 
 const sorted = await getSortedSotd();
 
@@ -10,24 +11,34 @@ const moods = [...new Set(sorted.map(e => e.data.mood).filter(Boolean))].sort() 
 const artists = [...new Set(sorted.map(e => e.data.artist))].sort();
 const decades = [...new Set(sorted.map(e => e.data.year).filter(Boolean).map(y => `${Math.floor(y! / 10) * 10}s`))].sort();
 
+// Computed in frontmatter — no IIFE in template
+const years = sorted.map(e => e.data.year).filter(Boolean) as number[];
+const yearRange = years.length > 0 ? `${Math.min(...years)}–${Math.max(...years)}` : '';
+const uniqueLabels = [...new Set(sorted.map(e => e.data.label).filter(Boolean))].length;
+
 // Gruppierung nach Monat
 type SotdEntry = typeof sorted[0];
 const grouped = sorted.reduce<Record<string, SotdEntry[]>>((acc, entry) => {
-  const d = new Date(entry.data.date);
-  const key = d.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+  // Explicit UTC parsing to avoid timezone off-by-one
+  const [y, m] = entry.data.date.split('-').map(Number);
+  const key = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('de-DE', { month: 'long', year: 'numeric', timeZone: 'UTC' });
   if (!acc[key]) acc[key] = [];
   acc[key].push(entry);
   return acc;
 }, {});
 ---
 
-<BaseLayout title="Song of the Day — Infinite Circles" description="Every day a song.">
+<BaseLayout title="Song of the Day — Infinite Circles" description="Jeden Tag ein Song.">
 <div class="page-sotd">
 
   <section class="sotd-header reveal">
     <div class="section-label">Song of the Day</div>
-    <h1>One song,<br><em>every day.</em></h1>
-    <p class="header-desc">{sorted.length} tracks &middot; {[...new Set(sorted.map(e => e.data.label).filter(Boolean))].length} labels &middot; {(() => { const years = sorted.map(e => e.data.year).filter(Boolean) as number[]; return years.length > 0 ? `${Math.min(...years)}–${Math.max(...years)}` : ''; })()}</p>
+    <h1>Ein Song,<br><em>jeden Tag.</em></h1>
+    <p class="header-desc">
+      {sorted.length} Tracks
+      {uniqueLabels > 0 && <>&middot; {uniqueLabels} Labels</>}
+      {yearRange && <>&middot; {yearRange}</>}
+    </p>
     <button class="random-btn" id="random-btn">Zufälliger Track ↝</button>
   </section>
 
@@ -40,7 +51,7 @@ const grouped = sorted.reduce<Record<string, SotdEntry[]>>((acc, entry) => {
       <div class="featured reveal" style="transition-delay:.05s">
         <div class="featured-inner">
           <div class="featured-info">
-            <div class="featured-eyebrow">Heute</div>
+            <div class="featured-eyebrow" data-rel-date={latest.data.date}>{relativeDayLabel(latest.data.date)}</div>
             <a href={`/sotd/${latest.id}`} class="featured-title-link">
               <div class="featured-title">{latest.data.title} · {latest.data.artist}</div>
             </a>
@@ -166,7 +177,7 @@ const grouped = sorted.reduce<Record<string, SotdEntry[]>>((acc, entry) => {
 </div>
 </BaseLayout>
 
-<style is:global>
+<style>
 .page-sotd {
   max-width: 900px;
   margin: 0 auto;
@@ -219,47 +230,34 @@ h1 em { font-style: italic; color: var(--accent); }
 /* FEATURED */
 .featured { margin-bottom: 2.5rem; }
 .featured-inner {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  padding: 2rem 0;
-  border-bottom: 0.5px solid var(--border-light);
+  display: flex; flex-direction: column; gap: 1.25rem;
+  padding: 2rem 0; border-bottom: 0.5px solid var(--border-light);
 }
 .featured-video { width: 100%; }
 .featured-thumb {
-  position: relative;
-  border-radius: 10px;
-  overflow: hidden;
-  cursor: pointer;
-  background: #000;
-  aspect-ratio: 16/9;
-  border: 0.5px solid var(--glass-border);
+  position: relative; border-radius: 10px; overflow: hidden; cursor: pointer;
+  background: #000; aspect-ratio: 16/9; border: 0.5px solid var(--glass-border);
 }
 .featured-thumb img {
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
-  object-fit: cover;
-  transition: opacity .25s;
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; transition: opacity .25s;
 }
 .featured-thumb:hover img { opacity: .7; }
 .featured-play {
   position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  pointer-events: none;
+  display: flex; align-items: center; justify-content: center; pointer-events: none;
 }
 .featured-play-btn {
   width: 52px; height: 52px; border-radius: 50%;
   background: rgba(255,255,255,.92);
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 4px 20px rgba(0,0,0,.3);
-  transition: transform .15s;
+  box-shadow: 0 4px 20px rgba(0,0,0,.3); transition: transform .15s;
 }
 .featured-thumb:hover .featured-play-btn { transform: scale(1.08); }
 .featured-play-tri {
   width: 0; height: 0; border-style: solid;
   border-width: 9px 0 9px 16px;
-  border-color: transparent transparent transparent #111;
-  margin-left: 3px;
+  border-color: transparent transparent transparent #111; margin-left: 3px;
 }
 .featured-player { display: none; width: 100%; border-radius: 10px; overflow: hidden; background: #000; }
 .featured-player.open { display: block; }
@@ -324,8 +322,6 @@ h1 em { font-style: italic; color: var(--accent); }
   font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
   color: var(--text-dim); margin-bottom: .75rem;
 }
-
-/* Thumbnail — mqdefault (320×180) on list, saves ~60% vs hqdefault */
 .yt-thumb-link { display: block; text-decoration: none; }
 .yt-thumb {
   position: relative; border-radius: 8px; overflow: hidden; cursor: pointer;
@@ -350,8 +346,6 @@ h1 em { font-style: italic; color: var(--accent); }
   width: 0; height: 0; border-style: solid; border-width: 6px 0 6px 11px;
   border-color: transparent transparent transparent #1a1a1a; margin-left: 2px;
 }
-
-/* Info */
 .sotd-title-link { text-decoration: none; }
 .sotd-item-title {
   font-family: var(--font-serif); font-size: 26px; font-weight: 300;
@@ -381,9 +375,6 @@ h1 em { font-style: italic; color: var(--accent); }
   color: var(--text-dim); letter-spacing: .06em; text-align: center;
 }
 
-.reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
-.reveal.in { opacity: 1; transform: translateY(0); }
-
 @media (max-width: 768px) {
   .page-sotd { padding: 0 1.5rem; }
   .sotd-header { padding: 3rem 0 2.5rem; }
@@ -399,7 +390,6 @@ const observer = new IntersectionObserver(
 );
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-// Featured player — video ID kommt aus data-vid
 const featuredThumb = document.getElementById('featured-thumb') as HTMLElement | null;
 const featuredPlayer = document.getElementById('featured-player') as HTMLElement | null;
 featuredThumb?.addEventListener('click', () => {
@@ -413,7 +403,6 @@ featuredThumb?.addEventListener('click', () => {
   featuredThumb.style.display = 'none';
 });
 
-// Filter logic
 let activeMood = '';
 let activeArtist = '';
 let activeDecade = '';
@@ -426,19 +415,14 @@ function applyFilter() {
     const mood   = item.dataset.mood   ?? '';
     const artist = item.dataset.artist ?? '';
     const decade = item.dataset.decade ?? '';
-    const moodMatch   = !activeMood   || mood   === activeMood;
-    const artistMatch = !activeArtist || artist === activeArtist;
-    const decadeMatch = !activeDecade || decade === activeDecade;
-    if (moodMatch && artistMatch && decadeMatch) {
-      item.classList.remove('hidden');
-      visible++;
-    } else {
-      item.classList.add('hidden');
-    }
+    const ok = (!activeMood || mood === activeMood)
+            && (!activeArtist || artist === activeArtist)
+            && (!activeDecade || decade === activeDecade);
+    item.classList.toggle('hidden', !ok);
+    if (ok) visible++;
   });
   groups.forEach(group => {
-    const hasVisible = group.querySelector('.sotd-item:not(.hidden)');
-    group.style.display = hasVisible ? '' : 'none';
+    group.style.display = group.querySelector('.sotd-item:not(.hidden)') ? '' : 'none';
   });
   const noResults = document.getElementById('no-results');
   if (noResults) noResults.style.display = visible === 0 ? 'block' : 'none';
@@ -462,7 +446,6 @@ bindPills('mood-pills',   'mood');
 bindPills('artist-pills', 'artist');
 bindPills('decade-pills', 'decade');
 
-// Random track
 const randomBtn = document.getElementById('random-btn');
 randomBtn?.addEventListener('click', () => {
   const items = Array.from(document.querySelectorAll<HTMLElement>('.sotd-item:not(.hidden)'));

@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getSortedSotd } from '../utils/sotd';
 import { getMoodDot } from '../utils/mood';
+import { relativeDayLabel } from '../utils/date';
 
 const sorted = await getSortedSotd();
 const latest = sorted[0];
@@ -16,13 +17,18 @@ const yearRange = years.length > 0 ? Math.min(...years) + '–' + Math.max(...ye
 const NOW_UPDATED = '2026-04-01';
 ---
 
-<BaseLayout title="Now – Infinite Circles">
+<BaseLayout
+  title="Now — Infinite Circles"
+  description="Woran ich gerade bin: Musik, Projekte, Pläne. Manuell gepflegt."
+>
 <div class="now-wrap">
 
   <header class="now-header">
     <div class="now-eyebrow">Now — Dejan</div>
     <h1 class="now-title">Now.</h1>
-    <p class="now-location" id="updated-line">Hannover</p>
+    <p class="now-location">
+      Zuletzt aktualisiert <span data-rel-date={NOW_UPDATED}>{relativeDayLabel(NOW_UPDATED)}</span> &middot; Hannover
+    </p>
   </header>
 
   <section class="now-section">
@@ -37,7 +43,7 @@ const NOW_UPDATED = '2026-04-01';
 
     {latest && (
       <a href={`/sotd/${latest.id}`} class="now-latest-track">
-        <div class="nlt-label">heute</div>
+        <div class="nlt-label" data-rel-date={latest.data.date}>{relativeDayLabel(latest.data.date)}</div>
         <div class="nlt-title">{latest.data.title}</div>
         <div class="nlt-artist">{latest.data.artist}</div>
         {latest.data.note && <div class="nlt-note">{latest.data.note}</div>}
@@ -309,15 +315,4 @@ html.dark .now-title {
 }
 </style>
 
-<script define:vars={{ NOW_UPDATED }}>
-const el = document.getElementById('updated-line');
-if (el) {
-  const updated = new Date(NOW_UPDATED);
-  const now = new Date();
-  const days = Math.floor((now.getTime() - updated.getTime()) / (1000*60*60*24));
-  const rel = days === 0 ? 'heute' : days === 1 ? 'gestern' : days < 7 ? `vor ${days} Tagen` : days < 14 ? 'vor einer Woche' : days < 30 ? `vor ${Math.floor(days/7)} Wochen` : `vor ${Math.floor(days/30)} Monaten`;
-  el.textContent = `Zuletzt aktualisiert ${rel} · Hannover`;
-}
-
-
-</script>
+<!-- Relative date labels are refreshed client-side by BaseLayout (see [data-rel-date]). -->
