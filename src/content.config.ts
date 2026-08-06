@@ -26,6 +26,9 @@ const sotd = defineCollection({
     label: z.string().optional(),
     note: z.string().optional(),
     tags: z.array(z.string()).optional(),
+    // Same escape hatch as the journal collection: keep an entry in the repo
+    // without publishing it. Filtered out centrally in utils/sotd.ts.
+    draft: z.boolean().optional().default(false),
   }),
 });
 

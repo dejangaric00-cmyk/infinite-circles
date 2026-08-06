@@ -5,7 +5,7 @@ import { getCollection } from 'astro:content';
  * Single source of truth — avoids repeated getCollection + sort across pages.
  */
 export async function getSortedSotd() {
-  const entries = await getCollection('sotd');
+  const entries = await getCollection('sotd', ({ data }) => !data.draft);
   return entries.sort((a, b) => b.data.date.localeCompare(a.data.date));
 }
 
