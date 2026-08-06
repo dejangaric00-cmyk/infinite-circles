@@ -29,16 +29,22 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
     # CSP: self, Google Fonts, YouTube embeds, SomaFM, Archive.org. No analytics.
-    # NOTE: archive.org/download/* redirects to ia######.us.archive.org — CSP still
-    # host-matches redirect targets, so the *.archive.org wildcard is required or the
-    # Archive player breaks. Same reason SomaFM needs *.somafm.com (ice4.somafm.com).
+    #
+    # media-src is deliberately 'self' https: and not a host list. Radio stations
+    # redirect to geo-balanced edge nodes with generated hostnames — NTS resolves to
+    # audio-edge-<random>.<region>.h.radiomast.io, and that name changes. CSP
+    # host-matches redirect targets, so any whitelist here silently kills streams
+    # whenever a provider reshuffles its CDN. https: still blocks plaintext http.
+    #
+    # img-src/connect-src stay narrow: archive.org/download/* redirects to
+    # ia######.us.archive.org, hence the *.archive.org wildcard.
     Content-Security-Policy = """\
       default-src 'self'; \
       script-src 'self' 'unsafe-inline'; \
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; \
       font-src 'self' https://fonts.gstatic.com; \
       img-src 'self' data: https://img.youtube.com https://i.ytimg.com https://*.somafm.com https://somafm.com https://archive.org https://*.archive.org; \
-      media-src 'self' https://*.somafm.com https://somafm.com https://archive.org https://*.archive.org https://stream-relay-geo.ntslive.net https://streams.radiomast.io https://stream.friskyradio.com https://streamer.radio.co https://stream.radiojuicy.de https://worldwidefm.out.airtime.pro; \
+      media-src 'self' https:; \
       frame-src https://www.youtube.com https://www.youtube-nocookie.com https://archive.org; \
       connect-src 'self' https://somafm.com https://*.somafm.com https://archive.org https://*.archive.org; \
       base-uri 'self'; \
