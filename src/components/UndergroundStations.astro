@@ -52,17 +52,6 @@ const playable: PlayableStation[] = [
   },
   {
     type: 'playable',
-    id: 'fnoob',
-    name: 'Fnoob Techno',
-    city: 'UK',
-    flag: '🇬🇧',
-    genre: ['Techno', 'Dark', 'Underground'],
-    url: 'https://streams.radiomast.io/8846a94e-9874-4692-a1a0-ec7aadbe2771',
-    site: 'https://fnoob.com',
-    color: '#7b2fff',
-  },
-  {
-    type: 'playable',
     id: 'frisky',
     name: 'Frisky Radio',
     city: 'Internet',
@@ -72,42 +61,64 @@ const playable: PlayableStation[] = [
     site: 'https://www.friskyradio.com',
     color: '#6c35de',
   },
+];
+
+// Vier Stationen ohne funktionierenden Direktstream (geprüft 2026-08-07).
+// Als Link-Karte statt Play-Button, damit kein Button erscheint, der sicher
+// scheitert. Zurück nach `playable` schieben, sobald eine URL feststeht —
+// dazu Station-Website öffnen, DevTools → Network → Media, URL kopieren.
+const brokenStreams: LinkStation[] = [
   {
-    type: 'playable',
+    type: 'link',
+    id: 'fnoob',
+    name: 'Fnoob Techno',
+    city: 'UK',
+    flag: '🇬🇧',
+    genre: ['Techno', 'Dark', 'Underground'],
+    site: 'https://fnoob.com',
+    color: '#7b2fff',
+    // Stream-ID auf radiomast.io liefert 404 — Kennung wurde neu vergeben.
+    desc: 'Techno rund um die Uhr aus UK. Direktstream zurzeit nicht erreichbar.',
+  },
+  {
+    type: 'link',
     id: 'thelot',
     name: 'The Lot Radio',
     city: 'New York',
     flag: '🇺🇸',
     genre: ['House', 'Techno', 'Eclectic'],
-    url: 'https://streamer.radio.co/s4e3436b87/listen',
     site: 'https://www.thelotradio.com',
     color: '#f5a623',
+    // radio.co antwortet mit 403 — vermutlich Referer- oder User-Agent-Filter.
+    desc: 'Aus einem umgebauten Schiffscontainer in Greenpoint, Brooklyn. Direktstream blockt externe Abrufe.',
   },
   {
-    type: 'playable',
+    type: 'link',
     id: 'radiojuicy',
     name: 'Radio Juicy',
     city: 'Berlin',
     flag: '🇩🇪',
     genre: ['Lo-Fi', 'Beats', 'Hip-Hop'],
-    url: 'https://stream.radiojuicy.de/radiojuicy',
     site: 'https://www.radiojuicy.com',
     color: '#e91e8c',
+    desc: 'Lo-Fi und Beats aus Berlin. Streamserver antwortet nicht mehr.',
   },
   {
-    type: 'playable',
+    type: 'link',
     id: 'worldwidefm',
     name: 'Worldwide FM',
     city: 'London',
     flag: '🇬🇧',
     genre: ['Global', 'Soul', 'Electronic'],
-    url: 'https://worldwidefm.out.airtime.pro/worldwidefm_a',
     site: 'https://worldwidefm.net',
     color: '#00bcd4',
+    // Station sendet weiter, nur der alte airtime.pro-Endpunkt ist tot.
+    desc: 'Gilles Petersons Sender für Global Sounds. Sendet weiter, alter Stream-Endpunkt abgeschaltet.',
   },
 ];
 
 const linkOnly: LinkStation[] = [
+  ...brokenStreams,
   {
     type: 'link',
     id: 'aaja',
