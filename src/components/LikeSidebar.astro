@@ -29,7 +29,6 @@
 <div class="like-backdrop" id="like-backdrop" hidden></div>
 
 <style>
-  /* ── Toggle button ── */
   .like-toggle {
     position: fixed;
     bottom: 1.25rem;
@@ -49,217 +48,80 @@
     -webkit-backdrop-filter: blur(8px);
     transition: border-color 0.15s, background 0.15s;
   }
-  .like-toggle:hover {
-    border-color: #ff6ef7;
-    background: var(--glass-bg-strong, rgba(10,18,35,0.85));
-  }
-  .like-toggle-icon {
-    font-size: 0.7rem;
-    color: var(--text-dim, rgba(255,255,255,0.35));
-    line-height: 1;
-    transition: color 0.15s;
-  }
+  .like-toggle:hover { border-color: #ff6ef7; background: var(--glass-bg-strong, rgba(10,18,35,0.85)); }
+  .like-toggle-icon { font-size: 0.7rem; color: var(--text-dim, rgba(255,255,255,0.35)); line-height: 1; transition: color 0.15s; }
   .like-toggle:hover .like-toggle-icon { color: #ff6ef7; }
   .like-toggle.has-likes .like-toggle-icon { color: #ff6ef7; }
-  .like-toggle-count {
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    color: #ff6ef7;
-    line-height: 1;
-  }
+  .like-toggle-count { font-family: var(--font-mono); font-size: 0.62rem; color: #ff6ef7; line-height: 1; }
 
-  /* ── Backdrop ── */
   .like-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 600;
+    position: fixed; inset: 0; z-index: 600;
     background: rgba(0,0,0,0.3);
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
-    opacity: 0;
-    transition: opacity 0.25s ease;
-    pointer-events: none;
+    backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+    opacity: 0; transition: opacity 0.25s ease; pointer-events: none;
   }
-  .like-backdrop:not([hidden]) {
-    opacity: 1;
-    pointer-events: auto;
-  }
-  .like-backdrop[hidden] {
-    display: block !important;
-    opacity: 0;
-    pointer-events: none;
-  }
+  .like-backdrop:not([hidden]) { opacity: 1; pointer-events: auto; }
+  .like-backdrop[hidden] { display: block !important; opacity: 0; pointer-events: none; }
 
-  /* ── Sidebar ── */
   .like-sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    z-index: 700;
-    width: 280px;
-    max-width: 85vw;
-    display: flex;
-    flex-direction: column;
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 700;
+    width: 280px; max-width: 85vw;
+    display: flex; flex-direction: column;
     background: var(--glass-bg-strong, rgba(8,14,28,0.97));
     border-right: 0.5px solid var(--border-mid, rgba(255,255,255,0.1));
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
     transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .like-sidebar:not([hidden]) {
-    transform: translateX(0);
-  }
-  .like-sidebar[hidden] {
-    display: flex !important;
-    transform: translateX(-100%);
-    pointer-events: none;
-  }
+  .like-sidebar:not([hidden]) { transform: translateX(0); }
+  .like-sidebar[hidden] { display: flex !important; transform: translateX(-100%); pointer-events: none; }
 
   .ls-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between;
     padding: 1rem 1rem 0.75rem;
     border-bottom: 0.5px solid var(--border-mid, rgba(255,255,255,0.08));
     flex-shrink: 0;
   }
-  .ls-title {
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: #ff6ef7;
-  }
-  .ls-close {
-    all: unset;
-    cursor: pointer;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    color: var(--text-dim, rgba(255,255,255,0.4));
-    padding: 2px 4px;
-    border-radius: 4px;
-    transition: color 0.15s;
-  }
+  .ls-title { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color: #ff6ef7; }
+  .ls-close { all: unset; cursor: pointer; font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-dim, rgba(255,255,255,0.4)); padding: 2px 4px; border-radius: 4px; transition: color 0.15s; }
   .ls-close:hover { color: var(--text-deep, #fff); }
 
-  .ls-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0.75rem 0;
-  }
-  .ls-empty {
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    color: var(--text-dim, rgba(255,255,255,0.3));
-    line-height: 1.7;
-    text-align: center;
-    padding: 2rem 1rem;
-    margin: 0;
-  }
-  .ls-items {
-    display: flex;
-    flex-direction: column;
-  }
+  .ls-body { flex: 1; overflow-y: auto; padding: 0.75rem 0; }
+  .ls-empty { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-dim, rgba(255,255,255,0.3)); line-height: 1.7; text-align: center; padding: 2rem 1rem; margin: 0; }
+  .ls-items { display: flex; flex-direction: column; }
 
-  .ls-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.55rem 1rem;
-    cursor: pointer;
-    transition: background 0.12s;
-    border-bottom: 0.5px solid var(--border-mid, rgba(255,255,255,0.06));
-  }
+  .ls-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 1rem; cursor: pointer; transition: background 0.12s; border-bottom: 0.5px solid var(--border-mid, rgba(255,255,255,0.06)); }
   .ls-item:last-child { border-bottom: none; }
   .ls-item:hover { background: rgba(255,110,247,0.06); }
 
-  .ls-item-play {
-    all: unset;
-    cursor: pointer;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    border: 0.5px solid rgba(255,110,247,0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    color: #ff6ef7;
-    font-size: 0.5rem;
-    transition: background 0.12s, border-color 0.12s;
-  }
+  .ls-item-play { all: unset; cursor: pointer; width: 22px; height: 22px; border-radius: 50%; border: 0.5px solid rgba(255,110,247,0.3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #ff6ef7; font-size: 0.5rem; transition: background 0.12s, border-color 0.12s; }
   .ls-item-play:hover { background: rgba(255,110,247,0.15); border-color: #ff6ef7; }
 
-  .ls-item-info {
-    flex: 1;
-    min-width: 0;
-  }
-  .ls-item-title {
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    color: var(--text-deep, #fff);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.4;
-  }
-  .ls-item-artist {
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    color: var(--text-dim, rgba(255,255,255,0.4));
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.3;
-  }
+  .ls-item-info { flex: 1; min-width: 0; }
+  .ls-item-title { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-deep, #fff); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; }
+  .ls-item-artist { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-dim, rgba(255,255,255,0.4)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
 
-  .ls-item-remove {
-    all: unset;
-    cursor: pointer;
-    font-size: 0.65rem;
-    color: var(--text-dim, rgba(255,255,255,0.25));
-    padding: 2px 4px;
-    border-radius: 3px;
-    flex-shrink: 0;
-    line-height: 1;
-    transition: color 0.12s;
-  }
+  .ls-item-remove { all: unset; cursor: pointer; font-size: 0.65rem; color: var(--text-dim, rgba(255,255,255,0.25)); padding: 2px 4px; border-radius: 3px; flex-shrink: 0; line-height: 1; transition: color 0.12s; }
   .ls-item-remove:hover { color: #ff6ef7; }
 
-  .ls-footer {
-    padding: 0.6rem 1rem;
-    border-top: 0.5px solid var(--border-mid, rgba(255,255,255,0.08));
-    flex-shrink: 0;
-  }
-  .ls-clear {
-    all: unset;
-    cursor: pointer;
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    letter-spacing: 0.06em;
-    color: var(--text-dim, rgba(255,255,255,0.3));
-    transition: color 0.15s;
-  }
+  .ls-footer { padding: 0.6rem 1rem; border-top: 0.5px solid var(--border-mid, rgba(255,255,255,0.08)); flex-shrink: 0; }
+  .ls-clear { all: unset; cursor: pointer; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.06em; color: var(--text-dim, rgba(255,255,255,0.3)); transition: color 0.15s; }
   .ls-clear:hover { color: #ff6ef7; }
 
-  @media (max-width: 400px) {
-    .like-toggle { bottom: 0.75rem; left: 0.75rem; }
-  }
+  @media (max-width: 400px) { .like-toggle { bottom: 0.75rem; left: 0.75rem; } }
 </style>
 
 <script>
   const RP_SK = 'ic_rp_liked_v2';
 
-  const sidebar    = document.getElementById('like-sidebar')  as HTMLElement;
-  const backdrop   = document.getElementById('like-backdrop') as HTMLElement;
-  const toggle     = document.getElementById('like-toggle')   as HTMLButtonElement;
-  const closeBtn   = document.getElementById('ls-close')      as HTMLButtonElement;
-  const clearBtn   = document.getElementById('ls-clear')      as HTMLButtonElement;
-  const itemsEl    = document.getElementById('ls-items')      as HTMLElement;
-  const emptyEl    = document.getElementById('ls-empty')      as HTMLElement;
-  const countEl    = document.getElementById('like-count')    as HTMLElement;
+  const sidebar  = document.getElementById('like-sidebar')  as HTMLElement;
+  const backdrop = document.getElementById('like-backdrop') as HTMLElement;
+  const toggle   = document.getElementById('like-toggle')   as HTMLButtonElement;
+  const closeBtn = document.getElementById('ls-close')      as HTMLButtonElement;
+  const clearBtn = document.getElementById('ls-clear')      as HTMLButtonElement;
+  const itemsEl  = document.getElementById('ls-items')      as HTMLElement;
+  const emptyEl  = document.getElementById('ls-empty')      as HTMLElement;
+  const countEl  = document.getElementById('like-count')    as HTMLElement;
 
   function loadLiked(): any[] {
     try { return JSON.parse(localStorage.getItem(RP_SK) || '[]'); } catch { return []; }
@@ -275,95 +137,82 @@
     return `${Math.floor(h / 24)}d`;
   }
 
-  function openSidebar() {
-    sidebar.hidden = false;
-    backdrop.hidden = false;
-    render();
-    closeBtn.focus();
-  }
-  function closeSidebar() {
-    sidebar.hidden = true;
-    backdrop.hidden = true;
-    toggle.focus();
-  }
+  function openSidebar()  { sidebar.hidden = false; backdrop.hidden = false; render(); closeBtn.focus(); }
+  function closeSidebar() { sidebar.hidden = true;  backdrop.hidden = true;  toggle.focus(); }
 
   toggle.addEventListener('click', () => sidebar.hidden ? openSidebar() : closeSidebar());
   closeBtn.addEventListener('click', closeSidebar);
   backdrop.addEventListener('click', closeSidebar);
+  clearBtn.addEventListener('click', () => { saveLiked([]); render(); updateBadge(); });
 
-  clearBtn.addEventListener('click', () => {
-    saveLiked([]);
-    render();
-    updateBadge();
-  });
-
-  // ── Render list ───────────────────────────────────────────────────────────
+  // ── XSS-safe DOM rendering (no innerHTML with user data) ──────────────────
   function render() {
     const liked = loadLiked();
-    if (!liked.length) {
-      emptyEl.style.display = 'block';
-      itemsEl.innerHTML = '';
-      return;
-    }
-    emptyEl.style.display = 'none';
-    itemsEl.innerHTML = liked.map((x: any, i: number) => `
-      <div class="ls-item" data-idx="${i}">
-        <button class="ls-item-play" data-id="${x.id}" data-title="${x.title}" data-artist="${x.artist || ''}" aria-label="Play">▶</button>
-        <div class="ls-item-info">
-          <div class="ls-item-title">${x.title.length > 32 ? x.title.slice(0, 32) + '…' : x.title}</div>
-          <div class="ls-item-artist">${x.artist ? x.artist.slice(0, 24) : 'Archive.org'} · ${fmtAgo(x.ts)}</div>
-        </div>
-        <button class="ls-item-remove" data-id="${x.id}" aria-label="Entfernen">✕</button>
-      </div>
-    `).join('');
+    emptyEl.style.display = liked.length ? 'none' : 'block';
+    itemsEl.innerHTML = '';
+    if (!liked.length) return;
 
-    itemsEl.querySelectorAll<HTMLButtonElement>('.ls-item-play').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+    liked.forEach((x: any) => {
+      const row = document.createElement('div');
+      row.className = 'ls-item';
+
+      const playBtn = document.createElement('button');
+      playBtn.className = 'ls-item-play';
+      playBtn.setAttribute('aria-label', 'Play');
+      playBtn.textContent = '▶';
+      playBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         window.dispatchEvent(new CustomEvent('ic:play-liked', {
-          detail: { identifier: btn.dataset.id, title: btn.dataset.title, creator: btn.dataset.artist }
+          detail: { identifier: x.id, title: x.title, creator: x.artist || '' }
         }));
         closeSidebar();
       });
-    });
 
-    itemsEl.querySelectorAll<HTMLButtonElement>('.ls-item-remove').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      const info = document.createElement('div');
+      info.className = 'ls-item-info';
+
+      const titleEl = document.createElement('div');
+      titleEl.className = 'ls-item-title';
+      // textContent auto-escapes — safe against XSS
+      titleEl.textContent = x.title.length > 32 ? x.title.slice(0, 32) + '…' : x.title;
+
+      const artistEl = document.createElement('div');
+      artistEl.className = 'ls-item-artist';
+      artistEl.textContent = `${x.artist ? x.artist.slice(0, 24) : 'Archive.org'} · ${fmtAgo(x.ts)}`;
+
+      info.append(titleEl, artistEl);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'ls-item-remove';
+      removeBtn.setAttribute('aria-label', 'Entfernen');
+      removeBtn.textContent = '✕';
+      removeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const liked = loadLiked();
-        const idx = liked.findIndex((x: any) => x.id === btn.dataset.id);
-        if (idx >= 0) liked.splice(idx, 1);
-        saveLiked(liked);
+        const current = loadLiked();
+        const idx = current.findIndex((item: any) => item.id === x.id);
+        if (idx >= 0) current.splice(idx, 1);
+        saveLiked(current);
         render();
         updateBadge();
       });
+
+      row.append(playBtn, info, removeBtn);
+      itemsEl.appendChild(row);
     });
   }
 
-  // ── Badge ─────────────────────────────────────────────────────────────────
+  // ── Badge ──────────────────────────────────────────────────────────────────
   function updateBadge() {
     const count = loadLiked().length;
-    if (count > 0) {
-      countEl.textContent = String(count);
-      countEl.hidden = false;
-      toggle.classList.add('has-likes');
-    } else {
-      countEl.hidden = true;
-      toggle.classList.remove('has-likes');
-    }
+    countEl.textContent = String(count);
+    countEl.hidden = count === 0;
+    toggle.classList.toggle('has-likes', count > 0);
   }
   updateBadge();
 
-  // ── Cross-tab storage changes ─────────────────────────────────────────────
   window.addEventListener('storage', (e) => {
-    if (e.key === RP_SK) {
-      updateBadge();
-      if (!sidebar.hidden) render();
-    }
+    if (e.key === RP_SK) { updateBadge(); if (!sidebar.hidden) render(); }
   });
-
-  // ── Same-tab: ArchiveRadio dispatches ic:liked-changed after every like ───
-  // Replaces old 1.5s polling loop — zero overhead, instant response
   window.addEventListener('ic:liked-changed', () => {
     updateBadge();
     if (!sidebar.hidden) render();

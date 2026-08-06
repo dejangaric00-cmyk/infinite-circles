@@ -218,7 +218,8 @@ input[type="range"]::-moz-range-thumb { width: 10px; height: 10px; border-radius
   playBtn.addEventListener('click', () => {
     if (!isPlaying) {
       const active = document.querySelector<HTMLButtonElement>('.station-btn.active');
-      if (active && (!audio.src || audio.src === window.location.href)) {
+      // Compare against expected stream URL — window.location.href is not a reliable "unset" sentinel
+      if (active && audio.src !== (active.dataset.stream ?? '')) {
         audio.src = active.dataset.stream ?? '';
         audio.load();
       }

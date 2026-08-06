@@ -207,25 +207,23 @@
     syncVisibility();
   }
 
-  // ── Listen to ic:playstate events ─────────────────────────────────────────
+  // ── Sync with soma on load — wait for ic:playstate instead of polling ─────
+  // If soma was already playing before MiniPlayer mounted, it will fire
+  // ic:playstate on its next interaction. No race condition possible.
+  // Fallback: check soma audio element after a short delay for auto-resume cases.
   window.addEventListener('ic:playstate', (e: Event) => {
     const { player, playing, title, artist } = (e as CustomEvent).detail;
     updateUI(player, playing, title, artist);
   });
 
-  // ── Also poll soma audio directly (in case it was playing before MiniPlayer mounted) ──
-  function pollSoma() {
+  // One-time fallback check in case soma was already playing at mount time
+  setTimeout(() => {
     const somaAudio = document.getElementById('soma-audio') as HTMLAudioElement | null;
-    if (!somaAudio) return;
-    const playing = !somaAudio.paused;
-    if (playing && currentPlayer !== 'archive') {
-      const stationEl = document.getElementById('now-station') as HTMLElement | null;
-      const trackEl   = document.getElementById('soma-np-track') as HTMLElement | null;
-      updateUI('soma', true, trackEl?.textContent ?? '—', stationEl?.textContent ?? 'soma fm');
-    }
-  }
-  // Poll once after load in case soma was already playing
-  setTimeout(pollSoma, 1500);
+    if (!somaAudio || somaAudio.paused || isPlaying) return;
+    const stationEl = document.getElementById('now-station') as HTMLElement | null;
+    const trackEl   = document.getElementById('soma-np-track') as HTMLElement | null;
+    updateUI('soma', true, trackEl?.textContent ?? '—', stationEl?.textContent ?? 'soma fm');
+  }, 800);
 
   // ── Controls ───────────────────────────────────────────────────────────────
   mpPlay.addEventListener('click', () => {
