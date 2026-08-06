@@ -6,6 +6,12 @@ import sitemap from '@astrojs/sitemap';
 export default defineConfig({
   site: 'https://infinite-circles.de',
   integrations: [
-    sitemap(),
+    sitemap({
+      // /music is a 301 to the homepage — keep it out of the index.
+      filter: (page) => !/\/music\/?$/.test(page),
+    }),
   ],
+  // Static output — no SSR adapter needed.
+  // @astrojs/netlify is listed in devDependencies only for potential future SSR use.
+  output: 'static',
 });
