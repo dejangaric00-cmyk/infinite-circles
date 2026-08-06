@@ -11,13 +11,13 @@ const latestSotd = await getLatestSotd();
 const videoId = latestSotd?.data.link ? getYouTubeId(latestSotd.data.link) : null;
 ---
 
-<BaseLayout title="Journal — Infinite Circles" description="Music journal, thoughts and notes.">
+<BaseLayout title="Journal — Infinite Circles" description="Musikjournal, Gedanken und Notizen.">
 <div class="page-journal">
 
   <section class="journal-header reveal">
     <div class="section-label">Journal</div>
-    <h1>Thoughts, music &<br><em>fragments.</em></h1>
-    <p class="header-desc">{posts.length} entries so far.</p>
+    <h1>Gedanken, Musik &<br><em>Fragmente.</em></h1>
+    <p class="header-desc">Bisher {posts.length} Einträge.</p>
   </section>
 
   {latestSotd && (
