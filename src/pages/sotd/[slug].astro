@@ -126,7 +126,9 @@ const schema = {
 
         {link && (
           <a href={link} target="_blank" rel="noopener" class="yt-link">
-            Auf YouTube öffnen ↗
+            {/* Nicht jeder Track liegt auf YouTube — Bandcamp etwa gibt es dort
+                nicht. Beschriftung deshalb aus dem Host ableiten statt festnageln. */}
+            Auf {vid ? 'YouTube' : new URL(link).hostname.replace(/^www\./, '')} öffnen ↗
           </a>
         )}
       </div>

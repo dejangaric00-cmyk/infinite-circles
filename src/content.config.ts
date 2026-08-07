@@ -21,11 +21,16 @@ const sotd = defineCollection({
     artist: z.string(),
     album: z.string().optional(),
     link: z.string().url().optional(),
-    mood: z.string().optional(),
+    // mood und tags speisen die Filterleisten auf /sotd. Die Filter vergleichen
+    // exakt, deshalb sind "Ambient" und "ambient" dort zwei getrennte Knöpfe —
+    // genau das war der Zustand bis 2026-08-07. Kleinschreibung erzwingen wir
+    // jetzt beim Einlesen, damit ein großgeschriebener Eintrag die Leiste nicht
+    // erneut aufspaltet. Anzeige-Großschreibung gehört ins CSS, nicht in die Daten.
+    mood: z.string().toLowerCase().optional(),
     year: z.number().optional(),
     label: z.string().optional(),
     note: z.string().optional(),
-    tags: z.array(z.string()).optional(),
+    tags: z.array(z.string().toLowerCase()).optional(),
     // Same escape hatch as the journal collection: keep an entry in the repo
     // without publishing it. Filtered out centrally in utils/sotd.ts.
     draft: z.boolean().optional().default(false),
