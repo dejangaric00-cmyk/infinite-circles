@@ -18,25 +18,30 @@ export type Teardown = () => void;
 export function onPage(setup: () => Teardown | void): void {
   let teardown: Teardown | void;
 
+  // The body this module last set itself up against. The router swaps the body
+  // on every navigation, so a page-load event carrying the same body is one we
+  // have already handled — no counter needed, and no assumption about whether
+  // the module evaluates before or after that event. A module that is fetched
+  // mid-session may well evaluate after its own page-load has fired.
+  let setupBody: HTMLElement | null = null;
+
   const run = () => {
     if (teardown) teardown();
+    setupBody = document.body;
     teardown = setup();
   };
-
-  // The router also fires page-load for the very first page. We already ran
-  // synchronously at module evaluation, so the first one gets skipped.
-  let skipFirstEvent = true;
 
   run();
 
   document.addEventListener('astro:page-load', () => {
-    if (skipFirstEvent) { skipFirstEvent = false; return; }
+    if (document.body === setupBody) return;
     run();
   });
 
   document.addEventListener('astro:before-swap', () => {
     if (teardown) teardown();
     teardown = undefined;
+    setupBody = null;
   });
 }
 
