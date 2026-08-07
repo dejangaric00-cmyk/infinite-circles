@@ -158,6 +158,27 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
     --font-serif: 'Cormorant Garamond', Georgia, serif;
     --font-mono: 'DM Mono', 'Courier New', monospace;
 
+    /* Glas-System — theme-unabhängig */
+    --glass-blur: 32px;
+    --glass-sat: 190%;
+    --r-panel: 20px;
+    --r-card: 14px;
+    --r-ctrl: 11px;
+    --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
+
+    /* Glas-System — hell */
+    --glass-panel: rgba(255,255,255,0.42);
+    --glass-sheen: rgba(255,255,255,0.55);
+    --glass-hairline: rgba(255,255,255,0.75);
+    --glass-inner-lo: rgba(10,26,46,0.07);
+    --glass-sep: rgba(10,26,46,0.08);
+    --glass-ctrl: rgba(255,255,255,0.45);
+    --glass-ctrl-hover: rgba(255,255,255,0.72);
+    --glass-shadow:
+      0 1px 1px rgba(10,26,46,0.05),
+      0 8px 24px rgba(10,26,46,0.09),
+      0 24px 64px rgba(10,26,46,0.10);
+
     /* Mood colors */
     --mood-ambient:    rgba(100, 160, 220, 0.18);
     --mood-deep-house: rgba(180, 120, 60,  0.14);
@@ -181,6 +202,19 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
     --accent2: #4a90d9;
     --border-light: rgba(255,255,255,0.12);
     --border-mid: rgba(255,255,255,0.1);
+
+    /* Glas-System — dunkel */
+    --glass-panel: rgba(16,30,62,0.44);
+    --glass-sheen: rgba(255,255,255,0.10);
+    --glass-hairline: rgba(255,255,255,0.16);
+    --glass-inner-lo: rgba(0,0,0,0.22);
+    --glass-sep: rgba(255,255,255,0.07);
+    --glass-ctrl: rgba(255,255,255,0.07);
+    --glass-ctrl-hover: rgba(255,255,255,0.14);
+    --glass-shadow:
+      0 1px 1px rgba(0,0,0,0.30),
+      0 8px 24px rgba(0,0,0,0.34),
+      0 24px 64px rgba(0,0,0,0.40);
   }
 
   @media (prefers-color-scheme: dark) {
@@ -199,6 +233,59 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
       --accent2: #4a90d9;
       --border-light: rgba(255,255,255,0.12);
       --border-mid: rgba(255,255,255,0.1);
+
+      /* Glas-System — dunkel */
+      --glass-panel: rgba(16,30,62,0.44);
+      --glass-sheen: rgba(255,255,255,0.10);
+      --glass-hairline: rgba(255,255,255,0.16);
+      --glass-inner-lo: rgba(0,0,0,0.22);
+      --glass-sep: rgba(255,255,255,0.07);
+      --glass-ctrl: rgba(255,255,255,0.07);
+      --glass-ctrl-hover: rgba(255,255,255,0.14);
+      --glass-shadow:
+        0 1px 1px rgba(0,0,0,0.30),
+        0 8px 24px rgba(0,0,0,0.34),
+        0 24px 64px rgba(0,0,0,0.40);
+    }
+  }
+
+  /* ── Glas-Oberfläche — gemeinsame Basis für Player-Module ────────────────── */
+  .glass-surface {
+    position: relative;
+    isolation: isolate;
+    border-radius: var(--r-panel);
+    background: var(--glass-panel);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    box-shadow:
+      var(--glass-shadow),
+      inset 0 0.5px 0 var(--glass-hairline),
+      inset 0 -0.5px 0 var(--glass-inner-lo),
+      inset 0 0 0 0.5px var(--glass-border-dim);
+  }
+  /* specular sheen — Licht fällt von oben ein */
+  .glass-surface::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: -1;
+    background:
+      linear-gradient(180deg, var(--glass-sheen) 0%, transparent 42%),
+      radial-gradient(120% 60% at 50% -20%, var(--glass-sheen) 0%, transparent 70%);
+    opacity: 0.7;
+  }
+
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass-surface { background: var(--glass-bg-strong); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
     }
   }
 
