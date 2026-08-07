@@ -273,104 +273,115 @@
 <script>
   import { toggle, setVolume, getState } from '../utils/player';
   import { requestNext } from '../utils/archive';
+  import { onPage, disposer } from '../utils/lifecycle';
 
-  const overlay   = document.getElementById('kb-overlay')    as HTMLElement;
-  const closeBtn  = document.getElementById('kb-close')      as HTMLButtonElement;
-  const hintBadge = document.getElementById('kb-hint-badge') as HTMLButtonElement;
-  const volToast  = document.getElementById('kb-vol-toast')  as HTMLElement;
-  const volFill   = document.getElementById('kb-vol-fill')   as HTMLElement;
-  const volPct    = document.getElementById('kb-vol-pct')    as HTMLElement;
-  const volIcon   = document.getElementById('kb-vol-icon')   as HTMLElement;
+  onPage(() => {
+    const overlay   = document.getElementById('kb-overlay')    as HTMLElement;
+    const closeBtn  = document.getElementById('kb-close')      as HTMLButtonElement;
+    const hintBadge = document.getElementById('kb-hint-badge') as HTMLButtonElement;
+    const volToast  = document.getElementById('kb-vol-toast')  as HTMLElement;
+    const volFill   = document.getElementById('kb-vol-fill')   as HTMLElement;
+    const volPct    = document.getElementById('kb-vol-pct')    as HTMLElement;
 
-  // ── Overlay toggle ──────────────────────────────────────────────────────────
-  function openOverlay() { overlay.hidden = false; closeBtn.focus(); }
-  function closeOverlay() { overlay.hidden = true; hintBadge.focus(); }
-  function toggleOverlay() { overlay.hidden ? openOverlay() : closeOverlay(); }
+    if (!overlay) return; // component not on this page
 
-  closeBtn.addEventListener('click', closeOverlay);
-  hintBadge.addEventListener('click', toggleOverlay);
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeOverlay(); });
+    const off = disposer();
+    const volIcon   = document.getElementById('kb-vol-icon')   as HTMLElement;
 
-  // ── Helper: is user typing? ─────────────────────────────────────────────────
-  function isTyping(): boolean {
-    const el = document.activeElement;
-    if (!el) return false;
-    const tag = el.tagName.toLowerCase();
-    return tag === 'input' || tag === 'textarea' || tag === 'select'
-      || (el as HTMLElement).isContentEditable;
-  }
+    // ── Overlay toggle ──────────────────────────────────────────────────────────
+    function openOverlay() { overlay.hidden = false; closeBtn.focus(); }
+    function closeOverlay() { overlay.hidden = true; hintBadge.focus(); }
+    function toggleOverlay() { overlay.hidden ? openOverlay() : closeOverlay(); }
 
-  // ── Player controls ─────────────────────────────────────────────────────────
-  // Everything runs through the engine, so the shortcuts work on any page —
-  // the station keys only do something where the station grid is mounted.
-  function somaStation(n: number) {
-    const btns = document.querySelectorAll<HTMLButtonElement>('.station-btn');
-    btns[n - 1]?.click();
-  }
+    closeBtn.addEventListener('click', closeOverlay);
+    hintBadge.addEventListener('click', toggleOverlay);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeOverlay(); });
 
-  function archiveSkip() {
-    requestNext();
-  }
-
-  function handleSpace() {
-    toggle();
-  }
-
-  // ── Volume control ──────────────────────────────────────────────────────────
-  let volToastTimer: ReturnType<typeof setTimeout>;
-
-  function showVolToast(vol: number) {
-    const pct = Math.round(vol * 100);
-    volFill.style.width = pct + '%';
-    volPct.textContent  = pct + '%';
-    volIcon.textContent = vol === 0 ? '🔇' : vol < 0.4 ? '🔉' : '🔊';
-    volToast.hidden = false;
-    clearTimeout(volToastTimer);
-    volToastTimer = setTimeout(() => { volToast.hidden = true; }, 1400);
-  }
-
-  function adjustVolume(delta: number) {
-    // One volume for the whole site — the engine owns it and persists it.
-    // SomaPlayer's slider follows along through its own subscription.
-    const newVol = Math.min(1, Math.max(0, Math.round((getState().volume + delta) * 10) / 10));
-    setVolume(newVol);
-    showVolToast(newVol);
-  }
-
-  // ── Keyboard handler ────────────────────────────────────────────────────────
-  document.addEventListener('keydown', (e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      if (!overlay.hidden) { closeOverlay(); e.preventDefault(); }
-      return;
+    // ── Helper: is user typing? ─────────────────────────────────────────────────
+    function isTyping(): boolean {
+      const el = document.activeElement;
+      if (!el) return false;
+      const tag = el.tagName.toLowerCase();
+      return tag === 'input' || tag === 'textarea' || tag === 'select'
+        || (el as HTMLElement).isContentEditable;
     }
-    if (isTyping()) return;
 
-    switch (e.key) {
-      case ' ':
-      case 'Spacebar':
-        e.preventDefault();
-        handleSpace();
-        break;
-      case 'ArrowRight':
-        e.preventDefault();
-        archiveSkip();
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        adjustVolume(0.1);
-        break;
-      case 'ArrowDown':
-        e.preventDefault();
-        adjustVolume(-0.1);
-        break;
-      case '1': somaStation(1); break;
-      case '2': somaStation(2); break;
-      case '3': somaStation(3); break;
-      case '4': somaStation(4); break;
-      case '?':
-        e.preventDefault();
-        toggleOverlay();
-        break;
+    // ── Player controls ─────────────────────────────────────────────────────────
+    // Everything runs through the engine, so the shortcuts work on any page —
+    // the station keys only do something where the station grid is mounted.
+    function somaStation(n: number) {
+      const btns = document.querySelectorAll<HTMLButtonElement>('.station-btn');
+      btns[n - 1]?.click();
     }
+
+    function archiveSkip() {
+      requestNext();
+    }
+
+    function handleSpace() {
+      toggle();
+    }
+
+    // ── Volume control ──────────────────────────────────────────────────────────
+    let volToastTimer: ReturnType<typeof setTimeout>;
+
+    function showVolToast(vol: number) {
+      const pct = Math.round(vol * 100);
+      volFill.style.width = pct + '%';
+      volPct.textContent  = pct + '%';
+      volIcon.textContent = vol === 0 ? '🔇' : vol < 0.4 ? '🔉' : '🔊';
+      volToast.hidden = false;
+      clearTimeout(volToastTimer);
+      volToastTimer = setTimeout(() => { volToast.hidden = true; }, 1400);
+    }
+
+    function adjustVolume(delta: number) {
+      // One volume for the whole site — the engine owns it and persists it.
+      // SomaPlayer's slider follows along through its own subscription.
+      const newVol = Math.min(1, Math.max(0, Math.round((getState().volume + delta) * 10) / 10));
+      setVolume(newVol);
+      showVolToast(newVol);
+    }
+
+    // ── Keyboard handler ────────────────────────────────────────────────────────
+    // On document, so it must be removed again — otherwise every navigation
+    // would add another handler and a single Space would toggle twice.
+    off.listen(document, 'keydown', ((e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (!overlay.hidden) { closeOverlay(); e.preventDefault(); }
+        return;
+      }
+      if (isTyping()) return;
+
+      switch (e.key) {
+        case ' ':
+        case 'Spacebar':
+          e.preventDefault();
+          handleSpace();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          archiveSkip();
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          adjustVolume(0.1);
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          adjustVolume(-0.1);
+          break;
+        case '1': somaStation(1); break;
+        case '2': somaStation(2); break;
+        case '3': somaStation(3); break;
+        case '4': somaStation(4); break;
+        case '?':
+          e.preventDefault();
+          toggleOverlay();
+          break;
+      }
+    }) as EventListener);
+
+    return off.run;
   });
 </script>

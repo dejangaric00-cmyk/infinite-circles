@@ -277,27 +277,38 @@ h1 em { font-style: italic; color: var(--accent); }
 </style>
 
 <script>
-const observer = new IntersectionObserver(
-  (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }),
-  { threshold: 0.1 }
-);
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-const ytCard = document.getElementById('sotd-yt-card');
-const ytPlayer = document.getElementById('sotd-yt-player');
-if (ytCard && ytPlayer) {
-  ytCard.addEventListener('click', () => {
-    const wrap = ytCard.closest('.yt-wrap') as HTMLElement;
-    const id = wrap?.dataset.vid;
-    if (!id) return;
-    const width = wrap.offsetWidth;
-    const height = Math.round(width * 9 / 16);
-    ytPlayer.style.width = width + 'px';
-    ytPlayer.style.height = height + 'px';
-    ytPlayer.style.aspectRatio = 'unset';
-    ytPlayer.innerHTML = `<iframe width="${width}" height="${height}" src="https://www.youtube.com/embed/${id}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-    ytPlayer.classList.add('open');
-    ytCard.style.display = 'none';
-  });
-}
+import { onPage, disposer } from '../../utils/lifecycle';
+
+
+onPage(() => {
+  const off = disposer();
+
+  const observer = new IntersectionObserver(
+    (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }),
+    { threshold: 0.1 }
+  );
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  off.add(() => observer.disconnect());
+
+  const ytCard = document.getElementById('sotd-yt-card');
+  const ytPlayer = document.getElementById('sotd-yt-player');
+  if (ytCard && ytPlayer) {
+    ytCard.addEventListener('click', () => {
+      const wrap = ytCard.closest('.yt-wrap') as HTMLElement;
+      const id = wrap?.dataset.vid;
+      if (!id) return;
+      const width = wrap.offsetWidth;
+      const height = Math.round(width * 9 / 16);
+      ytPlayer.style.width = width + 'px';
+      ytPlayer.style.height = height + 'px';
+      ytPlayer.style.aspectRatio = 'unset';
+      ytPlayer.innerHTML = `<iframe width="${width}" height="${height}" src="https://www.youtube.com/embed/${id}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+      ytPlayer.classList.add('open');
+      ytCard.style.display = 'none';
+    });
+  }
+
+  return off.run;
+});
 </script>

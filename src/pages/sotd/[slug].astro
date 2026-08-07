@@ -285,26 +285,36 @@ const schema = {
 </style>
 
 <script>
-const thumb = document.getElementById('yt-thumb') as HTMLElement | null;
-const player = document.getElementById('yt-player') as HTMLElement | null;
 
-thumb?.addEventListener('click', () => {
-  const vid = thumb.dataset.vid;
-  if (!vid || !player) return;
-  const w = thumb.offsetWidth;
-  const h = Math.round(w * 9 / 16);
-  player.style.height = h + 'px';
-  player.innerHTML = `<iframe width="${w}" height="${h}" src="https://www.youtube.com/embed/${vid}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-  player.classList.add('open');
-  thumb.style.display = 'none';
-});
+import { onPage, disposer } from '../../utils/lifecycle';
 
-// J/K keyboard navigation
-document.addEventListener('keydown', (e) => {
-  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-  const prevLink = document.querySelector<HTMLAnchorElement>('.track-nav-btn:not(.track-nav-right)');
-  const nextLink = document.querySelector<HTMLAnchorElement>('.track-nav-btn.track-nav-right');
-  if (e.key === 'j' || e.key === 'J') nextLink && (window.location.href = nextLink.href);
-  if (e.key === 'k' || e.key === 'K') prevLink && (window.location.href = prevLink.href);
+
+onPage(() => {
+  const thumb = document.getElementById('yt-thumb') as HTMLElement | null;
+  const player = document.getElementById('yt-player') as HTMLElement | null;
+
+  thumb?.addEventListener('click', () => {
+    const vid = thumb.dataset.vid;
+    if (!vid || !player) return;
+    const w = thumb.offsetWidth;
+    const h = Math.round(w * 9 / 16);
+    player.style.height = h + 'px';
+    player.innerHTML = `<iframe width="${w}" height="${h}" src="https://www.youtube.com/embed/${vid}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+    player.classList.add('open');
+    thumb.style.display = 'none';
+  });
+
+  // J/K keyboard navigation. On document, so it has to come off again —
+  // otherwise a second handler would survive on the next SOTD entry.
+  const off = disposer();
+  off.listen(document, 'keydown', ((e: KeyboardEvent) => {
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+    const prevLink = document.querySelector<HTMLAnchorElement>('.track-nav-btn:not(.track-nav-right)');
+    const nextLink = document.querySelector<HTMLAnchorElement>('.track-nav-btn.track-nav-right');
+    if (e.key === 'j' || e.key === 'J') nextLink && (window.location.href = nextLink.href);
+    if (e.key === 'k' || e.key === 'K') prevLink && (window.location.href = prevLink.href);
+  }) as EventListener);
+
+  return off.run;
 });
 </script>

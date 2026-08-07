@@ -175,78 +175,91 @@
 <script>
   import { subscribe, toggle, getState } from '../utils/player';
   import { requestNext } from '../utils/archive';
+  import { onPage, disposer } from '../utils/lifecycle';
 
-  const miniPlayer  = document.getElementById('mini-player')  as HTMLElement;
-  const mpDot       = document.getElementById('mp-dot')       as HTMLElement;
-  const mpSource    = document.getElementById('mp-source')    as HTMLElement;
-  const mpTrack     = document.getElementById('mp-track')     as HTMLElement;
-  const mpPlay      = document.getElementById('mp-play')      as HTMLButtonElement;
-  const mpSkip      = document.getElementById('mp-skip')      as HTMLButtonElement;
-  const mpScrollUp  = document.getElementById('mp-scroll-up') as HTMLButtonElement;
-  const mpIconPlay  = document.getElementById('mp-icon-play') as SVGElement;
-  const mpIconPause = document.getElementById('mp-icon-pause')as SVGElement;
+  onPage(() => {
+    const miniPlayer = document.getElementById('mini-player');
+    if (!miniPlayer) return; // component not on this page
 
-  let isPlaying = false;
+    const mpDot       = document.getElementById('mp-dot')       as HTMLElement;
+    const mpSource    = document.getElementById('mp-source')    as HTMLElement;
+    const mpTrack     = document.getElementById('mp-track')     as HTMLElement;
+    const mpPlay      = document.getElementById('mp-play')      as HTMLButtonElement;
+    const mpSkip      = document.getElementById('mp-skip')      as HTMLButtonElement;
+    const mpScrollUp  = document.getElementById('mp-scroll-up') as HTMLButtonElement;
+    const mpIconPlay  = document.getElementById('mp-icon-play') as SVGElement;
+    const mpIconPause = document.getElementById('mp-icon-pause')as SVGElement;
 
-  // ── Visibility ─────────────────────────────────────────────────────────────
-  // On the radio page the bar appears once the big player scrolls away. On
-  // every other page there is nothing to scroll past, so it simply follows
-  // playback.
-  const sentinel = document.querySelector('.soma-wrap') as HTMLElement | null;
+    const off = disposer();
+    let isPlaying = false;
 
-  function syncVisibility() {
-    if (!sentinel) { miniPlayer.hidden = !isPlaying; return; }
-    const rect = sentinel.getBoundingClientRect();
-    const outOfView = rect.bottom < 0 || rect.top > window.innerHeight;
-    miniPlayer.hidden = !(isPlaying && outOfView);
-  }
+    // ── Visibility ───────────────────────────────────────────────────────────
+    // On the radio page the bar appears once the big player scrolls away. On
+    // every other page there is nothing to scroll past, so it simply follows
+    // playback.
+    const sentinel = document.querySelector('.soma-wrap') as HTMLElement | null;
 
-  window.addEventListener('scroll', syncVisibility, { passive: true });
-  if (sentinel) {
-    new IntersectionObserver(syncVisibility, {
-      threshold: 0,
-      rootMargin: '0px 0px -80px 0px',
-    }).observe(sentinel);
-  }
+    function syncVisibility() {
+      if (!sentinel) { miniPlayer!.hidden = !isPlaying; return; }
+      const rect = sentinel.getBoundingClientRect();
+      const outOfView = rect.bottom < 0 || rect.top > window.innerHeight;
+      miniPlayer!.hidden = !(isPlaying && outOfView);
+    }
 
-  // ── Render from engine state ───────────────────────────────────────────────
-  subscribe((s) => {
-    isPlaying = s.playing;
-    const isArchive = s.source === 'archive';
+    off.listen(window, 'scroll', syncVisibility, { passive: true });
 
-    mpDot.classList.toggle('playing', s.playing);
-    mpDot.classList.toggle('archive', isArchive);
-    mpPlay.classList.toggle('playing', s.playing);
-    mpSkip.classList.toggle('archive-active', isArchive);
+    if (sentinel) {
+      const io = new IntersectionObserver(syncVisibility, {
+        threshold: 0,
+        rootMargin: '0px 0px -80px 0px',
+      });
+      io.observe(sentinel);
+      off.add(() => io.disconnect());
+    }
 
-    mpSource.textContent =
-      s.source === 'archive'     ? 'archive.org'
-      : s.source === 'underground' ? 'underground'
-      : 'soma fm';
-    mpSource.classList.toggle('archive', isArchive);
+    // ── Render from engine state ─────────────────────────────────────────────
+    off.add(subscribe((s) => {
+      isPlaying = s.playing;
+      const isArchive = s.source === 'archive';
 
-    // Prefer the track name, fall back to the artist or station
-    const label = s.track.title && s.track.title !== '—'
-      ? s.track.title
-      : (s.track.artist || s.stationName);
-    mpTrack.textContent = label || '—';
+      mpDot.classList.toggle('playing', s.playing);
+      mpDot.classList.toggle('archive', isArchive);
+      mpPlay.classList.toggle('playing', s.playing);
+      mpSkip.classList.toggle('archive-active', isArchive);
 
-    mpIconPlay.style.display  = s.playing ? 'none'  : 'block';
-    mpIconPause.style.display = s.playing ? 'block' : 'none';
+      mpSource.textContent =
+        s.source === 'archive'     ? 'archive.org'
+        : s.source === 'underground' ? 'underground'
+        : 'soma fm';
+      mpSource.classList.toggle('archive', isArchive);
 
-    syncVisibility();
-  });
+      // Prefer the track name, fall back to the artist or station
+      const label = s.track.title && s.track.title !== '—'
+        ? s.track.title
+        : (s.track.artist || s.stationName);
+      mpTrack.textContent = label || '—';
 
-  // ── Controls ───────────────────────────────────────────────────────────────
-  mpPlay.addEventListener('click', () => toggle());
-  mpSkip.addEventListener('click', () => requestNext());
+      mpIconPlay.style.display  = s.playing ? 'none'  : 'block';
+      mpIconPause.style.display = s.playing ? 'block' : 'none';
 
-  mpScrollUp.addEventListener('click', () => {
-    const target = getState().source === 'archive'
-      ? document.querySelector('.ar-wrap')
-      : document.querySelector('.soma-wrap');
-    // Not on this page — send the visitor to the radio instead.
-    if (!target) { window.location.href = '/'; return; }
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      syncVisibility();
+    }));
+
+    // ── Controls ─────────────────────────────────────────────────────────────
+    // These sit on nodes inside the swapped body and die with it, so they need
+    // no teardown of their own.
+    mpPlay.addEventListener('click', () => toggle());
+    mpSkip.addEventListener('click', () => requestNext());
+
+    mpScrollUp.addEventListener('click', () => {
+      const target = getState().source === 'archive'
+        ? document.querySelector('.ar-wrap')
+        : document.querySelector('.soma-wrap');
+      // Not on this page — send the visitor to the radio instead.
+      if (!target) { window.location.href = '/'; return; }
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    return off.run;
   });
 </script>

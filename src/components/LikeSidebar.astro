@@ -116,94 +116,105 @@
     playDoc, loadLiked, saveLiked, fmtAgo,
     LIKED_KEY, LIKED_CHANGED, type StoredTrack,
   } from '../utils/archive';
+  import { onPage, disposer } from '../utils/lifecycle';
 
-  const sidebar  = document.getElementById('like-sidebar')  as HTMLElement;
-  const backdrop = document.getElementById('like-backdrop') as HTMLElement;
-  const toggle   = document.getElementById('like-toggle')   as HTMLButtonElement;
-  const closeBtn = document.getElementById('ls-close')      as HTMLButtonElement;
-  const clearBtn = document.getElementById('ls-clear')      as HTMLButtonElement;
-  const itemsEl  = document.getElementById('ls-items')      as HTMLElement;
-  const emptyEl  = document.getElementById('ls-empty')      as HTMLElement;
-  const countEl  = document.getElementById('like-count')    as HTMLElement;
+  onPage(() => {
+    const sidebar  = document.getElementById('like-sidebar')  as HTMLElement;
+    const backdrop = document.getElementById('like-backdrop') as HTMLElement;
+    const toggle   = document.getElementById('like-toggle')   as HTMLButtonElement;
+    const closeBtn = document.getElementById('ls-close')      as HTMLButtonElement;
+    const clearBtn = document.getElementById('ls-clear')      as HTMLButtonElement;
+    const itemsEl  = document.getElementById('ls-items')      as HTMLElement;
+    const emptyEl  = document.getElementById('ls-empty')      as HTMLElement;
+    const countEl  = document.getElementById('like-count')    as HTMLElement;
 
-  // Storage and formatting live in src/utils/archive.ts — see imports above.
+    if (!sidebar) return; // component not on this page
 
-  function openSidebar()  { sidebar.hidden = false; backdrop.hidden = false; render(); closeBtn.focus(); }
-  function closeSidebar() { sidebar.hidden = true;  backdrop.hidden = true;  toggle.focus(); }
+    const off = disposer();
 
-  toggle.addEventListener('click', () => sidebar.hidden ? openSidebar() : closeSidebar());
-  closeBtn.addEventListener('click', closeSidebar);
-  backdrop.addEventListener('click', closeSidebar);
-  clearBtn.addEventListener('click', () => saveLiked([]));
+    // Storage and formatting live in src/utils/archive.ts — see imports above.
 
-  // ── XSS-safe DOM rendering (no innerHTML with user data) ──────────────────
-  function render() {
-    const liked = loadLiked();
-    emptyEl.style.display = liked.length ? 'none' : 'block';
-    itemsEl.innerHTML = '';
-    if (!liked.length) return;
+    function openSidebar()  { sidebar.hidden = false; backdrop.hidden = false; render(); closeBtn.focus(); }
+    function closeSidebar() { sidebar.hidden = true;  backdrop.hidden = true;  toggle.focus(); }
 
-    liked.forEach((x: StoredTrack) => {
-      const row = document.createElement('div');
-      row.className = 'ls-item';
+    toggle.addEventListener('click', () => sidebar.hidden ? openSidebar() : closeSidebar());
+    closeBtn.addEventListener('click', closeSidebar);
+    backdrop.addEventListener('click', closeSidebar);
+    clearBtn.addEventListener('click', () => saveLiked([]));
 
-      const playBtn = document.createElement('button');
-      playBtn.className = 'ls-item-play';
-      playBtn.setAttribute('aria-label', 'Play');
-      playBtn.textContent = '▶';
-      playBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        // Straight to the engine — works on pages without the radio UI too.
-        void playDoc({ identifier: x.id, title: x.title, creator: x.artist || '' });
-        closeSidebar();
+    // ── XSS-safe DOM rendering (no innerHTML with user data) ──────────────────
+    function render() {
+      const liked = loadLiked();
+      emptyEl.style.display = liked.length ? 'none' : 'block';
+      itemsEl.innerHTML = '';
+      if (!liked.length) return;
+
+      liked.forEach((x: StoredTrack) => {
+        const row = document.createElement('div');
+        row.className = 'ls-item';
+
+        const playBtn = document.createElement('button');
+        playBtn.className = 'ls-item-play';
+        playBtn.setAttribute('aria-label', 'Play');
+        playBtn.textContent = '▶';
+        playBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          // Straight to the engine — works on pages without the radio UI too.
+          void playDoc({ identifier: x.id, title: x.title, creator: x.artist || '' });
+          closeSidebar();
+        });
+
+        const info = document.createElement('div');
+        info.className = 'ls-item-info';
+
+        const titleEl = document.createElement('div');
+        titleEl.className = 'ls-item-title';
+        // textContent auto-escapes — safe against XSS
+        titleEl.textContent = x.title.length > 32 ? x.title.slice(0, 32) + '…' : x.title;
+
+        const artistEl = document.createElement('div');
+        artistEl.className = 'ls-item-artist';
+        artistEl.textContent = `${x.artist ? x.artist.slice(0, 24) : 'Archive.org'} · ${fmtAgo(x.ts)}`;
+
+        info.append(titleEl, artistEl);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'ls-item-remove';
+        removeBtn.setAttribute('aria-label', 'Entfernen');
+        removeBtn.textContent = '✕';
+        removeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const current = loadLiked();
+          const idx = current.findIndex((item) => item.id === x.id);
+          if (idx >= 0) current.splice(idx, 1);
+          saveLiked(current);
+        });
+
+        row.append(playBtn, info, removeBtn);
+        itemsEl.appendChild(row);
       });
+    }
 
-      const info = document.createElement('div');
-      info.className = 'ls-item-info';
-
-      const titleEl = document.createElement('div');
-      titleEl.className = 'ls-item-title';
-      // textContent auto-escapes — safe against XSS
-      titleEl.textContent = x.title.length > 32 ? x.title.slice(0, 32) + '…' : x.title;
-
-      const artistEl = document.createElement('div');
-      artistEl.className = 'ls-item-artist';
-      artistEl.textContent = `${x.artist ? x.artist.slice(0, 24) : 'Archive.org'} · ${fmtAgo(x.ts)}`;
-
-      info.append(titleEl, artistEl);
-
-      const removeBtn = document.createElement('button');
-      removeBtn.className = 'ls-item-remove';
-      removeBtn.setAttribute('aria-label', 'Entfernen');
-      removeBtn.textContent = '✕';
-      removeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const current = loadLiked();
-        const idx = current.findIndex((item) => item.id === x.id);
-        if (idx >= 0) current.splice(idx, 1);
-        saveLiked(current);
-      });
-
-      row.append(playBtn, info, removeBtn);
-      itemsEl.appendChild(row);
-    });
-  }
-
-  // ── Badge ──────────────────────────────────────────────────────────────────
-  function updateBadge() {
-    const count = loadLiked().length;
-    countEl.textContent = String(count);
-    countEl.hidden = count === 0;
-    toggle.classList.toggle('has-likes', count > 0);
-  }
-  updateBadge();
-
-  window.addEventListener('storage', (e) => {
-    if (e.key === LIKED_KEY) { updateBadge(); if (!sidebar.hidden) render(); }
-  });
-  // saveLiked() fires this, so every mutation repaints through one path.
-  window.addEventListener(LIKED_CHANGED, () => {
+    // ── Badge ──────────────────────────────────────────────────────────────────
+    function updateBadge() {
+      const count = loadLiked().length;
+      countEl.textContent = String(count);
+      countEl.hidden = count === 0;
+      toggle.classList.toggle('has-likes', count > 0);
+    }
     updateBadge();
-    if (!sidebar.hidden) render();
+
+    // Both live on window and would stack up across navigations without the
+    // disposer — the sidebar would repaint once per visited page.
+    off.listen(window, 'storage', (e) => {
+      if ((e as StorageEvent).key === LIKED_KEY) { updateBadge(); if (!sidebar.hidden) render(); }
+    });
+    // saveLiked() fires this, so every mutation repaints through one path.
+    off.listen(window, LIKED_CHANGED, () => {
+      updateBadge();
+      if (!sidebar.hidden) render();
+    });
+
+    return off.run;
   });
 </script>

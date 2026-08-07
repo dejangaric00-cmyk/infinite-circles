@@ -127,10 +127,14 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
       // Static build freezes relative dates at deploy time — recompute them for
       // the actual visitor. Opt in with data-rel-date="YYYY-MM-DD".
       import { relativeDayLabel } from '../utils/date';
-      for (const el of document.querySelectorAll<HTMLElement>('[data-rel-date]')) {
-        const iso = el.dataset.relDate;
-        if (iso) el.textContent = relativeDayLabel(iso);
-      }
+      import { onPage } from '../utils/lifecycle';
+
+      onPage(() => {
+        for (const el of document.querySelectorAll<HTMLElement>('[data-rel-date]')) {
+          const iso = el.dataset.relDate;
+          if (iso) el.textContent = relativeDayLabel(iso);
+        }
+      });
     </script>
   </body>
 </html>
@@ -370,11 +374,17 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
 </style>
 
 <script>
-  // Dark mode toggle
-  const btn = document.getElementById('dm-btn');
-  btn?.addEventListener('click', () => {
-    const isDark = document.documentElement.classList.toggle('dark');
-    document.documentElement.classList.toggle('light', !isDark);
-    try { localStorage.setItem('ic_dark', isDark ? '1' : '0'); } catch(e) {}
+  import { onPage } from '../utils/lifecycle';
+
+  // Dark mode toggle. The button lives in the swapped body, so the listener has
+  // to be attached again after every navigation. The class itself sits on
+  // <html>, which survives the swap — no flash, no re-reading localStorage.
+  onPage(() => {
+    const btn = document.getElementById('dm-btn');
+    btn?.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.toggle('dark');
+      document.documentElement.classList.toggle('light', !isDark);
+      try { localStorage.setItem('ic_dark', isDark ? '1' : '0'); } catch(e) {}
+    });
   });
 </script>

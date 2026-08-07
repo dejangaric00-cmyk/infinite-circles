@@ -666,93 +666,104 @@ const linkOnly: LinkStation[] = [
 
 <script>
   import { load, pause, subscribe, registerSourceHandlers, getState } from '../utils/player';
+  import { onPage, disposer } from '../utils/lifecycle';
 
-  const nowBar  = document.getElementById('ugNowBar')  as HTMLElement;
-  const nowName = document.getElementById('ugNowName') as HTMLElement;
-  const stopBtn = document.getElementById('ugStopAll') as HTMLButtonElement;
+  onPage(() => {
+    const nowBar  = document.getElementById('ugNowBar')  as HTMLElement;
+    const nowName = document.getElementById('ugNowName') as HTMLElement;
+    const stopBtn = document.getElementById('ugStopAll') as HTMLButtonElement;
 
-  function setCardState(card: HTMLElement, state: 'idle'|'loading'|'playing'|'error') {
-    card.dataset.state = state;
-    const icon  = card.querySelector<HTMLElement>('.btn-icon');
-    const label = card.querySelector<HTMLElement>('.btn-label');
-    if (!icon || !label) return;
-    switch (state) {
-      case 'idle':    icon.textContent = '▶'; label.textContent = 'Play'; break;
-      case 'loading': icon.textContent = '…'; label.textContent = 'Loading'; break;
-      case 'playing': icon.textContent = '■'; label.textContent = 'Stop'; break;
-      case 'error':   icon.textContent = '✕'; label.textContent = 'Error'; break;
+    if (!nowBar) return; // component not on this page
+
+    const off = disposer();
+
+    function setCardState(card: HTMLElement, state: 'idle'|'loading'|'playing'|'error') {
+      card.dataset.state = state;
+      const icon  = card.querySelector<HTMLElement>('.btn-icon');
+      const label = card.querySelector<HTMLElement>('.btn-label');
+      if (!icon || !label) return;
+      switch (state) {
+        case 'idle':    icon.textContent = '▶'; label.textContent = 'Play'; break;
+        case 'loading': icon.textContent = '…'; label.textContent = 'Loading'; break;
+        case 'playing': icon.textContent = '■'; label.textContent = 'Stop'; break;
+        case 'error':   icon.textContent = '✕'; label.textContent = 'Error'; break;
+      }
     }
-  }
 
-  // The stream URL doubles as the station id — it is unique per card.
-  function cards(): HTMLElement[] {
-    return Array.from(document.querySelectorAll<HTMLElement>('.station-card'));
-  }
+    // The stream URL doubles as the station id — it is unique per card.
+    function cards(): HTMLElement[] {
+      return Array.from(document.querySelectorAll<HTMLElement>('.station-card'));
+    }
 
-  function stopAll() {
-    pause();
-  }
-
-  function playStation(card: HTMLElement) {
-    const url  = card.dataset.url  ?? '';
-    const name = card.dataset.name ?? '';
-    const s = getState();
-
-    // Second click on the running card stops it.
-    if (s.source === 'underground' && s.stationSlug === url && s.playing) {
+    function stopAll() {
       pause();
-      return;
     }
 
-    setCardState(card, 'loading');
-    void load({
-      source: 'underground',
-      src: url,
-      stationSlug: url,
-      stationName: name,
-      track: { title: name, artist: 'underground radio' },
-    });
-  }
+    function playStation(card: HTMLElement) {
+      const url  = card.dataset.url  ?? '';
+      const name = card.dataset.name ?? '';
+      const s = getState();
 
-  // ── Render from engine state ───────────────────────────────────────────────
-  subscribe((s) => {
-    const mine = s.source === 'underground';
+      // Second click on the running card stops it.
+      if (s.source === 'underground' && s.stationSlug === url && s.playing) {
+        pause();
+        return;
+      }
+
+      setCardState(card, 'loading');
+      void load({
+        source: 'underground',
+        src: url,
+        stationSlug: url,
+        stationName: name,
+        track: { title: name, artist: 'underground radio' },
+      });
+    }
+
+    // ── Render from engine state ───────────────────────────────────────────────
+    off.add(subscribe((s) => {
+      const mine = s.source === 'underground';
+
+      for (const card of cards()) {
+        // A card that failed keeps its error badge until it is clicked again.
+        if (card.dataset.state === 'error') continue;
+        if (mine && card.dataset.url === s.stationSlug) {
+          setCardState(card, s.playing ? 'playing' : 'loading');
+        } else {
+          setCardState(card, 'idle');
+        }
+      }
+
+      if (nowBar && nowName) {
+        if (mine && s.playing) {
+          nowName.textContent = s.stationName;
+          nowBar.hidden = false;
+        } else {
+          nowBar.hidden = true;
+        }
+      }
+    }));
+
+    // Deliberately outside the disposer: playback continues after leaving this
+    // page, so the error handler has to survive too. Re-registering overwrites.
+    registerSourceHandlers('underground', {
+      onError: () => {
+        const slug = getState().stationSlug;
+        const card = cards().find(c => c.dataset.url === slug);
+        if (card) setCardState(card, 'error');
+        if (nowBar) nowBar.hidden = true;
+      },
+    });
 
     for (const card of cards()) {
-      // A card that failed keeps its error badge until it is clicked again.
-      if (card.dataset.state === 'error') continue;
-      if (mine && card.dataset.url === s.stationSlug) {
-        setCardState(card, s.playing ? 'playing' : 'loading');
-      } else {
-        setCardState(card, 'idle');
-      }
+      card.querySelector<HTMLButtonElement>('.play-btn')?.addEventListener('click', () => {
+        if (card.dataset.state === 'error') { setCardState(card, 'idle'); return; }
+        playStation(card);
+      });
     }
 
-    if (nowBar && nowName) {
-      if (mine && s.playing) {
-        nowName.textContent = s.stationName;
-        nowBar.hidden = false;
-      } else {
-        nowBar.hidden = true;
-      }
-    }
+    stopBtn?.addEventListener('click', stopAll);
+
+    return off.run;
   });
-
-  registerSourceHandlers('underground', {
-    onError: () => {
-      const slug = getState().stationSlug;
-      const card = cards().find(c => c.dataset.url === slug);
-      if (card) setCardState(card, 'error');
-      if (nowBar) nowBar.hidden = true;
-    },
-  });
-
-  for (const card of cards()) {
-    card.querySelector<HTMLButtonElement>('.play-btn')?.addEventListener('click', () => {
-      if (card.dataset.state === 'error') { setCardState(card, 'idle'); return; }
-      playStation(card);
-    });
-  }
-
-  stopBtn?.addEventListener('click', stopAll);
 </script>

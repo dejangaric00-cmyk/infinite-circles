@@ -65,93 +65,102 @@ const latestSotd = await getLatestSotd();
 
 <!-- ── Ringe Canvas ────────────────────────────────────────────────────────── -->
 <script>
-  const bgCanvas = document.getElementById('circle-canvas') as HTMLCanvasElement;
-  if (bgCanvas) {
-    const ctx = bgCanvas.getContext('2d')!;
-    let W = 0, H = 0;
-    const resize = () => { W = bgCanvas.width = window.innerWidth; H = bgCanvas.height = window.innerHeight; };
-    resize();
-    window.addEventListener('resize', resize, { passive: true });
+  import { onPage, disposer } from '../utils/lifecycle';
+  onPage(() => {
+    const bgCanvas = document.getElementById('circle-canvas') as HTMLCanvasElement;
+    if (bgCanvas) {
+      const ctx = bgCanvas.getContext('2d')!;
+      const off = disposer();
+      let W = 0, H = 0;
+      const resize = () => { W = bgCanvas.width = window.innerWidth; H = bgCanvas.height = window.innerHeight; };
+      resize();
+      off.listen(window, 'resize', resize, { passive: true });
 
-    const isDark = () => document.documentElement.classList.contains('dark');
+      const isDark = () => document.documentElement.classList.contains('dark');
 
-    const rings = [
-      { rf: 0.10, speed: 0.0018, offset: 0.00 },
-      { rf: 0.18, speed: 0.0014, offset: 0.90 },
-      { rf: 0.27, speed: 0.0011, offset: 1.80 },
-      { rf: 0.37, speed: 0.0009, offset: 2.70 },
-      { rf: 0.47, speed: 0.0007, offset: 3.60 },
-      { rf: 0.58, speed: 0.0005, offset: 4.50 },
-      { rf: 0.70, speed: 0.0004, offset: 5.40 },
-    ];
+      const rings = [
+        { rf: 0.10, speed: 0.0018, offset: 0.00 },
+        { rf: 0.18, speed: 0.0014, offset: 0.90 },
+        { rf: 0.27, speed: 0.0011, offset: 1.80 },
+        { rf: 0.37, speed: 0.0009, offset: 2.70 },
+        { rf: 0.47, speed: 0.0007, offset: 3.60 },
+        { rf: 0.58, speed: 0.0005, offset: 4.50 },
+        { rf: 0.70, speed: 0.0004, offset: 5.40 },
+      ];
 
-    let t = 0;
-    let rafId = 0;
+      let t = 0;
+      let rafId = 0;
+      let stopped = false;
 
-    const draw = () => {
-      ctx.clearRect(0, 0, W, H);
-      const dark  = isDark();
-      const cx    = W > 768 ? W * 0.72 : W * 0.5;
-      const cy    = H * 0.32;
-      const base  = Math.min(W, H);
-      const ringAlpha = dark ? 0.13 : 0.14;
-      const dotColor  = dark ? '180,215,255' : '255,255,255';
-      const trailColor= dark ? '160,200,255' : '255,255,255';
-      const trailAlpha= dark ? 0.20 : 0.20;
+      const draw = () => {
+        if (stopped) return;
+        ctx.clearRect(0, 0, W, H);
+        const dark  = isDark();
+        const cx    = W > 768 ? W * 0.72 : W * 0.5;
+        const cy    = H * 0.32;
+        const base  = Math.min(W, H);
+        const ringAlpha = dark ? 0.13 : 0.14;
+        const dotColor  = dark ? '180,215,255' : '255,255,255';
+        const trailColor= dark ? '160,200,255' : '255,255,255';
+        const trailAlpha= dark ? 0.20 : 0.20;
 
-      for (const ring of rings) {
-        const r = base * ring.rf;
+        for (const ring of rings) {
+          const r = base * ring.rf;
 
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.strokeStyle = dark
-          ? `rgba(140,190,255,${ringAlpha})`
-          : `rgba(255,255,255,${ringAlpha})`;
-        ctx.lineWidth = 0.7;
-        ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.strokeStyle = dark
+            ? `rgba(140,190,255,${ringAlpha})`
+            : `rgba(255,255,255,${ringAlpha})`;
+          ctx.lineWidth = 0.7;
+          ctx.stroke();
 
-        const angle = t * ring.speed + ring.offset;
-        const dx = cx + Math.cos(angle) * r;
-        const dy = cy + Math.sin(angle) * r;
-        const dotR = r * 0.07;
-        const glow = ctx.createRadialGradient(dx, dy, 0, dx, dy, dotR);
-        glow.addColorStop(0,   `rgba(${dotColor},${dark ? 0.95 : 0.92})`);
-        glow.addColorStop(0.3, `rgba(${dotColor},${dark ? 0.45 : 0.35})`);
-        glow.addColorStop(1,   'rgba(180,220,255,0)');
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(dx, dy, dotR, 0, Math.PI * 2);
-        ctx.fill();
+          const angle = t * ring.speed + ring.offset;
+          const dx = cx + Math.cos(angle) * r;
+          const dy = cy + Math.sin(angle) * r;
+          const dotR = r * 0.07;
+          const glow = ctx.createRadialGradient(dx, dy, 0, dx, dy, dotR);
+          glow.addColorStop(0,   `rgba(${dotColor},${dark ? 0.95 : 0.92})`);
+          glow.addColorStop(0.3, `rgba(${dotColor},${dark ? 0.45 : 0.35})`);
+          glow.addColorStop(1,   'rgba(180,220,255,0)');
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(dx, dy, dotR, 0, Math.PI * 2);
+          ctx.fill();
 
-        const trailLen   = Math.PI * 0.32;
-        const trailStart = angle - trailLen;
-        const trail = ctx.createLinearGradient(
-          cx + Math.cos(trailStart) * r, cy + Math.sin(trailStart) * r, dx, dy
-        );
-        trail.addColorStop(0, `rgba(${trailColor},0)`);
-        trail.addColorStop(1, `rgba(${trailColor},${trailAlpha})`);
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, trailStart, angle);
-        ctx.strokeStyle = trail;
-        ctx.lineWidth = dark ? 1.2 : 1.3;
-        ctx.stroke();
-      }
+          const trailLen   = Math.PI * 0.32;
+          const trailStart = angle - trailLen;
+          const trail = ctx.createLinearGradient(
+            cx + Math.cos(trailStart) * r, cy + Math.sin(trailStart) * r, dx, dy
+          );
+          trail.addColorStop(0, `rgba(${trailColor},0)`);
+          trail.addColorStop(1, `rgba(${trailColor},${trailAlpha})`);
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, trailStart, angle);
+          ctx.strokeStyle = trail;
+          ctx.lineWidth = dark ? 1.2 : 1.3;
+          ctx.stroke();
+        }
 
-      t++;
-      rafId = requestAnimationFrame(draw);
-    };
-
-    // Pause rAF when tab is hidden to save CPU/GPU
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        cancelAnimationFrame(rafId);
-      } else {
+        t++;
         rafId = requestAnimationFrame(draw);
-      }
-    });
+      };
 
-    rafId = requestAnimationFrame(draw);
-  }
+      // Pause rAF when tab is hidden to save CPU/GPU
+      off.listen(document, 'visibilitychange', () => {
+        if (document.hidden) {
+          cancelAnimationFrame(rafId);
+        } else {
+          rafId = requestAnimationFrame(draw);
+        }
+      });
+
+      rafId = requestAnimationFrame(draw);
+      off.add(() => { stopped = true; cancelAnimationFrame(rafId); });
+
+      return off.run;
+    }
+  });
 </script>
 
 <style>

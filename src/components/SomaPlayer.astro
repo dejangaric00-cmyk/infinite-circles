@@ -257,262 +257,278 @@ input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-of
 
 <script>
   import { load, toggle, setVolume, setTrack, setStation, subscribe, getState } from '../utils/player';
+  import { onPage, disposer } from '../utils/lifecycle';
 
-  const playBtn = document.getElementById('play-btn') as HTMLButtonElement;
-  const iconPlay = document.getElementById('icon-play') as SVGElement;
-  const iconPause = document.getElementById('icon-pause') as SVGElement;
-  const nowStation = document.getElementById('now-station') as HTMLSpanElement;
-  const liveDot = document.getElementById('live-dot') as HTMLSpanElement;
-  const volumeSlider = document.getElementById('volume-slider') as HTMLInputElement;
-  const stationBtns = document.querySelectorAll<HTMLButtonElement>('.station-btn');
+  onPage(() => {
+    const playBtn = document.getElementById('play-btn') as HTMLButtonElement;
+    const iconPlay = document.getElementById('icon-play') as SVGElement;
+    const iconPause = document.getElementById('icon-pause') as SVGElement;
+    const nowStation = document.getElementById('now-station') as HTMLSpanElement;
+    const liveDot = document.getElementById('live-dot') as HTMLSpanElement;
+    const volumeSlider = document.getElementById('volume-slider') as HTMLInputElement;
+    const stationBtns = document.querySelectorAll<HTMLButtonElement>('.station-btn');
 
-  const npTrack  = document.getElementById('soma-np-track')  as HTMLElement;
-  const npArtist = document.getElementById('soma-np-artist') as HTMLElement;
-  const npAlbum  = document.getElementById('soma-np-album')  as HTMLElement;
-  const npCover  = document.getElementById('soma-np-cover')  as HTMLImageElement;
+    const npTrack  = document.getElementById('soma-np-track')  as HTMLElement;
+    const npArtist = document.getElementById('soma-np-artist') as HTMLElement;
+    const npAlbum  = document.getElementById('soma-np-album')  as HTMLElement;
+    const npCover  = document.getElementById('soma-np-cover')  as HTMLImageElement;
 
-  // Mirrors the engine — read by the visualizer, never written directly.
-  let isPlaying = false;
+    if (!playBtn) return; // component not on this page
 
-  // Slider fill is painted via --vol on the input itself
-  function syncVolumeFill() {
-    volumeSlider.style.setProperty('--vol', volumeSlider.value);
-  }
+    const off = disposer();
 
-  volumeSlider.value = String(getState().volume);
-  syncVolumeFill();
+    // Mirrors the engine — read by the visualizer, never written directly.
+    let isPlaying = false;
 
-  function activeBtn(): HTMLButtonElement | null {
-    return document.querySelector<HTMLButtonElement>('.station-btn.active');
-  }
-
-  function markActive(btn: HTMLButtonElement) {
-    stationBtns.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    nowStation.textContent = btn.dataset.name ?? '';
-  }
-
-  // ── URL State ──────────────────────────────────────────────────────────────
-  function applyUrlStation() {
-    const slug = new URLSearchParams(window.location.search).get('station');
-    if (!slug) return;
-    const target = Array.from(stationBtns).find(b => b.dataset.slug === slug);
-    if (target && !target.classList.contains('active')) markActive(target);
-  }
-  applyUrlStation();
-
-  function setUrlStation(slug: string) {
-    const url = new URL(window.location.href);
-    url.searchParams.set('station', slug);
-    history.replaceState(null, '', url.toString());
-  }
-
-  // Adopt whatever the engine is already playing — matters when arriving on
-  // this page while a station is running.
-  {
-    const s = getState();
-    if (s.source === 'soma' && s.stationSlug) {
-      const running = Array.from(stationBtns).find(b => b.dataset.slug === s.stationSlug);
-      if (running) markActive(running);
+    // Slider fill is painted via --vol on the input itself
+    function syncVolumeFill() {
+      volumeSlider.style.setProperty('--vol', volumeSlider.value);
     }
-  }
 
-  function playStation(btn: HTMLButtonElement) {
-    markActive(btn);
-    setUrlStation(btn.dataset.slug ?? '');
-    clearNowPlaying();
-    void load({
-      source: 'soma',
-      src: btn.dataset.stream ?? '',
-      stationSlug: btn.dataset.slug ?? '',
-      stationName: btn.dataset.name ?? '',
-      track: { title: '—', artist: btn.dataset.name ?? 'soma fm', album: '' },
-    });
-    setTimeout(fetchNowPlaying, 1000);
-  }
-
-  playBtn.addEventListener('click', () => {
-    // Another source is running, or nothing was loaded yet — start this station.
-    if (getState().source !== 'soma') {
-      const btn = activeBtn();
-      if (btn) playStation(btn);
-      return;
-    }
-    toggle();
-  });
-
-  stationBtns.forEach(btn => {
-    btn.addEventListener('click', () => playStation(btn));
-  });
-
-  volumeSlider.addEventListener('input', () => {
-    setVolume(parseFloat(volumeSlider.value));
+    volumeSlider.value = String(getState().volume);
     syncVolumeFill();
-  });
 
-  // ── Render from engine state ───────────────────────────────────────────────
-  subscribe((s) => {
-    const mine = s.source === 'soma';
-    isPlaying = mine && s.playing;
-
-    playBtn.classList.toggle('playing', isPlaying);
-    iconPlay.style.display = isPlaying ? 'none' : 'block';
-    iconPause.style.display = isPlaying ? 'block' : 'none';
-    liveDot.classList.toggle('active', isPlaying);
-
-    if (volumeSlider.value !== String(s.volume)) {
-      volumeSlider.value = String(s.volume);
-      syncVolumeFill();
+    function activeBtn(): HTMLButtonElement | null {
+      return document.querySelector<HTMLButtonElement>('.station-btn.active');
     }
-    if (mine && s.stationName) nowStation.textContent = s.stationName;
-  });
 
-  // ── Visualizer ─────────────────────────────────────────────────────────────
-  const vizCanvas = document.getElementById('soma-viz') as HTMLCanvasElement;
-  const vizCtx    = vizCanvas?.getContext('2d');
-  const BAR_COUNT = 48;
-
-  function resizeViz() {
-    if (!vizCanvas) return;
-    vizCanvas.width  = vizCanvas.offsetWidth  * devicePixelRatio;
-    vizCanvas.height = vizCanvas.offsetHeight * devicePixelRatio;
-  }
-  resizeViz();
-  window.addEventListener('resize', resizeViz, { passive: true });
-
-  function getAccent(): string {
-    return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#1a6bb5';
-  }
-
-  const fakePhases  = Array.from({ length: BAR_COUNT }, () => Math.random() * Math.PI * 2);
-  const fakeSpeeds  = Array.from({ length: BAR_COUNT }, (_, i) => 0.018 + (i / BAR_COUNT) * 0.022 + Math.random() * 0.01);
-  const fakeProfile = Array.from({ length: BAR_COUNT }, (_, i) => {
-    const x = i / BAR_COUNT;
-    return 0.15 + 0.85 * Math.exp(-Math.pow((x - 0.18) * 2.2, 2))
-                + 0.45 * Math.exp(-Math.pow((x - 0.55) * 3.0, 2))
-                + 0.25 * Math.exp(-Math.pow((x - 0.80) * 4.0, 2));
-  });
-  let fakeT = 0;
-
-  function getFakeBar(i: number): number {
-    const p = fakePhases[i];
-    const s = fakeSpeeds[i];
-    const v = 0.5
-      + 0.28 * Math.sin(fakeT * s           + p)
-      + 0.14 * Math.sin(fakeT * s * 2.3     + p * 1.7)
-      + 0.08 * Math.sin(fakeT * s * 0.5     + p * 0.6)
-      + 0.06 * Math.sin(fakeT * (i * 0.04)  + p * 2.1);
-    return Math.max(0.04, Math.min(1, v * fakeProfile[i]));
-  }
-
-  const smoothed = new Float32Array(BAR_COUNT).fill(0.04);
-
-  function drawViz() {
-    requestAnimationFrame(drawViz);
-    if (!vizCanvas || !vizCtx) return;
-    const W = vizCanvas.width, H = vizCanvas.height;
-    vizCtx.clearRect(0, 0, W, H);
-    const playing = isPlaying;
-    const accent  = getAccent();
-    if (playing) fakeT++;
-    const gap  = 2 * devicePixelRatio;
-    const barW = (W - gap * (BAR_COUNT - 1)) / BAR_COUNT;
-    const maxH = H * 0.88, centerY = H / 2;
-    for (let i = 0; i < BAR_COUNT; i++) {
-      const target = playing ? getFakeBar(i) : 0.04;
-      const speed  = target > smoothed[i] ? 0.18 : 0.10;
-      smoothed[i] += (target - smoothed[i]) * speed;
-      const bH = Math.max(2 * devicePixelRatio, smoothed[i] * maxH);
-      const x  = i * (barW + gap), y = centerY - bH / 2;
-      const grad = vizCtx.createLinearGradient(0, y, 0, y + bH);
-      grad.addColorStop(0,   accent + 'd9');
-      grad.addColorStop(0.5, accent + 'a6');
-      grad.addColorStop(1,   accent + '40');
-      vizCtx.fillStyle = grad;
-      vizCtx.beginPath();
-      vizCtx.roundRect(x, y, barW, bH, Math.min(barW / 2, bH / 2));
-      vizCtx.fill();
+    function markActive(btn: HTMLButtonElement) {
+      stationBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      nowStation.textContent = btn.dataset.name ?? '';
     }
-  }
-  drawViz();
 
-  // ── SomaFM Now Playing — only polls while playing ─────────────────────────
-  // data-slug is the SomaFM channel id, so no second URL table is needed.
-  // The old map was keyed by stream URL and would have rotted along with the
-  // direct server hostnames.
-  async function fetchNowPlaying() {
-    const activeBtn = document.querySelector<HTMLButtonElement>('.station-btn.active');
-    if (!activeBtn) return;
-    const channelId = activeBtn.dataset.slug ?? '';
-    if (!channelId) return;
-    try {
-      const resp = await fetch(`https://somafm.com/songs/${channelId}.json`, {
-        signal: AbortSignal.timeout(5000)
-      });
-      if (!resp.ok) return;
-      const data = await resp.json();
-      const song = data?.songs?.[0];
-      if (!song) return;
-      const title  = song.title  || '—';
-      const artist = song.artist || '';
-      const album  = song.album  || '';
+    // ── URL State ──────────────────────────────────────────────────────────────
+    function applyUrlStation() {
+      const slug = new URLSearchParams(window.location.search).get('station');
+      if (!slug) return;
+      const target = Array.from(stationBtns).find(b => b.dataset.slug === slug);
+      if (target && !target.classList.contains('active')) markActive(target);
+    }
+    applyUrlStation();
 
-      if (npTrack)  npTrack.textContent  = title;
-      if (npArtist) npArtist.textContent = artist;
-      if (npAlbum)  npAlbum.textContent  = album;
+    function setUrlStation(slug: string) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('station', slug);
+      history.replaceState(null, '', url.toString());
+    }
 
-      const raw = song.albumart || '';
-      const cover = raw.startsWith('http') ? raw
-                  : raw.startsWith('/') ? 'https://somafm.com' + raw : '';
-
-      // Hand the metadata to the engine — MiniPlayer and MediaSession read it
-      // from there, on this page or any other.
-      setTrack({ title, artist, album, cover });
-
-      if (npCover) {
-        if (cover) {
-          npCover.classList.remove('loaded');
-          const img = new Image();
-          img.onload  = () => { npCover.src = cover; npCover.classList.add('loaded'); };
-          img.onerror = () => { npCover.classList.remove('loaded'); };
-          img.src = cover;
-        } else {
-          npCover.classList.remove('loaded');
-        }
+    // Adopt whatever the engine is already playing — matters when arriving on
+    // this page while a station is running.
+    {
+      const s = getState();
+      if (s.source === 'soma' && s.stationSlug) {
+        const running = Array.from(stationBtns).find(b => b.dataset.slug === s.stationSlug);
+        if (running) markActive(running);
       }
-    } catch { /* silent */ }
-  }
-
-  function clearNowPlaying() {
-    if (npTrack)  npTrack.textContent  = '—';
-    if (npArtist) npArtist.textContent = '';
-    if (npAlbum)  npAlbum.textContent  = '';
-    if (npCover)  npCover.classList.remove('loaded');
-  }
-
-  // Repaint from engine state when arriving mid-stream on a later visit
-  {
-    const s = getState();
-    if (s.source === 'soma' && s.track.title !== '—') {
-      if (npTrack)  npTrack.textContent  = s.track.title;
-      if (npArtist) npArtist.textContent = s.track.artist;
-      if (npAlbum)  npAlbum.textContent  = s.track.album;
-      if (npCover && s.track.cover) { npCover.src = s.track.cover; npCover.classList.add('loaded'); }
     }
-  }
 
-  // Initial fetch (shows track info if e.g. station URL param preselects one)
-  fetchNowPlaying();
-
-  // Poll only while soma is actually playing — zero requests when idle
-  let npInterval: ReturnType<typeof setInterval> | null = null;
-  subscribe((s) => {
-    const active = s.source === 'soma' && s.playing;
-    if (active && !npInterval) {
-      npInterval = setInterval(fetchNowPlaying, 30000);
-    } else if (!active && npInterval) {
-      clearInterval(npInterval);
-      npInterval = null;
+    function playStation(btn: HTMLButtonElement) {
+      markActive(btn);
+      setUrlStation(btn.dataset.slug ?? '');
+      clearNowPlaying();
+      void load({
+        source: 'soma',
+        src: btn.dataset.stream ?? '',
+        stationSlug: btn.dataset.slug ?? '',
+        stationName: btn.dataset.name ?? '',
+        track: { title: '—', artist: btn.dataset.name ?? 'soma fm', album: '' },
+      });
+      setTimeout(fetchNowPlaying, 1000);
     }
+
+    playBtn.addEventListener('click', () => {
+      // Another source is running, or nothing was loaded yet — start this station.
+      if (getState().source !== 'soma') {
+        const btn = activeBtn();
+        if (btn) playStation(btn);
+        return;
+      }
+      toggle();
+    });
+
+    stationBtns.forEach(btn => {
+      btn.addEventListener('click', () => playStation(btn));
+    });
+
+    volumeSlider.addEventListener('input', () => {
+      setVolume(parseFloat(volumeSlider.value));
+      syncVolumeFill();
+    });
+
+    // ── Render from engine state ───────────────────────────────────────────────
+    off.add(subscribe((s) => {
+      const mine = s.source === 'soma';
+      isPlaying = mine && s.playing;
+
+      playBtn.classList.toggle('playing', isPlaying);
+      iconPlay.style.display = isPlaying ? 'none' : 'block';
+      iconPause.style.display = isPlaying ? 'block' : 'none';
+      liveDot.classList.toggle('active', isPlaying);
+
+      if (volumeSlider.value !== String(s.volume)) {
+        volumeSlider.value = String(s.volume);
+        syncVolumeFill();
+      }
+      if (mine && s.stationName) nowStation.textContent = s.stationName;
+    }));
+
+    // ── Visualizer ─────────────────────────────────────────────────────────────
+    const vizCanvas = document.getElementById('soma-viz') as HTMLCanvasElement;
+    const vizCtx    = vizCanvas?.getContext('2d');
+    const BAR_COUNT = 48;
+
+    function resizeViz() {
+      if (!vizCanvas) return;
+      vizCanvas.width  = vizCanvas.offsetWidth  * devicePixelRatio;
+      vizCanvas.height = vizCanvas.offsetHeight * devicePixelRatio;
+    }
+    resizeViz();
+    off.listen(window, 'resize', resizeViz, { passive: true });
+
+    function getAccent(): string {
+      return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#1a6bb5';
+    }
+
+    const fakePhases  = Array.from({ length: BAR_COUNT }, () => Math.random() * Math.PI * 2);
+    const fakeSpeeds  = Array.from({ length: BAR_COUNT }, (_, i) => 0.018 + (i / BAR_COUNT) * 0.022 + Math.random() * 0.01);
+    const fakeProfile = Array.from({ length: BAR_COUNT }, (_, i) => {
+      const x = i / BAR_COUNT;
+      return 0.15 + 0.85 * Math.exp(-Math.pow((x - 0.18) * 2.2, 2))
+                  + 0.45 * Math.exp(-Math.pow((x - 0.55) * 3.0, 2))
+                  + 0.25 * Math.exp(-Math.pow((x - 0.80) * 4.0, 2));
+    });
+    let fakeT = 0;
+
+    function getFakeBar(i: number): number {
+      const p = fakePhases[i];
+      const s = fakeSpeeds[i];
+      const v = 0.5
+        + 0.28 * Math.sin(fakeT * s           + p)
+        + 0.14 * Math.sin(fakeT * s * 2.3     + p * 1.7)
+        + 0.08 * Math.sin(fakeT * s * 0.5     + p * 0.6)
+        + 0.06 * Math.sin(fakeT * (i * 0.04)  + p * 2.1);
+      return Math.max(0.04, Math.min(1, v * fakeProfile[i]));
+    }
+
+    const smoothed = new Float32Array(BAR_COUNT).fill(0.04);
+
+    let vizStopped = false;
+    off.add(() => { vizStopped = true; });
+
+    function drawViz() {
+      if (vizStopped) return;
+      requestAnimationFrame(drawViz);
+      if (!vizCanvas || !vizCtx) return;
+      const W = vizCanvas.width, H = vizCanvas.height;
+      vizCtx.clearRect(0, 0, W, H);
+      const playing = isPlaying;
+      const accent  = getAccent();
+      if (playing) fakeT++;
+      const gap  = 2 * devicePixelRatio;
+      const barW = (W - gap * (BAR_COUNT - 1)) / BAR_COUNT;
+      const maxH = H * 0.88, centerY = H / 2;
+      for (let i = 0; i < BAR_COUNT; i++) {
+        const target = playing ? getFakeBar(i) : 0.04;
+        const speed  = target > smoothed[i] ? 0.18 : 0.10;
+        smoothed[i] += (target - smoothed[i]) * speed;
+        const bH = Math.max(2 * devicePixelRatio, smoothed[i] * maxH);
+        const x  = i * (barW + gap), y = centerY - bH / 2;
+        const grad = vizCtx.createLinearGradient(0, y, 0, y + bH);
+        grad.addColorStop(0,   accent + 'd9');
+        grad.addColorStop(0.5, accent + 'a6');
+        grad.addColorStop(1,   accent + '40');
+        vizCtx.fillStyle = grad;
+        vizCtx.beginPath();
+        vizCtx.roundRect(x, y, barW, bH, Math.min(barW / 2, bH / 2));
+        vizCtx.fill();
+      }
+    }
+    drawViz();
+
+    // ── SomaFM Now Playing — only polls while playing ─────────────────────────
+    // data-slug is the SomaFM channel id, so no second URL table is needed.
+    // The old map was keyed by stream URL and would have rotted along with the
+    // direct server hostnames.
+    async function fetchNowPlaying() {
+      const activeBtn = document.querySelector<HTMLButtonElement>('.station-btn.active');
+      if (!activeBtn) return;
+      const channelId = activeBtn.dataset.slug ?? '';
+      if (!channelId) return;
+      try {
+        const resp = await fetch(`https://somafm.com/songs/${channelId}.json`, {
+          signal: AbortSignal.timeout(5000)
+        });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const song = data?.songs?.[0];
+        if (!song) return;
+        const title  = song.title  || '—';
+        const artist = song.artist || '';
+        const album  = song.album  || '';
+
+        if (npTrack)  npTrack.textContent  = title;
+        if (npArtist) npArtist.textContent = artist;
+        if (npAlbum)  npAlbum.textContent  = album;
+
+        const raw = song.albumart || '';
+        const cover = raw.startsWith('http') ? raw
+                    : raw.startsWith('/') ? 'https://somafm.com' + raw : '';
+
+        // Hand the metadata to the engine — MiniPlayer and MediaSession read it
+        // from there, on this page or any other.
+        setTrack({ title, artist, album, cover });
+
+        if (npCover) {
+          if (cover) {
+            npCover.classList.remove('loaded');
+            const img = new Image();
+            img.onload  = () => { npCover.src = cover; npCover.classList.add('loaded'); };
+            img.onerror = () => { npCover.classList.remove('loaded'); };
+            img.src = cover;
+          } else {
+            npCover.classList.remove('loaded');
+          }
+        }
+      } catch { /* silent */ }
+    }
+
+    function clearNowPlaying() {
+      if (npTrack)  npTrack.textContent  = '—';
+      if (npArtist) npArtist.textContent = '';
+      if (npAlbum)  npAlbum.textContent  = '';
+      if (npCover)  npCover.classList.remove('loaded');
+    }
+
+    // Repaint from engine state when arriving mid-stream on a later visit
+    {
+      const s = getState();
+      if (s.source === 'soma' && s.track.title !== '—') {
+        if (npTrack)  npTrack.textContent  = s.track.title;
+        if (npArtist) npArtist.textContent = s.track.artist;
+        if (npAlbum)  npAlbum.textContent  = s.track.album;
+        if (npCover && s.track.cover) { npCover.src = s.track.cover; npCover.classList.add('loaded'); }
+      }
+    }
+
+    // Initial fetch (shows track info if e.g. station URL param preselects one)
+    fetchNowPlaying();
+
+    // Poll only while soma is actually playing — zero requests when idle
+    let npInterval: ReturnType<typeof setInterval> | null = null;
+    off.add(subscribe((s) => {
+      const active = s.source === 'soma' && s.playing;
+      if (active && !npInterval) {
+        npInterval = setInterval(fetchNowPlaying, 30000);
+      } else if (!active && npInterval) {
+        clearInterval(npInterval);
+        npInterval = null;
+      }
+    }));
+    // The stream keeps running after leaving the page, but this UI does not —
+    // the poll would write into discarded nodes.
+    off.add(() => { if (npInterval) { clearInterval(npInterval); npInterval = null; } });
+
+    return off.run;
   });
 </script>

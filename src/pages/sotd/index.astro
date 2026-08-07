@@ -384,74 +384,85 @@ h1 em { font-style: italic; color: var(--accent); }
 </style>
 
 <script>
-const observer = new IntersectionObserver(
-  (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }),
-  { threshold: 0.1 }
-);
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-const featuredThumb = document.getElementById('featured-thumb') as HTMLElement | null;
-const featuredPlayer = document.getElementById('featured-player') as HTMLElement | null;
-featuredThumb?.addEventListener('click', () => {
-  const vid = featuredThumb.dataset.vid;
-  if (!vid || !featuredPlayer) return;
-  const w = featuredThumb.offsetWidth;
-  const h = Math.round(w * 9 / 16);
-  featuredPlayer.style.height = h + 'px';
-  featuredPlayer.innerHTML = `<iframe width="${w}" height="${h}" src="https://www.youtube.com/embed/${vid}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-  featuredPlayer.classList.add('open');
-  featuredThumb.style.display = 'none';
-});
+import { onPage, disposer } from '../../utils/lifecycle';
 
-let activeMood = '';
-let activeArtist = '';
-let activeDecade = '';
 
-function applyFilter() {
-  const items = document.querySelectorAll<HTMLElement>('.sotd-item');
-  const groups = document.querySelectorAll<HTMLElement>('.sotd-month-group');
-  let visible = 0;
-  items.forEach(item => {
-    const mood   = item.dataset.mood   ?? '';
-    const artist = item.dataset.artist ?? '';
-    const decade = item.dataset.decade ?? '';
-    const ok = (!activeMood || mood === activeMood)
-            && (!activeArtist || artist === activeArtist)
-            && (!activeDecade || decade === activeDecade);
-    item.classList.toggle('hidden', !ok);
-    if (ok) visible++;
+onPage(() => {
+  const off = disposer();
+
+  const observer = new IntersectionObserver(
+    (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }),
+    { threshold: 0.1 }
+  );
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  off.add(() => observer.disconnect());
+
+  const featuredThumb = document.getElementById('featured-thumb') as HTMLElement | null;
+  const featuredPlayer = document.getElementById('featured-player') as HTMLElement | null;
+  featuredThumb?.addEventListener('click', () => {
+    const vid = featuredThumb.dataset.vid;
+    if (!vid || !featuredPlayer) return;
+    const w = featuredThumb.offsetWidth;
+    const h = Math.round(w * 9 / 16);
+    featuredPlayer.style.height = h + 'px';
+    featuredPlayer.innerHTML = `<iframe width="${w}" height="${h}" src="https://www.youtube.com/embed/${vid}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+    featuredPlayer.classList.add('open');
+    featuredThumb.style.display = 'none';
   });
-  groups.forEach(group => {
-    group.style.display = group.querySelector('.sotd-item:not(.hidden)') ? '' : 'none';
-  });
-  const noResults = document.getElementById('no-results');
-  if (noResults) noResults.style.display = visible === 0 ? 'block' : 'none';
-}
 
-function bindPills(containerId: string, filterKey: 'mood' | 'artist' | 'decade') {
-  const container = document.getElementById(containerId);
-  container?.querySelectorAll<HTMLButtonElement>('.pill').forEach(btn => {
-    btn.addEventListener('click', () => {
-      container.querySelectorAll('.pill').forEach(p => p.classList.remove('pill-active'));
-      btn.classList.add('pill-active');
-      if (filterKey === 'mood')   activeMood   = btn.dataset.value ?? '';
-      if (filterKey === 'artist') activeArtist = btn.dataset.value ?? '';
-      if (filterKey === 'decade') activeDecade = btn.dataset.value ?? '';
-      applyFilter();
+  let activeMood = '';
+  let activeArtist = '';
+  let activeDecade = '';
+
+  function applyFilter() {
+    const items = document.querySelectorAll<HTMLElement>('.sotd-item');
+    const groups = document.querySelectorAll<HTMLElement>('.sotd-month-group');
+    let visible = 0;
+    items.forEach(item => {
+      const mood   = item.dataset.mood   ?? '';
+      const artist = item.dataset.artist ?? '';
+      const decade = item.dataset.decade ?? '';
+      const ok = (!activeMood || mood === activeMood)
+              && (!activeArtist || artist === activeArtist)
+              && (!activeDecade || decade === activeDecade);
+      item.classList.toggle('hidden', !ok);
+      if (ok) visible++;
     });
+    groups.forEach(group => {
+      group.style.display = group.querySelector('.sotd-item:not(.hidden)') ? '' : 'none';
+    });
+    const noResults = document.getElementById('no-results');
+    if (noResults) noResults.style.display = visible === 0 ? 'block' : 'none';
+  }
+
+  function bindPills(containerId: string, filterKey: 'mood' | 'artist' | 'decade') {
+    const container = document.getElementById(containerId);
+    container?.querySelectorAll<HTMLButtonElement>('.pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        container.querySelectorAll('.pill').forEach(p => p.classList.remove('pill-active'));
+        btn.classList.add('pill-active');
+        if (filterKey === 'mood')   activeMood   = btn.dataset.value ?? '';
+        if (filterKey === 'artist') activeArtist = btn.dataset.value ?? '';
+        if (filterKey === 'decade') activeDecade = btn.dataset.value ?? '';
+        applyFilter();
+      });
+    });
+  }
+
+  bindPills('mood-pills',   'mood');
+  bindPills('artist-pills', 'artist');
+  bindPills('decade-pills', 'decade');
+
+  const randomBtn = document.getElementById('random-btn');
+  randomBtn?.addEventListener('click', () => {
+    const items = Array.from(document.querySelectorAll<HTMLElement>('.sotd-item:not(.hidden)'));
+    if (!items.length) return;
+    const pick = items[Math.floor(Math.random() * items.length)];
+    const id = pick.dataset.id;
+    if (id) window.location.href = `/sotd/${id}`;
   });
-}
 
-bindPills('mood-pills',   'mood');
-bindPills('artist-pills', 'artist');
-bindPills('decade-pills', 'decade');
-
-const randomBtn = document.getElementById('random-btn');
-randomBtn?.addEventListener('click', () => {
-  const items = Array.from(document.querySelectorAll<HTMLElement>('.sotd-item:not(.hidden)'));
-  if (!items.length) return;
-  const pick = items[Math.floor(Math.random() * items.length)];
-  const id = pick.dataset.id;
-  if (id) window.location.href = `/sotd/${id}`;
+  return off.run;
 });
 </script>
