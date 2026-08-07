@@ -1,25 +1,36 @@
 /**
- * Shared reveal animation utility.
+ * Shared reveal animation.
  *
- * NOTE: The .reveal CSS class and its animation are defined globally in
- * BaseLayout.astro. The IntersectionObserver wiring is done inline in each
- * page's <script> block since Astro does not support shared client scripts
- * across pages without a bundler import.
+ * The .reveal class and its transition are defined globally in
+ * BaseLayout.astro; this is the observer half.
  *
- * This file is kept as a reference / for potential future use with
- * Astro's client:load directive or a shared island component.
+ * The block below used to sit verbatim in three page scripts, under a note
+ * claiming Astro cannot share client scripts across pages. It can — every
+ * component in src/ imports utils/lifecycle.ts — so the copies are gone and
+ * this is the one remaining version.
  *
- * Usage in any page script:
- *   const observer = new IntersectionObserver(
- *     (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }),
- *     { threshold: 0.1 }
- *   );
- *   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+ * Returns its own teardown:
+ *
+ *   onPage(() => {
+ *     const off = disposer();
+ *     off.add(initReveal());
+ *     return off.run;
+ *   });
  */
-export function initReveal(threshold = 0.1): void {
+export function initReveal(threshold = 0.1): () => void {
   const observer = new IntersectionObserver(
-    (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }),
-    { threshold }
+    (entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        e.target.classList.add('in');
+        // The class is never taken off again, so one sighting is enough.
+        observer.unobserve(e.target);
+      }
+    },
+    { threshold },
   );
-  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  for (const el of document.querySelectorAll('.reveal')) observer.observe(el);
+
+  return () => observer.disconnect();
 }

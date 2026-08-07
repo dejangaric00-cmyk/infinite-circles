@@ -386,17 +386,13 @@ h1 em { font-style: italic; color: var(--accent); }
 <script>
 
 import { onPage, disposer } from '../../utils/lifecycle';
+import { initReveal } from '../../utils/reveal';
 
 
 onPage(() => {
   const off = disposer();
 
-  const observer = new IntersectionObserver(
-    (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }),
-    { threshold: 0.1 }
-  );
-  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-  off.add(() => observer.disconnect());
+  off.add(initReveal());
 
   const featuredThumb = document.getElementById('featured-thumb') as HTMLElement | null;
   const featuredPlayer = document.getElementById('featured-player') as HTMLElement | null;

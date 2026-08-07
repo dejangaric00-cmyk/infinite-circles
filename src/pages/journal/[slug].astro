@@ -117,17 +117,13 @@ const { Content } = await render(post);
 <script>
 
 import { onPage, disposer } from '../../utils/lifecycle';
+import { initReveal } from '../../utils/reveal';
 
 
 onPage(() => {
   const off = disposer();
 
-  const observer = new IntersectionObserver(
-    (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }),
-    { threshold: 0.1 }
-  );
-  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-  off.add(() => observer.disconnect());
+  off.add(initReveal());
 
   return off.run;
 });

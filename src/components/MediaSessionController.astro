@@ -9,7 +9,7 @@
 ---
 
 <script>
-  import { subscribe, play, pause, seekBy, seekToPercent, getPosition, getState } from '../utils/player';
+  import { subscribe, play, pause, seekBy, seekToPercent, getPosition } from '../utils/player';
   import { requestNext } from '../utils/archive';
 
   if ('mediaSession' in navigator) {
@@ -45,9 +45,24 @@
       });
     } catch { /* ignore unsupported actions */ }
 
+    // Keeps the lock screen scrubber honest, but only while a finite track is
+    // actually running. This used to be an unconditional setInterval that
+    // started on the first page view and ticked forever, whether or not anyone
+    // ever pressed play. Live streams have no position to report.
+    let posTimer: ReturnType<typeof setInterval> | null = null;
+
     // ── Metadata ──────────────────────────────────────────────────────────────
     subscribe((s) => {
       ms.playbackState = s.playing ? 'playing' : 'paused';
+
+      const scrubbable = s.playing && s.source === 'archive';
+      if (scrubbable && !posTimer) {
+        posTimer = setInterval(syncPosition, 5000);
+      } else if (!scrubbable && posTimer) {
+        clearInterval(posTimer);
+        posTimer = null;
+      }
+
       if (!s.playing) return; // don't overwrite metadata on pause
 
       const fallbackTitle =
@@ -73,8 +88,5 @@
 
       syncPosition();
     });
-
-    // Keep the lock screen scrubber honest while a finite track runs
-    setInterval(() => { if (getState().playing) syncPosition(); }, 5000);
   }
 </script>
