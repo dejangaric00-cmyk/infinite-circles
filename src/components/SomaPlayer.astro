@@ -9,35 +9,35 @@
   </div>
 
   <div class="station-grid">
-    <button class="station-btn active" data-stream="https://ice4.somafm.com/dronezone-128-mp3" data-name="drone zone" data-slug="dronezone">
+    <button class="station-btn active" data-stream="https://ice5.somafm.com/dronezone-128-mp3" data-name="drone zone" data-slug="dronezone">
       <span class="station-name">Drone Zone</span>
       <span class="station-genre">ambient · dub · space</span>
     </button>
-    <button class="station-btn" data-stream="https://ice4.somafm.com/deepspaceone-128-mp3" data-name="deep space one" data-slug="deepspaceone">
+    <button class="station-btn" data-stream="https://ice5.somafm.com/deepspaceone-128-mp3" data-name="deep space one" data-slug="deepspaceone">
       <span class="station-name">Deep Space One</span>
       <span class="station-genre">deep ambient · experimental</span>
     </button>
-    <button class="station-btn" data-stream="https://ice4.somafm.com/groovesalad-128-mp3" data-name="groove salad" data-slug="groovesalad">
+    <button class="station-btn" data-stream="https://ice5.somafm.com/groovesalad-128-mp3" data-name="groove salad" data-slug="groovesalad">
       <span class="station-name">Groove Salad</span>
       <span class="station-genre">ambient groove · downtempo</span>
     </button>
-    <button class="station-btn" data-stream="https://ice4.somafm.com/thetrip-128-mp3" data-name="the trip" data-slug="thetrip">
+    <button class="station-btn" data-stream="https://ice5.somafm.com/thetrip-128-mp3" data-name="the trip" data-slug="thetrip">
       <span class="station-name">The Trip</span>
       <span class="station-genre">psychedelic · progressive</span>
     </button>
-    <button class="station-btn" data-stream="https://ice4.somafm.com/fluid-128-mp3" data-name="fluid" data-slug="fluid">
+    <button class="station-btn" data-stream="https://ice5.somafm.com/fluid-128-mp3" data-name="fluid" data-slug="fluid">
       <span class="station-name">Fluid</span>
       <span class="station-genre">new age · ambient · chill</span>
     </button>
-    <button class="station-btn" data-stream="https://ice4.somafm.com/illstreet-128-mp3" data-name="illinois street lounge" data-slug="illstreet">
+    <button class="station-btn" data-stream="https://ice5.somafm.com/illstreet-128-mp3" data-name="illinois street lounge" data-slug="illstreet">
       <span class="station-name">Illinois Street Lounge</span>
       <span class="station-genre">vintage lounge · cocktail</span>
     </button>
-    <button class="station-btn" data-stream="https://ice4.somafm.com/thistle-128-mp3" data-name="thistle radio" data-slug="thistle">
+    <button class="station-btn" data-stream="https://ice5.somafm.com/thistle-128-mp3" data-name="thistle radio" data-slug="thistle">
       <span class="station-name">Thistle Radio</span>
       <span class="station-genre">celtic · folk · world</span>
     </button>
-    <button class="station-btn" data-stream="https://ice4.somafm.com/lush-128-mp3" data-name="lush" data-slug="lush">
+    <button class="station-btn" data-stream="https://ice5.somafm.com/lush-128-mp3" data-name="lush" data-slug="lush">
       <span class="station-name">Lush</span>
       <span class="station-genre">indie · shoegaze · dream pop</span>
     </button>
@@ -68,8 +68,6 @@
       <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.8" aria-label="Lautstärke">
     </div>
   </div>
-
-  <audio id="soma-audio" preload="none"></audio>
 </div>
 
 <style>
@@ -258,7 +256,8 @@ input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-of
 </style>
 
 <script>
-  const audio = document.getElementById('soma-audio') as HTMLAudioElement;
+  import { load, toggle, setVolume, setTrack, setStation, subscribe, getState } from '../utils/player';
+
   const playBtn = document.getElementById('play-btn') as HTMLButtonElement;
   const iconPlay = document.getElementById('icon-play') as SVGElement;
   const iconPause = document.getElementById('icon-pause') as SVGElement;
@@ -267,25 +266,38 @@ input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-of
   const volumeSlider = document.getElementById('volume-slider') as HTMLInputElement;
   const stationBtns = document.querySelectorAll<HTMLButtonElement>('.station-btn');
 
+  const npTrack  = document.getElementById('soma-np-track')  as HTMLElement;
+  const npArtist = document.getElementById('soma-np-artist') as HTMLElement;
+  const npAlbum  = document.getElementById('soma-np-album')  as HTMLElement;
+  const npCover  = document.getElementById('soma-np-cover')  as HTMLImageElement;
+
+  // Mirrors the engine — read by the visualizer, never written directly.
   let isPlaying = false;
-  audio.volume = 0.8;
 
   // Slider fill is painted via --vol on the input itself
   function syncVolumeFill() {
     volumeSlider.style.setProperty('--vol', volumeSlider.value);
   }
+
+  volumeSlider.value = String(getState().volume);
   syncVolumeFill();
+
+  function activeBtn(): HTMLButtonElement | null {
+    return document.querySelector<HTMLButtonElement>('.station-btn.active');
+  }
+
+  function markActive(btn: HTMLButtonElement) {
+    stationBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    nowStation.textContent = btn.dataset.name ?? '';
+  }
 
   // ── URL State ──────────────────────────────────────────────────────────────
   function applyUrlStation() {
     const slug = new URLSearchParams(window.location.search).get('station');
     if (!slug) return;
     const target = Array.from(stationBtns).find(b => b.dataset.slug === slug);
-    if (target && !target.classList.contains('active')) {
-      stationBtns.forEach(b => b.classList.remove('active'));
-      target.classList.add('active');
-      nowStation.textContent = target.dataset.name ?? '';
-    }
+    if (target && !target.classList.contains('active')) markActive(target);
   }
   applyUrlStation();
 
@@ -295,60 +307,65 @@ input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-of
     history.replaceState(null, '', url.toString());
   }
 
-  // ── Play state ─────────────────────────────────────────────────────────────
-  function setPlaying(playing: boolean) {
-    isPlaying = playing;
-    playBtn.classList.toggle('playing', playing);
-    iconPlay.style.display = playing ? 'none' : 'block';
-    iconPause.style.display = playing ? 'block' : 'none';
-    liveDot.classList.toggle('active', playing);
-    const trackEl   = document.getElementById('soma-np-track') as HTMLElement | null;
-    const stationEl = document.getElementById('now-station')   as HTMLElement | null;
-    window.dispatchEvent(new CustomEvent('ic:playstate', {
-      detail: {
-        player: 'soma',
-        playing,
-        title: trackEl?.textContent ?? '—',
-        artist: stationEl?.textContent ?? 'soma fm',
-      }
-    }));
+  // Adopt whatever the engine is already playing — matters when arriving on
+  // this page while a station is running.
+  {
+    const s = getState();
+    if (s.source === 'soma' && s.stationSlug) {
+      const running = Array.from(stationBtns).find(b => b.dataset.slug === s.stationSlug);
+      if (running) markActive(running);
+    }
+  }
+
+  function playStation(btn: HTMLButtonElement) {
+    markActive(btn);
+    setUrlStation(btn.dataset.slug ?? '');
+    clearNowPlaying();
+    void load({
+      source: 'soma',
+      src: btn.dataset.stream ?? '',
+      stationSlug: btn.dataset.slug ?? '',
+      stationName: btn.dataset.name ?? '',
+      track: { title: '—', artist: btn.dataset.name ?? 'soma fm', album: '' },
+    });
+    setTimeout(fetchNowPlaying, 1000);
   }
 
   playBtn.addEventListener('click', () => {
-    if (!isPlaying) {
-      const active = document.querySelector<HTMLButtonElement>('.station-btn.active');
-      // Compare against expected stream URL — window.location.href is not a reliable "unset" sentinel
-      if (active && audio.src !== (active.dataset.stream ?? '')) {
-        audio.src = active.dataset.stream ?? '';
-        audio.load();
-      }
-      audio.play().then(() => setPlaying(true)).catch(() => {});
-    } else {
-      audio.pause();
-      setPlaying(false);
+    // Another source is running, or nothing was loaded yet — start this station.
+    if (getState().source !== 'soma') {
+      const btn = activeBtn();
+      if (btn) playStation(btn);
+      return;
     }
+    toggle();
   });
 
   stationBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      stationBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      audio.src = btn.dataset.stream ?? '';
-      audio.load();
-      nowStation.textContent = btn.dataset.name ?? '';
-      setUrlStation(btn.dataset.slug ?? '');
-      audio.play().then(() => setPlaying(true)).catch(() => {});
-    });
+    btn.addEventListener('click', () => playStation(btn));
   });
 
   volumeSlider.addEventListener('input', () => {
-    audio.volume = parseFloat(volumeSlider.value);
+    setVolume(parseFloat(volumeSlider.value));
     syncVolumeFill();
   });
 
-  audio.addEventListener('play',  () => setPlaying(true));
-  audio.addEventListener('pause', () => setPlaying(false));
-  audio.addEventListener('error', () => setPlaying(false));
+  // ── Render from engine state ───────────────────────────────────────────────
+  subscribe((s) => {
+    const mine = s.source === 'soma';
+    isPlaying = mine && s.playing;
+
+    playBtn.classList.toggle('playing', isPlaying);
+    iconPlay.style.display = isPlaying ? 'none' : 'block';
+    iconPause.style.display = isPlaying ? 'block' : 'none';
+    liveDot.classList.toggle('active', isPlaying);
+
+    if (volumeSlider.value !== String(s.volume)) {
+      volumeSlider.value = String(s.volume);
+      syncVolumeFill();
+    }
+    if (mine && s.stationName) nowStation.textContent = s.stationName;
+  });
 
   // ── Visualizer ─────────────────────────────────────────────────────────────
   const vizCanvas = document.getElementById('soma-viz') as HTMLCanvasElement;
@@ -420,26 +437,13 @@ input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-of
   drawViz();
 
   // ── SomaFM Now Playing — only polls while playing ─────────────────────────
-  const SOMA_CHANNEL_MAP: Record<string, string> = {
-    'https://ice4.somafm.com/dronezone-128-mp3':    'dronezone',
-    'https://ice4.somafm.com/deepspaceone-128-mp3': 'deepspaceone',
-    'https://ice4.somafm.com/groovesalad-128-mp3':  'groovesalad',
-    'https://ice4.somafm.com/thetrip-128-mp3':      'thetrip',
-    'https://ice4.somafm.com/fluid-128-mp3':        'fluid',
-    'https://ice4.somafm.com/illstreet-128-mp3':    'illstreet',
-    'https://ice4.somafm.com/thistle-128-mp3':      'thistle',
-    'https://ice4.somafm.com/lush-128-mp3':         'lush',
-  };
-
-  const npTrack  = document.getElementById('soma-np-track')  as HTMLElement;
-  const npArtist = document.getElementById('soma-np-artist') as HTMLElement;
-  const npAlbum  = document.getElementById('soma-np-album')  as HTMLElement;
-  const npCover  = document.getElementById('soma-np-cover')  as HTMLImageElement;
-
+  // data-slug is the SomaFM channel id, so no second URL table is needed.
+  // The old map was keyed by stream URL and would have rotted along with the
+  // direct server hostnames.
   async function fetchNowPlaying() {
     const activeBtn = document.querySelector<HTMLButtonElement>('.station-btn.active');
     if (!activeBtn) return;
-    const channelId = SOMA_CHANNEL_MAP[activeBtn.dataset.stream ?? ''];
+    const channelId = activeBtn.dataset.slug ?? '';
     if (!channelId) return;
     try {
       const resp = await fetch(`https://somafm.com/songs/${channelId}.json`, {
@@ -449,20 +453,29 @@ input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-of
       const data = await resp.json();
       const song = data?.songs?.[0];
       if (!song) return;
-      if (npTrack)  npTrack.textContent  = song.title  || '—';
-      if (npArtist) npArtist.textContent = song.artist || '';
-      if (npAlbum)  npAlbum.textContent  = song.album  || '';
-      if (isPlaying) setPlaying(true);
-      if (npCover) {
-        const raw = song.albumart || '';
-        const src = raw.startsWith('http') ? raw
+      const title  = song.title  || '—';
+      const artist = song.artist || '';
+      const album  = song.album  || '';
+
+      if (npTrack)  npTrack.textContent  = title;
+      if (npArtist) npArtist.textContent = artist;
+      if (npAlbum)  npAlbum.textContent  = album;
+
+      const raw = song.albumart || '';
+      const cover = raw.startsWith('http') ? raw
                   : raw.startsWith('/') ? 'https://somafm.com' + raw : '';
-        if (src) {
+
+      // Hand the metadata to the engine — MiniPlayer and MediaSession read it
+      // from there, on this page or any other.
+      setTrack({ title, artist, album, cover });
+
+      if (npCover) {
+        if (cover) {
           npCover.classList.remove('loaded');
           const img = new Image();
-          img.onload  = () => { npCover.src = src; npCover.classList.add('loaded'); };
+          img.onload  = () => { npCover.src = cover; npCover.classList.add('loaded'); };
           img.onerror = () => { npCover.classList.remove('loaded'); };
-          img.src = src;
+          img.src = cover;
         } else {
           npCover.classList.remove('loaded');
         }
@@ -470,22 +483,36 @@ input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-of
     } catch { /* silent */ }
   }
 
-  // Initial fetch (shows track info if e.g. station URL param auto-starts)
+  function clearNowPlaying() {
+    if (npTrack)  npTrack.textContent  = '—';
+    if (npArtist) npArtist.textContent = '';
+    if (npAlbum)  npAlbum.textContent  = '';
+    if (npCover)  npCover.classList.remove('loaded');
+  }
+
+  // Repaint from engine state when arriving mid-stream on a later visit
+  {
+    const s = getState();
+    if (s.source === 'soma' && s.track.title !== '—') {
+      if (npTrack)  npTrack.textContent  = s.track.title;
+      if (npArtist) npArtist.textContent = s.track.artist;
+      if (npAlbum)  npAlbum.textContent  = s.track.album;
+      if (npCover && s.track.cover) { npCover.src = s.track.cover; npCover.classList.add('loaded'); }
+    }
+  }
+
+  // Initial fetch (shows track info if e.g. station URL param preselects one)
   fetchNowPlaying();
 
-  // Poll only while playing — zero requests when paused/idle
+  // Poll only while soma is actually playing — zero requests when idle
   let npInterval: ReturnType<typeof setInterval> | null = null;
-  audio.addEventListener('play',  () => { if (!npInterval) npInterval = setInterval(fetchNowPlaying, 30000); });
-  audio.addEventListener('pause', () => { if (npInterval) { clearInterval(npInterval); npInterval = null; } });
-  audio.addEventListener('error', () => { if (npInterval) { clearInterval(npInterval); npInterval = null; } });
-
-  stationBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (npTrack)  npTrack.textContent  = '—';
-      if (npArtist) npArtist.textContent = '';
-      if (npAlbum)  npAlbum.textContent  = '';
-      if (npCover)  npCover.classList.remove('loaded');
-      setTimeout(fetchNowPlaying, 1000);
-    });
+  subscribe((s) => {
+    const active = s.source === 'soma' && s.playing;
+    if (active && !npInterval) {
+      npInterval = setInterval(fetchNowPlaying, 30000);
+    } else if (!active && npInterval) {
+      clearInterval(npInterval);
+      npInterval = null;
+    }
   });
 </script>

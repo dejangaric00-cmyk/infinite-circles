@@ -152,13 +152,6 @@ const latestSotd = await getLatestSotd();
 
     rafId = requestAnimationFrame(draw);
   }
-
-  // ── ic:play-liked → forward to ArchiveRadio rpJumpTo ─────────────────────
-  window.addEventListener('ic:play-liked', (e: Event) => {
-    const doc = (e as CustomEvent).detail;
-    const fn = (window as any).__icArchiveJumpTo;
-    if (typeof fn === 'function') fn(doc);
-  });
 </script>
 
 <style>

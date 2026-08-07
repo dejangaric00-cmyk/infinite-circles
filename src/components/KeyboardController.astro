@@ -271,6 +271,9 @@
 </style>
 
 <script>
+  import { toggle, setVolume, getState } from '../utils/player';
+  import { requestNext } from '../utils/archive';
+
   const overlay   = document.getElementById('kb-overlay')    as HTMLElement;
   const closeBtn  = document.getElementById('kb-close')      as HTMLButtonElement;
   const hintBadge = document.getElementById('kb-hint-badge') as HTMLButtonElement;
@@ -297,48 +300,24 @@
       || (el as HTMLElement).isContentEditable;
   }
 
-  // ── SomaFM controls ─────────────────────────────────────────────────────────
-  function somaPlayPause() {
-    (document.getElementById('play-btn') as HTMLButtonElement | null)?.click();
-  }
+  // ── Player controls ─────────────────────────────────────────────────────────
+  // Everything runs through the engine, so the shortcuts work on any page —
+  // the station keys only do something where the station grid is mounted.
   function somaStation(n: number) {
     const btns = document.querySelectorAll<HTMLButtonElement>('.station-btn');
     btns[n - 1]?.click();
   }
 
-  // ── ArchiveRadio controls ───────────────────────────────────────────────────
-  function archivePlayPause() {
-    (document.getElementById('rp-play-btn') as HTMLButtonElement | null)?.click();
-  }
   function archiveSkip() {
-    (document.getElementById('rp-skip-btn') as HTMLButtonElement | null)?.click();
-  }
-
-  // ── Active player detection ─────────────────────────────────────────────────
-  function activePlayer(): 'soma' | 'archive' | 'none' {
-    const somaAudio = document.getElementById('soma-audio') as HTMLAudioElement | null;
-    if (somaAudio && !somaAudio.paused) return 'soma';
-    if (document.getElementById('ar-dot')?.classList.contains('playing')) return 'archive';
-    return 'none';
+    requestNext();
   }
 
   function handleSpace() {
-    activePlayer() === 'archive' ? archivePlayPause() : somaPlayPause();
+    toggle();
   }
 
   // ── Volume control ──────────────────────────────────────────────────────────
   let volToastTimer: ReturnType<typeof setTimeout>;
-
-  function getActiveAudio(): HTMLAudioElement | null {
-    const ap = activePlayer();
-    if (ap === 'soma') return document.getElementById('soma-audio') as HTMLAudioElement;
-    // ArchiveRadio doesn't expose its audio element by id — we track it via a
-    // custom property set on window by a small patch, or fall back to soma
-    const w = window as any;
-    if (ap === 'archive' && w.__icArchiveAudio instanceof HTMLAudioElement) return w.__icArchiveAudio;
-    // fallback: if soma audio exists, control that
-    return document.getElementById('soma-audio') as HTMLAudioElement | null;
-  }
 
   function showVolToast(vol: number) {
     const pct = Math.round(vol * 100);
@@ -351,31 +330,10 @@
   }
 
   function adjustVolume(delta: number) {
-    // Adjust soma volume slider (source of truth for soma)
-    const somaSlider = document.getElementById('volume-slider') as HTMLInputElement | null;
-    const somaAudio  = document.getElementById('soma-audio')    as HTMLAudioElement | null;
-
-    // Determine which audio to adjust
-    const ap = activePlayer();
-    const w  = window as any;
-
-    let currentVol = 0.8;
-    if (ap === 'archive' && w.__icArchiveAudio instanceof HTMLAudioElement) {
-      currentVol = w.__icArchiveAudio.volume;
-    } else if (somaAudio) {
-      currentVol = somaAudio.volume;
-    }
-
-    const newVol = Math.min(1, Math.max(0, Math.round((currentVol + delta) * 10) / 10));
-
-    // Apply to archive if active
-    if (ap === 'archive' && w.__icArchiveAudio instanceof HTMLAudioElement) {
-      w.__icArchiveAudio.volume = newVol;
-    }
-    // Always sync soma slider + audio (keeps UI in sync)
-    if (somaAudio)  somaAudio.volume = newVol;
-    if (somaSlider) { somaSlider.value = String(newVol); }
-
+    // One volume for the whole site — the engine owns it and persists it.
+    // SomaPlayer's slider follows along through its own subscription.
+    const newVol = Math.min(1, Math.max(0, Math.round((getState().volume + delta) * 10) / 10));
+    setVolume(newVol);
     showVolToast(newVol);
   }
 

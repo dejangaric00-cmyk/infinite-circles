@@ -112,7 +112,10 @@
 </style>
 
 <script>
-  const RP_SK = 'ic_rp_liked_v2';
+  import {
+    playDoc, loadLiked, saveLiked, fmtAgo,
+    LIKED_KEY, LIKED_CHANGED, type StoredTrack,
+  } from '../utils/archive';
 
   const sidebar  = document.getElementById('like-sidebar')  as HTMLElement;
   const backdrop = document.getElementById('like-backdrop') as HTMLElement;
@@ -123,19 +126,7 @@
   const emptyEl  = document.getElementById('ls-empty')      as HTMLElement;
   const countEl  = document.getElementById('like-count')    as HTMLElement;
 
-  function loadLiked(): any[] {
-    try { return JSON.parse(localStorage.getItem(RP_SK) || '[]'); } catch { return []; }
-  }
-  function saveLiked(a: any[]) { localStorage.setItem(RP_SK, JSON.stringify(a)); }
-
-  function fmtAgo(ts: number): string {
-    const d = Math.floor((Date.now() - ts) / 60000);
-    if (d < 1)  return 'jetzt';
-    if (d < 60) return `${d}min`;
-    const h = Math.floor(d / 60);
-    if (h < 24) return `${h}h`;
-    return `${Math.floor(h / 24)}d`;
-  }
+  // Storage and formatting live in src/utils/archive.ts — see imports above.
 
   function openSidebar()  { sidebar.hidden = false; backdrop.hidden = false; render(); closeBtn.focus(); }
   function closeSidebar() { sidebar.hidden = true;  backdrop.hidden = true;  toggle.focus(); }
@@ -143,7 +134,7 @@
   toggle.addEventListener('click', () => sidebar.hidden ? openSidebar() : closeSidebar());
   closeBtn.addEventListener('click', closeSidebar);
   backdrop.addEventListener('click', closeSidebar);
-  clearBtn.addEventListener('click', () => { saveLiked([]); render(); updateBadge(); });
+  clearBtn.addEventListener('click', () => saveLiked([]));
 
   // ── XSS-safe DOM rendering (no innerHTML with user data) ──────────────────
   function render() {
@@ -152,7 +143,7 @@
     itemsEl.innerHTML = '';
     if (!liked.length) return;
 
-    liked.forEach((x: any) => {
+    liked.forEach((x: StoredTrack) => {
       const row = document.createElement('div');
       row.className = 'ls-item';
 
@@ -162,9 +153,8 @@
       playBtn.textContent = '▶';
       playBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        window.dispatchEvent(new CustomEvent('ic:play-liked', {
-          detail: { identifier: x.id, title: x.title, creator: x.artist || '' }
-        }));
+        // Straight to the engine — works on pages without the radio UI too.
+        void playDoc({ identifier: x.id, title: x.title, creator: x.artist || '' });
         closeSidebar();
       });
 
@@ -189,11 +179,9 @@
       removeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         const current = loadLiked();
-        const idx = current.findIndex((item: any) => item.id === x.id);
+        const idx = current.findIndex((item) => item.id === x.id);
         if (idx >= 0) current.splice(idx, 1);
         saveLiked(current);
-        render();
-        updateBadge();
       });
 
       row.append(playBtn, info, removeBtn);
@@ -211,9 +199,10 @@
   updateBadge();
 
   window.addEventListener('storage', (e) => {
-    if (e.key === RP_SK) { updateBadge(); if (!sidebar.hidden) render(); }
+    if (e.key === LIKED_KEY) { updateBadge(); if (!sidebar.hidden) render(); }
   });
-  window.addEventListener('ic:liked-changed', () => {
+  // saveLiked() fires this, so every mutation repaints through one path.
+  window.addEventListener(LIKED_CHANGED, () => {
     updateBadge();
     if (!sidebar.hidden) render();
   });

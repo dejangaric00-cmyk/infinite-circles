@@ -344,8 +344,15 @@
 </style>
 
 <script>
-const RP_SK = 'ic_rp_liked_v2';
-const HX_SK = 'ic_rp_history_v2';
+import {
+  playDoc, isLiked, toggleLike, addToHistory,
+  loadHistory, clearHistory, fmtTime, fmtAgo,
+  HISTORY_CHANGED, ARCHIVE_NEXT, type ArchiveDoc,
+} from '../utils/archive';
+import {
+  subscribe, subscribeTime, registerSourceHandlers,
+  toggle as playerToggle, pause as playerPause, seekToPercent, getState,
+} from '../utils/player';
 
 // ── Genre → query map ─────────────────────────────────────────────────────────
 const GENRE_QUERIES: Record<string, string[]> = {
@@ -475,9 +482,8 @@ const GENRE_LABELS: Record<string, string> = {
 
 let activeGenre = 'all';
 
-let rpTracks: any[] = [];
+let rpTracks: ArchiveDoc[] = [];
 let rpIdx = 0;
-let rpAudio: HTMLAudioElement | null = null;
 let rpPlaying = false;
 let rpCurrentId = '';
 
@@ -502,26 +508,7 @@ const arHistClear = $('ar-history-clear') as HTMLButtonElement;
 const arBadge     = $('ar-badge')      as HTMLElement;
 const genreBtns   = document.querySelectorAll<HTMLButtonElement>('.ar-genre-btn');
 
-// ── Storage ──────────────────────────────────────────────────────────────────
-function loadLiked(): any[]   { try { return JSON.parse(localStorage.getItem(RP_SK) || '[]'); } catch { return []; } }
-function saveLiked(a: any[])  { localStorage.setItem(RP_SK, JSON.stringify(a)); }
-function loadHistory(): any[] { try { return JSON.parse(localStorage.getItem(HX_SK) || '[]'); } catch { return []; } }
-function saveHistory(a: any[]){ localStorage.setItem(HX_SK, JSON.stringify(a)); }
-
-// ── Utilities ─────────────────────────────────────────────────────────────────
-function fmtTime(sec: number): string {
-  if (!isFinite(sec) || isNaN(sec)) return '—';
-  const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
-function fmtAgo(ts: number): string {
-  const d = Math.floor((Date.now() - ts) / 60000);
-  if (d < 1)  return 'jetzt';
-  if (d < 60) return `${d}min`;
-  const h = Math.floor(d / 60);
-  if (h < 24) return `${h}h`;
-  return `${Math.floor(h / 24)}d`;
-}
+// Storage and formatting live in src/utils/archive.ts — see imports above.
 function setStatus(s: string) { if (rpStatus) rpStatus.textContent = s; }
 function setTrack(title: string, artist: string) {
   if (rpTrackEl)  rpTrackEl.textContent  = title.length > 60 ? title.slice(0, 60) + '…' : title;
@@ -537,23 +524,12 @@ genreBtns.forEach(btn => {
     genreBtns.forEach(b => b.classList.toggle('active', b.dataset.genre === genre));
     if (arBadge) arBadge.textContent = GENRE_LABELS[genre] ?? 'archive.org';
     // Stop current playback and reload with new genre
-    if (rpAudio) { rpAudio.pause(); rpAudio = null; }
-    setPlaying(false);
+    if (getState().source === 'archive') playerPause();
     await rpInit();
   });
 });
 
 // ── History ───────────────────────────────────────────────────────────────────
-function addToHistory(id: string, title: string, artist: string) {
-  if (!id || title === '—') return;
-  const history = loadHistory();
-  if (history.length && history[0].id === id) return;
-  history.unshift({ id, title, artist, ts: Date.now() });
-  if (history.length > 15) history.pop();
-  saveHistory(history);
-  renderHistory();
-}
-
 function renderHistory() {
   const history = loadHistory();
   if (!arHistory || !arHistItems) return;
@@ -571,29 +547,33 @@ function renderHistory() {
       const id     = el.dataset.id     ?? '';
       const title  = el.dataset.title  ?? '';
       const artist = el.dataset.artist ?? '';
-      if (id) rpJumpTo({ identifier: id, title, creator: artist });
+      if (id) void playTrack({ identifier: id, title, creator: artist });
     });
   });
 }
 
 // ── Seek bar ──────────────────────────────────────────────────────────────────
-function seekUpdate() {
-  if (!rpAudio) return;
-  const pct = rpAudio.duration ? (rpAudio.currentTime / rpAudio.duration) * 100 : 0;
-  if (arSeekFill)  arSeekFill.style.width = pct + '%';
-  if (arSeekInput) arSeekInput.value = String(pct);
-  if (arCurrent)   arCurrent.textContent  = fmtTime(rpAudio.currentTime);
-  if (arDuration)  arDuration.textContent = fmtTime(rpAudio.duration);
-}
 function seekReset() {
   if (arSeekFill)  arSeekFill.style.width = '0%';
   if (arSeekInput) arSeekInput.value = '0';
   if (arCurrent)   arCurrent.textContent  = '0:00';
   if (arDuration)  arDuration.textContent = '—';
 }
+
+// Position comes from the engine. Ignore it while soma holds the element —
+// a live stream has no meaningful duration.
+subscribeTime((currentTime, duration) => {
+  if (getState().source !== 'archive') return;
+  const pct = duration ? (currentTime / duration) * 100 : 0;
+  if (arSeekFill)  arSeekFill.style.width = pct + '%';
+  if (arSeekInput) arSeekInput.value = String(pct);
+  if (arCurrent)   arCurrent.textContent  = fmtTime(currentTime);
+  if (arDuration)  arDuration.textContent = fmtTime(duration);
+});
+
 arSeekInput?.addEventListener('input', () => {
-  if (!rpAudio || !rpAudio.duration) return;
-  rpAudio.currentTime = (parseFloat(arSeekInput.value) / 100) * rpAudio.duration;
+  if (getState().source !== 'archive') return;
+  seekToPercent(parseFloat(arSeekInput.value));
   if (arSeekFill) arSeekFill.style.width = arSeekInput.value + '%';
 });
 
@@ -609,77 +589,67 @@ async function fetchTracks(): Promise<any[]> {
   return data?.response?.docs ?? [];
 }
 
-async function getAudioFile(identifier: string): Promise<string | null> {
-  const resp = await fetch(`https://archive.org/metadata/${identifier}/files`, { signal: AbortSignal.timeout(8000) });
-  if (!resp.ok) return null;
-  const data  = await resp.json();
-  const files: any[] = data?.result ?? [];
-  const mp3s  = files.filter((f: any) => f.name && /\.mp3$/i.test(f.name) && f.source !== 'derivative');
-  const oggs  = files.filter((f: any) => f.name && /\.ogg$/i.test(f.name));
-  const pick  = mp3s.length ? mp3s : oggs;
-  if (!pick.length) return null;
-  const f = pick[Math.floor(Math.random() * Math.min(3, pick.length))];
-  return `https://archive.org/download/${identifier}/${encodeURIComponent(f.name)}`;
+// ── The track currently shown in this UI ──────────────────────────────────────
+// Not necessarily the one the engine is playing: on page load we preview the
+// first track without touching playback, so an already running soma stream
+// keeps going.
+let rpCurrentDoc: ArchiveDoc | null = null;
+
+function syncLikeBtn() {
+  if (!rpLikeBtn) return;
+  const liked = isLiked(rpCurrentId);
+  rpLikeBtn.textContent = liked ? '♥ liked' : '♡ like';
+  rpLikeBtn.className   = 'ar-like-btn' + (liked ? ' liked' : '');
 }
 
-// ── Play state ────────────────────────────────────────────────────────────────
-function setPlaying(playing: boolean) {
-  rpPlaying = playing;
-  if (rpPlayBtn) rpPlayBtn.textContent = playing ? '❚❚' : '▶';
-  document.querySelectorAll('.rpwb').forEach(b => b.classList.toggle('active', playing));
-  if (rpDot) rpDot.classList.toggle('playing', playing);
-  setStatus(playing ? '● Playing' : 'Ready');
-  window.dispatchEvent(new CustomEvent('ic:playstate', {
-    detail: { player: 'archive', playing, title: rpTrackEl?.textContent ?? '—', artist: rpArtistEl?.textContent ?? '' }
-  }));
-}
-
-// ── Load track ────────────────────────────────────────────────────────────────
-async function loadTrack(doc: any, autoplay = false) {
+/** Paint track info without engaging the engine. */
+function previewTrack(doc: ArchiveDoc | null) {
   if (!doc) return;
-  rpCurrentId      = doc.identifier ?? '';
-  const title      = doc.title   ?? doc.identifier ?? 'Unknown';
-  const artist     = doc.creator ?? 'Archive.org';
-
-  setTrack(title, artist);
+  rpCurrentDoc = doc;
+  rpCurrentId  = doc.identifier ?? '';
+  setTrack(doc.title ?? rpCurrentId, doc.creator ?? 'Archive.org');
   if (rpLinkEl) rpLinkEl.href = `https://archive.org/details/${rpCurrentId}`;
-
-  const isLiked = loadLiked().some((x: any) => x.id === rpCurrentId);
-  if (rpLikeBtn) {
-    rpLikeBtn.textContent = isLiked ? '♥ liked' : '♡ like';
-    rpLikeBtn.className   = 'ar-like-btn' + (isLiked ? ' liked' : '');
-  }
-
+  syncLikeBtn();
   seekReset();
+}
+
+/** Resolve and start a track through the engine. */
+async function playTrack(doc: ArchiveDoc) {
+  previewTrack(doc);
   setStatus('Loading…');
-  if (rpAudio) { rpAudio.pause(); rpAudio = null; rpPlaying = false; }
-
-  try {
-    const src = await getAudioFile(rpCurrentId);
-    if (!src) { setStatus('No audio — skip'); return; }
-    const audio      = new Audio(src);
-    rpAudio          = audio;
-    (window as any).__icArchiveAudio = audio;
-    audio.ontimeupdate     = seekUpdate;
-    audio.onloadedmetadata = seekUpdate;
-    audio.onended          = () => rpNext();
-    audio.onerror          = () => { setStatus('Error — skipping'); setTimeout(rpNext, 1500); };
-    setStatus('● Ready');
-    if (autoplay) audio.play().then(() => {
-      setPlaying(true);
-      addToHistory(rpCurrentId, title, artist);
-    }).catch(() => {});
-  } catch { setStatus('Unavailable'); }
+  const res = await playDoc(doc, true);
+  if (!res.ok) setStatus(res.reason === 'no-audio' ? 'No audio — skip' : 'Unavailable');
 }
 
-// ── Jump to specific track (history / LikeSidebar) ────────────────────────────
-async function rpJumpTo(doc: any) {
-  if (rpAudio) { rpAudio.pause(); rpAudio = null; }
-  setPlaying(false);
-  await loadTrack(doc, true);
-}
+// ── Render from engine state ──────────────────────────────────────────────────
+subscribe((s) => {
+  const mine = s.source === 'archive';
+  rpPlaying = mine && s.playing;
 
-(window as any).__icArchiveJumpTo = rpJumpTo;
+  if (rpPlayBtn) rpPlayBtn.textContent = rpPlaying ? '❚❚' : '▶';
+  document.querySelectorAll('.rpwb').forEach(b => b.classList.toggle('active', rpPlaying));
+  if (rpDot) rpDot.classList.toggle('playing', rpPlaying);
+
+  if (!mine) return;
+
+  // A track may have been started elsewhere — history, LikeSidebar, autoplay.
+  const id = s.track.link.split('/details/')[1] ?? '';
+  if (id && id !== rpCurrentId) {
+    rpCurrentId  = id;
+    rpCurrentDoc = { identifier: id, title: s.track.title, creator: s.track.artist };
+    seekReset();
+  }
+  setTrack(s.track.title, s.track.artist);
+  if (rpLinkEl && s.track.link) rpLinkEl.href = s.track.link;
+  syncLikeBtn();
+  setStatus(rpPlaying ? '● Playing' : 'Ready');
+});
+
+// Autoplay the next track when one finishes, skip past dead links.
+registerSourceHandlers('archive', {
+  onEnded: () => { void rpNext(); },
+  onError: () => { setStatus('Error — skipping'); setTimeout(() => void rpNext(), 1500); },
+});
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function rpInit() {
@@ -692,12 +662,18 @@ async function rpInit() {
   rpIdx = 0;
   if (rpLoading) rpLoading.style.display = 'none';
   if (rpMain)    rpMain.style.display    = 'block';
-  setStatus('Ready');
-  await loadTrack(rpTracks[0]);
+
+  // Don't disturb whatever is already running.
+  if (getState().source === 'archive') {
+    setStatus(getState().playing ? '● Playing' : 'Ready');
+  } else {
+    setStatus('Ready');
+    previewTrack(rpTracks[0]);
+  }
   renderHistory();
 }
 
-function getFallback(): any[] {
+function getFallback(): ArchiveDoc[] {
   return [
     { identifier: 'HumanMusicProject', title: 'Electronic Session',  creator: 'Netlabel' },
     { identifier: 'KSCO-1650',         title: 'Archive Session',     creator: 'Archive.org' },
@@ -706,56 +682,43 @@ function getFallback(): any[] {
 
 // ── Toggle ────────────────────────────────────────────────────────────────────
 function rpToggle() {
-  if (!rpAudio) return;
-  if (rpPlaying) {
-    rpAudio.pause(); setPlaying(false);
-  } else {
-    rpAudio.play().then(() => {
-      setPlaying(true);
+  // Engine already holds this track — just flip it.
+  if (getState().source === 'archive') {
+    playerToggle();
+    if (!rpPlaying && rpCurrentId) {
       addToHistory(rpCurrentId, rpTrackEl?.textContent ?? '—', rpArtistEl?.textContent ?? '');
-    }).catch(() => setStatus('Click play'));
+    }
+    return;
   }
+  // Coming from soma or a cold start — load the previewed track.
+  if (rpCurrentDoc) void playTrack(rpCurrentDoc);
 }
 
 // ── Next ──────────────────────────────────────────────────────────────────────
 async function rpNext() {
-  if (rpAudio) { rpAudio.pause(); rpAudio = null; }
-  setPlaying(false);
   rpIdx = (rpIdx + 1) % rpTracks.length;
   if (rpIdx === 0) {
     try { const docs = await fetchTracks(); if (docs.length) rpTracks = docs.sort(() => Math.random() - 0.5); } catch {}
   }
-  await loadTrack(rpTracks[rpIdx], true);
+  await playTrack(rpTracks[rpIdx]);
 }
 
 // ── Like ──────────────────────────────────────────────────────────────────────
 function rpLike() {
   if (!rpCurrentId) return;
-  const liked  = loadLiked();
-  const idx    = liked.findIndex((x: any) => x.id === rpCurrentId);
-  const title  = rpTrackEl?.textContent  ?? '—';
-  const artist = rpArtistEl?.textContent ?? '—';
-  if (idx >= 0) {
-    liked.splice(idx, 1);
-    if (rpLikeBtn) { rpLikeBtn.textContent = '♡ like'; rpLikeBtn.className = 'ar-like-btn'; }
-  } else {
-    liked.unshift({ id: rpCurrentId, title, artist, ts: Date.now() });
-    if (rpLikeBtn) { rpLikeBtn.textContent = '♥ liked'; rpLikeBtn.className = 'ar-like-btn liked'; }
-  }
-  saveLiked(liked);
-  // Notify LikeSidebar instantly — replaces the old 1.5s polling loop
-  window.dispatchEvent(new Event('ic:liked-changed'));
+  toggleLike(rpCurrentId, rpTrackEl?.textContent ?? '—', rpArtistEl?.textContent ?? '—');
+  syncLikeBtn();
 }
 
 // ── Wire up ───────────────────────────────────────────────────────────────────
 rpPlayBtn?.addEventListener('click', rpToggle);
-rpSkipBtn?.addEventListener('click', () => rpNext());
+rpSkipBtn?.addEventListener('click', () => void rpNext());
 rpLikeBtn?.addEventListener('click', rpLike);
-rpStatus?.addEventListener('click', () => { if (!rpPlaying) rpInit(); });
-arHistClear?.addEventListener('click', () => {
-  saveHistory([]);
-  renderHistory();
-});
+rpStatus?.addEventListener('click', () => { if (!rpPlaying) void rpInit(); });
+arHistClear?.addEventListener('click', () => clearHistory());
+window.addEventListener(HISTORY_CHANGED, renderHistory);
+// Skip requests from MiniPlayer, media keys or the keyboard shortcuts
+window.addEventListener(ARCHIVE_NEXT, () => void rpNext());
 
-rpInit();
+void rpInit();
 </script>

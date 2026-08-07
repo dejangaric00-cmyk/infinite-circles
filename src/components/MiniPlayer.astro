@@ -1,8 +1,7 @@
 ---
 // src/components/MiniPlayer.astro
 // Sticky bottom bar — shown when scrolled past the players.
-// Listens to ic:playstate events from SomaPlayer and ArchiveRadio.
-// Also listens to the soma-audio element directly for state.
+// Renders purely from src/utils/player.ts, so it works on every page.
 ---
 
 <div class="mini-player" id="mini-player" aria-label="Mini Player" hidden>
@@ -174,6 +173,9 @@
 </style>
 
 <script>
+  import { subscribe, toggle, getState } from '../utils/player';
+  import { requestNext } from '../utils/archive';
+
   const miniPlayer  = document.getElementById('mini-player')  as HTMLElement;
   const mpDot       = document.getElementById('mp-dot')       as HTMLElement;
   const mpSource    = document.getElementById('mp-source')    as HTMLElement;
@@ -184,25 +186,13 @@
   const mpIconPlay  = document.getElementById('mp-icon-play') as SVGElement;
   const mpIconPause = document.getElementById('mp-icon-pause')as SVGElement;
 
-  let currentPlayer: 'soma' | 'archive' = 'soma';
   let isPlaying = false;
 
-  // ── Show/hide based on scroll ──────────────────────────────────────────────
-  // Show when the soma-wrap + ar-wrap are scrolled out of view
+  // ── Visibility ─────────────────────────────────────────────────────────────
+  // On the radio page the bar appears once the big player scrolls away. On
+  // every other page there is nothing to scroll past, so it simply follows
+  // playback.
   const sentinel = document.querySelector('.soma-wrap') as HTMLElement | null;
-
-  const observer = new IntersectionObserver(
-    ([entry]) => {
-      // Only show MiniPlayer if something is actually playing
-      if (!entry.isIntersecting && isPlaying) {
-        miniPlayer.hidden = false;
-      } else {
-        miniPlayer.hidden = true;
-      }
-    },
-    { threshold: 0, rootMargin: '0px 0px -80px 0px' }
-  );
-  if (sentinel) observer.observe(sentinel);
 
   function syncVisibility() {
     if (!sentinel) { miniPlayer.hidden = !isPlaying; return; }
@@ -210,68 +200,53 @@
     const outOfView = rect.bottom < 0 || rect.top > window.innerHeight;
     miniPlayer.hidden = !(isPlaying && outOfView);
   }
+
   window.addEventListener('scroll', syncVisibility, { passive: true });
-
-  // ── Update MiniPlayer UI ───────────────────────────────────────────────────
-  function updateUI(player: 'soma' | 'archive', playing: boolean, track: string, artist: string) {
-    currentPlayer = player;
-    isPlaying = playing;
-
-    const isArchive = player === 'archive';
-    mpDot.classList.toggle('playing', playing);
-    mpDot.classList.toggle('archive', isArchive);
-    mpPlay.classList.toggle('playing', playing);
-    mpSkip.classList.toggle('archive-active', isArchive);
-
-    mpSource.textContent = isArchive ? 'archive.org' : 'soma fm';
-    mpSource.classList.toggle('archive', isArchive);
-
-    // Track display: prefer track name, fall back to artist
-    const label = track && track !== '—' ? track : artist;
-    mpTrack.textContent = label || '—';
-
-    mpIconPlay.style.display  = playing ? 'none'  : 'block';
-    mpIconPause.style.display = playing ? 'block' : 'none';
-
-    syncVisibility();
+  if (sentinel) {
+    new IntersectionObserver(syncVisibility, {
+      threshold: 0,
+      rootMargin: '0px 0px -80px 0px',
+    }).observe(sentinel);
   }
 
-  // ── Sync with soma on load — wait for ic:playstate instead of polling ─────
-  // If soma was already playing before MiniPlayer mounted, it will fire
-  // ic:playstate on its next interaction. No race condition possible.
-  // Fallback: check soma audio element after a short delay for auto-resume cases.
-  window.addEventListener('ic:playstate', (e: Event) => {
-    const { player, playing, title, artist } = (e as CustomEvent).detail;
-    updateUI(player, playing, title, artist);
-  });
+  // ── Render from engine state ───────────────────────────────────────────────
+  subscribe((s) => {
+    isPlaying = s.playing;
+    const isArchive = s.source === 'archive';
 
-  // One-time fallback check in case soma was already playing at mount time
-  setTimeout(() => {
-    const somaAudio = document.getElementById('soma-audio') as HTMLAudioElement | null;
-    if (!somaAudio || somaAudio.paused || isPlaying) return;
-    const stationEl = document.getElementById('now-station') as HTMLElement | null;
-    const trackEl   = document.getElementById('soma-np-track') as HTMLElement | null;
-    updateUI('soma', true, trackEl?.textContent ?? '—', stationEl?.textContent ?? 'soma fm');
-  }, 800);
+    mpDot.classList.toggle('playing', s.playing);
+    mpDot.classList.toggle('archive', isArchive);
+    mpPlay.classList.toggle('playing', s.playing);
+    mpSkip.classList.toggle('archive-active', isArchive);
+
+    mpSource.textContent =
+      s.source === 'archive'     ? 'archive.org'
+      : s.source === 'underground' ? 'underground'
+      : 'soma fm';
+    mpSource.classList.toggle('archive', isArchive);
+
+    // Prefer the track name, fall back to the artist or station
+    const label = s.track.title && s.track.title !== '—'
+      ? s.track.title
+      : (s.track.artist || s.stationName);
+    mpTrack.textContent = label || '—';
+
+    mpIconPlay.style.display  = s.playing ? 'none'  : 'block';
+    mpIconPause.style.display = s.playing ? 'block' : 'none';
+
+    syncVisibility();
+  });
 
   // ── Controls ───────────────────────────────────────────────────────────────
-  mpPlay.addEventListener('click', () => {
-    if (currentPlayer === 'archive') {
-      (document.getElementById('rp-play-btn') as HTMLButtonElement | null)?.click();
-    } else {
-      (document.getElementById('play-btn') as HTMLButtonElement | null)?.click();
-    }
-  });
-
-  mpSkip.addEventListener('click', () => {
-    // Skip only makes sense for archive
-    (document.getElementById('rp-skip-btn') as HTMLButtonElement | null)?.click();
-  });
+  mpPlay.addEventListener('click', () => toggle());
+  mpSkip.addEventListener('click', () => requestNext());
 
   mpScrollUp.addEventListener('click', () => {
-    const target = currentPlayer === 'archive'
+    const target = getState().source === 'archive'
       ? document.querySelector('.ar-wrap')
       : document.querySelector('.soma-wrap');
-    target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Not on this page — send the visitor to the radio instead.
+    if (!target) { window.location.href = '/'; return; }
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
 </script>

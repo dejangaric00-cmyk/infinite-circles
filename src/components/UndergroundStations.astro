@@ -665,8 +665,7 @@ const linkOnly: LinkStation[] = [
 </style>
 
 <script>
-  let activeAudio: HTMLAudioElement | null = null;
-  let activeCard:  HTMLElement | null = null;
+  import { load, pause, subscribe, registerSourceHandlers, getState } from '../utils/player';
 
   const nowBar  = document.getElementById('ugNowBar')  as HTMLElement;
   const nowName = document.getElementById('ugNowName') as HTMLElement;
@@ -685,64 +684,75 @@ const linkOnly: LinkStation[] = [
     }
   }
 
+  // The stream URL doubles as the station id — it is unique per card.
+  function cards(): HTMLElement[] {
+    return Array.from(document.querySelectorAll<HTMLElement>('.station-card'));
+  }
+
   function stopAll() {
-    if (activeAudio) { activeAudio.pause(); activeAudio.src = ''; activeAudio = null; }
-    if (activeCard)  { setCardState(activeCard, 'idle'); activeCard = null; }
-    if (nowBar) nowBar.hidden = true;
+    pause();
   }
 
   function playStation(card: HTMLElement) {
-    if (activeCard === card) { stopAll(); return; }
-    stopAll();
-
     const url  = card.dataset.url  ?? '';
     const name = card.dataset.name ?? '';
+    const s = getState();
+
+    // Second click on the running card stops it.
+    if (s.source === 'underground' && s.stationSlug === url && s.playing) {
+      pause();
+      return;
+    }
 
     setCardState(card, 'loading');
-    activeCard = card;
-    if (nowBar && nowName) { nowName.textContent = name; nowBar.hidden = false; }
-
-    const audio = new Audio();
-    audio.volume = 0.8;
-    activeAudio = audio;
-
-    let timeout: ReturnType<typeof setTimeout>;
-
-    const onError = () => {
-      if (activeAudio !== audio) return;
-      clearTimeout(timeout);
-      setCardState(card, 'error');
-      activeAudio = null; activeCard = null;
-      if (nowBar) nowBar.hidden = true;
-    };
-
-    audio.addEventListener('canplay', () => {
-      if (activeAudio !== audio) return;
-      clearTimeout(timeout);
-      setCardState(card, 'playing');
-      audio.play().catch(onError);
-    }, { once: true });
-
-    audio.addEventListener('error', onError, { once: true });
-
-    timeout = setTimeout(() => {
-      if (activeAudio === audio && card.dataset.state === 'loading') {
-        setCardState(card, 'playing');
-        audio.play().catch(onError);
-      }
-    }, 10000);
-
-    audio.src = url;
-    audio.load();
+    void load({
+      source: 'underground',
+      src: url,
+      stationSlug: url,
+      stationName: name,
+      track: { title: name, artist: 'underground radio' },
+    });
   }
 
-  document.querySelectorAll<HTMLElement>('.station-card').forEach((card) => {
+  // ── Render from engine state ───────────────────────────────────────────────
+  subscribe((s) => {
+    const mine = s.source === 'underground';
+
+    for (const card of cards()) {
+      // A card that failed keeps its error badge until it is clicked again.
+      if (card.dataset.state === 'error') continue;
+      if (mine && card.dataset.url === s.stationSlug) {
+        setCardState(card, s.playing ? 'playing' : 'loading');
+      } else {
+        setCardState(card, 'idle');
+      }
+    }
+
+    if (nowBar && nowName) {
+      if (mine && s.playing) {
+        nowName.textContent = s.stationName;
+        nowBar.hidden = false;
+      } else {
+        nowBar.hidden = true;
+      }
+    }
+  });
+
+  registerSourceHandlers('underground', {
+    onError: () => {
+      const slug = getState().stationSlug;
+      const card = cards().find(c => c.dataset.url === slug);
+      if (card) setCardState(card, 'error');
+      if (nowBar) nowBar.hidden = true;
+    },
+  });
+
+  for (const card of cards()) {
     card.querySelector<HTMLButtonElement>('.play-btn')?.addEventListener('click', () => {
       if (card.dataset.state === 'error') { setCardState(card, 'idle'); return; }
       playStation(card);
     });
-  });
+  }
 
   stopBtn?.addEventListener('click', stopAll);
-  document.addEventListener('astro:before-swap', stopAll);
 </script>
