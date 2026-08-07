@@ -1,5 +1,6 @@
 ---
 import { ClientRouter } from 'astro:transitions';
+import CircleCanvas from '../components/CircleCanvas.astro';
 import MiniPlayer from '../components/MiniPlayer.astro';
 import LikeSidebar from '../components/LikeSidebar.astro';
 import KeyboardController from '../components/KeyboardController.astro';
@@ -37,6 +38,11 @@ function isActive(href: string): boolean {
   if (href === '/') return currentPath === '/';
   return currentPath === href || currentPath.startsWith(href + '/');
 }
+
+// Die Ringe sind der Hintergrund der Startseite und des Radios. Hinter
+// Lesestrecken bleiben sie, aber gedämpft — der Text steht dort im Vordergrund.
+const showcasePages = ['/', '/radio'];
+const dimRings = !showcasePages.includes(currentPath.replace(/\/$/, '') || '/');
 
 // Site-wide structured data. Page-specific nodes get appended.
 const graph: Record<string, unknown>[] = [
@@ -118,12 +124,17 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
       } catch(e) {}
     </script>
   </head>
-  <body>
+  <body data-rings={dimRings ? 'dim' : undefined}>
+    <!-- Namensgebender Hintergrund — liegt hinter allen Seiten -->
+    <CircleCanvas />
+
     <nav>
       <a class="logo" href="/">Infinite Circles</a>
       <ul class="nav-links">
         <li><a href="/" aria-current={isActive('/') ? 'page' : undefined}>Home</a></li>
+        <li><a href="/radio" aria-current={isActive('/radio') ? 'page' : undefined}>Radio</a></li>
         <li><a href="/sotd" aria-current={isActive('/sotd') ? 'page' : undefined}>Song of the Day</a></li>
+        <li><a href="/journal" aria-current={isActive('/journal') ? 'page' : undefined}>Journal</a></li>
         <li><a href="/now" aria-current={isActive('/now') ? 'page' : undefined}>Now</a></li>
         <li><a href="/about" aria-current={isActive('/about') ? 'page' : undefined}>About</a></li>
       </ul>
@@ -169,7 +180,9 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
     --glass-border-dim: rgba(255,255,255,0.35);
     --text-deep: #0a1a2e;
     --text-mid: rgba(10,26,46,0.65);
-    --text-dim: rgba(10,26,46,0.42);
+    /* War 0.42. Auf Glas lag der Kontrast damit unter 4,5:1 — und --text-dim
+       trägt nicht nur Dekoration, sondern Datum, Genre und Interpret. */
+    --text-dim: rgba(10,26,46,0.58);
     --accent: #1a6bb5;
     --accent2: #4a90d9;
     --border-light: rgba(255,255,255,0.5);
@@ -217,7 +230,7 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
     --glass-border-dim: rgba(255,255,255,0.10);
     --text-deep: #e8f2ff;
     --text-mid: rgba(200,220,255,0.65);
-    --text-dim: rgba(180,210,255,0.38);
+    --text-dim: rgba(180,210,255,0.55);
     --accent: #7ab8f0;
     --accent2: #4a90d9;
     --border-light: rgba(255,255,255,0.12);
@@ -248,7 +261,7 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
       --glass-border-dim: rgba(255,255,255,0.10);
       --text-deep: #e8f2ff;
       --text-mid: rgba(200,220,255,0.65);
-      --text-dim: rgba(180,210,255,0.38);
+      --text-dim: rgba(180,210,255,0.55);
       --accent: #7ab8f0;
       --accent2: #4a90d9;
       --border-light: rgba(255,255,255,0.12);
@@ -380,13 +393,24 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
 
   @media (max-width: 768px) {
     nav { padding: 0.9rem 1.5rem; }
-    .nav-links { gap: 1.2rem; }
-    .nav-links a { font-size: 9px; }
+    /* Sechs Punkte passen auf einem Telefon nicht in eine Zeile — umbrechen
+       statt überlaufen lassen. */
+    .nav-links { gap: 0.5rem 1.1rem; flex-wrap: wrap; justify-content: flex-end; }
+    .nav-links a { font-size: 10px; }
   }
 
   /* Shared reveal animation — used across multiple pages */
   .reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
   .reveal.in { opacity: 1; transform: translateY(0); }
+
+  /* Ein Fokusring für alles, was Fokus bekommen kann. :where() hat Spezifität
+     null, also behalten Komponenten mit eigenem Ring — .ar-genre-btn, .way —
+     ihren. Vorher war der Ring auf den Radio-Bedienelementen gar nicht da:
+     wer per Tastatur navigierte, sah auf /radio nicht, wo er steht. */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
 </style>
 
 <script>

@@ -1,174 +1,82 @@
 ---
+// src/pages/index.astro
 import BaseLayout from '../layouts/BaseLayout.astro';
-import SomaPlayer from '../components/SomaPlayer.astro';
-import ArchiveRadio from '../components/ArchiveRadio.astro';
-import UndergroundStations from '../components/UndergroundStations.astro';
 import { getLatestSotd } from '../utils/sotd';
+import { relativeDayLabel } from '../utils/date';
+import { getCollection } from 'astro:content';
 
 const latestSotd = await getLatestSotd();
+
+const journal = (await getCollection('journal', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const latestJournal = journal[0];
+
+// [data-rel-date] is recomputed client-side by BaseLayout, so the value has to
+// be YYYY-MM-DD — the journal schema coerces to Date.
+const latestJournalIso = latestJournal
+  ? latestJournal.data.date.toISOString().slice(0, 10)
+  : '';
 ---
 
 <BaseLayout title="Grooves & Rhythms — Infinite Circles">
 
-  <!-- Infinite Circles Ringe — subtiler Hintergrund -->
-  <canvas id="circle-canvas" aria-hidden="true"></canvas>
-
   <!-- ══ HERO ══════════════════════════════════════════════════════════════ -->
-  <section class="music-hero">
+  <section class="home-hero">
     <div class="hero-inner">
       <p class="hero-eyebrow">
         <span class="eyebrow-dot"></span>
-        infinite&#8209;circles.de&nbsp;/&nbsp;music
+        infinite&#8209;circles.de
       </p>
       <h1 class="hero-title">
         Grooves &amp;&nbsp;<em>Rhythms.</em>
       </h1>
-      <p class="hero-sub">House. Tech House. Minimal. Dub Techno.</p>
-
-      {latestSotd && (
-        <a href={`/sotd/${latestSotd.id}`} class="sotd-hero-card">
-          <span class="sotd-hero-label">· song of the day</span>
-          <span class="sotd-hero-title">{latestSotd.data.title}</span>
-          <span class="sotd-hero-artist">{latestSotd.data.artist}</span>
-          {latestSotd.data.note && <span class="sotd-hero-note">&ldquo;{latestSotd.data.note}&rdquo;</span>}
-        </a>
-      )}
+      <p class="hero-sub">Musikjournal, Radio, Texte. Aus Hannover.</p>
     </div>
   </section>
 
-  <!-- ══ PLAYERS ═══════════════════════════════════════════════════════════ -->
-  <div class="content-wrap">
+  <!-- ══ WEGE ══════════════════════════════════════════════════════════════ -->
+  <nav class="ways" aria-label="Bereiche">
 
-    <div class="section-label">Live Radio</div>
-    <div class="card-label">soma fm</div>
-    <SomaPlayer />
+    <a href="/radio" class="way">
+      <span class="way-label">// radio</span>
+      <span class="way-title">Live &amp; Archive.</span>
+      <span class="way-note">Soma FM, Archive.org und Underground-Sender. Läuft weiter, während du liest.</span>
+    </a>
 
-    <div class="section-label" style="margin-top: 2rem;">Archive.org · Open Radio</div>
-    <ArchiveRadio />
+    <a href="/sotd" class="way">
+      <span class="way-label">· song of the day</span>
+      {latestSotd ? (
+        <>
+          <span class="way-title">{latestSotd.data.title}</span>
+          <span class="way-meta">{latestSotd.data.artist}</span>
+          {latestSotd.data.note && <span class="way-note">&ldquo;{latestSotd.data.note}&rdquo;</span>}
+        </>
+      ) : (
+        <span class="way-title">Ein Song pro Tag.</span>
+      )}
+    </a>
 
-  </div>
+    <a href="/journal" class="way">
+      <span class="way-label">// journal</span>
+      {latestJournal ? (
+        <>
+          <span class="way-title">{latestJournal.data.title}</span>
+          <span class="way-meta" data-rel-date={latestJournalIso}>{relativeDayLabel(latestJournalIso)}</span>
+        </>
+      ) : (
+        <span class="way-title">Notizen.</span>
+      )}
+    </a>
 
-  <!-- UndergroundStations bringt ihr eigenes "Entdecken"-Label mit -->
-  <UndergroundStations />
-
-  <!-- Globale Bedienelemente liegen jetzt im BaseLayout -->
+  </nav>
 
 </BaseLayout>
 
-<!-- ── Ringe Canvas ────────────────────────────────────────────────────────── -->
-<script>
-  import { onPage, disposer } from '../utils/lifecycle';
-  onPage(() => {
-    const bgCanvas = document.getElementById('circle-canvas') as HTMLCanvasElement;
-    if (bgCanvas) {
-      const ctx = bgCanvas.getContext('2d')!;
-      const off = disposer();
-      let W = 0, H = 0;
-      const resize = () => { W = bgCanvas.width = window.innerWidth; H = bgCanvas.height = window.innerHeight; };
-      resize();
-      off.listen(window, 'resize', resize, { passive: true });
-
-      const isDark = () => document.documentElement.classList.contains('dark');
-
-      const rings = [
-        { rf: 0.10, speed: 0.0018, offset: 0.00 },
-        { rf: 0.18, speed: 0.0014, offset: 0.90 },
-        { rf: 0.27, speed: 0.0011, offset: 1.80 },
-        { rf: 0.37, speed: 0.0009, offset: 2.70 },
-        { rf: 0.47, speed: 0.0007, offset: 3.60 },
-        { rf: 0.58, speed: 0.0005, offset: 4.50 },
-        { rf: 0.70, speed: 0.0004, offset: 5.40 },
-      ];
-
-      let t = 0;
-      let rafId = 0;
-      let stopped = false;
-
-      const draw = () => {
-        if (stopped) return;
-        ctx.clearRect(0, 0, W, H);
-        const dark  = isDark();
-        const cx    = W > 768 ? W * 0.72 : W * 0.5;
-        const cy    = H * 0.32;
-        const base  = Math.min(W, H);
-        const ringAlpha = dark ? 0.13 : 0.14;
-        const dotColor  = dark ? '180,215,255' : '255,255,255';
-        const trailColor= dark ? '160,200,255' : '255,255,255';
-        const trailAlpha= dark ? 0.20 : 0.20;
-
-        for (const ring of rings) {
-          const r = base * ring.rf;
-
-          ctx.beginPath();
-          ctx.arc(cx, cy, r, 0, Math.PI * 2);
-          ctx.strokeStyle = dark
-            ? `rgba(140,190,255,${ringAlpha})`
-            : `rgba(255,255,255,${ringAlpha})`;
-          ctx.lineWidth = 0.7;
-          ctx.stroke();
-
-          const angle = t * ring.speed + ring.offset;
-          const dx = cx + Math.cos(angle) * r;
-          const dy = cy + Math.sin(angle) * r;
-          const dotR = r * 0.07;
-          const glow = ctx.createRadialGradient(dx, dy, 0, dx, dy, dotR);
-          glow.addColorStop(0,   `rgba(${dotColor},${dark ? 0.95 : 0.92})`);
-          glow.addColorStop(0.3, `rgba(${dotColor},${dark ? 0.45 : 0.35})`);
-          glow.addColorStop(1,   'rgba(180,220,255,0)');
-          ctx.fillStyle = glow;
-          ctx.beginPath();
-          ctx.arc(dx, dy, dotR, 0, Math.PI * 2);
-          ctx.fill();
-
-          const trailLen   = Math.PI * 0.32;
-          const trailStart = angle - trailLen;
-          const trail = ctx.createLinearGradient(
-            cx + Math.cos(trailStart) * r, cy + Math.sin(trailStart) * r, dx, dy
-          );
-          trail.addColorStop(0, `rgba(${trailColor},0)`);
-          trail.addColorStop(1, `rgba(${trailColor},${trailAlpha})`);
-          ctx.beginPath();
-          ctx.arc(cx, cy, r, trailStart, angle);
-          ctx.strokeStyle = trail;
-          ctx.lineWidth = dark ? 1.2 : 1.3;
-          ctx.stroke();
-        }
-
-        t++;
-        rafId = requestAnimationFrame(draw);
-      };
-
-      // Pause rAF when tab is hidden to save CPU/GPU
-      off.listen(document, 'visibilitychange', () => {
-        if (document.hidden) {
-          cancelAnimationFrame(rafId);
-        } else {
-          rafId = requestAnimationFrame(draw);
-        }
-      });
-
-      rafId = requestAnimationFrame(draw);
-      off.add(() => { stopped = true; cancelAnimationFrame(rafId); });
-
-      return off.run;
-    }
-  });
-</script>
-
 <style>
-  #circle-canvas {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: -1;
-    pointer-events: none;
-    opacity: 0.7;
-  }
-
   /* ── Hero ── */
-  .music-hero {
+  .home-hero {
     width: 100%;
-    padding: 4rem 0 2.5rem;
+    padding: 5rem 0 3rem;
   }
   .hero-inner {
     max-width: 900px;
@@ -207,84 +115,83 @@ const latestSotd = await getLatestSotd();
     font-size: 0.72rem;
     letter-spacing: 0.08em;
     color: var(--text-dim);
-    margin: 0 0 1.5rem;
+    margin: 0;
   }
 
-  .sotd-hero-card {
-    display: inline-flex;
+  /* ── Wege ── */
+  .ways {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1.5rem 5rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    align-items: start;
+  }
+
+  .way {
+    display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 5px;
     text-decoration: none;
-    padding: 0.75rem 1.1rem;
-    border: 0.5px solid var(--glass-border);
-    border-radius: 10px;
+    padding: 1.1rem 1.2rem 1.3rem;
+    border-radius: var(--r-card);
     background: var(--glass-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    transition: border-color 0.15s, background 0.15s;
-    max-width: 360px;
+    box-shadow: inset 0 0 0 0.5px var(--glass-border-dim);
+    transition:
+      background 0.35s var(--ease-ios),
+      box-shadow 0.35s var(--ease-ios),
+      transform 0.2s var(--ease-ios);
   }
-  .sotd-hero-card:hover {
-    border-color: var(--accent);
+  .way:hover {
     background: var(--glass-bg-strong);
+    box-shadow:
+      inset 0 0.5px 0 var(--glass-hairline),
+      inset 0 0 0 0.5px color-mix(in srgb, var(--accent) 30%, transparent);
   }
-  .sotd-hero-label {
+  .way:active { transform: scale(0.99); }
+  .way:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .way-label {
     font-family: var(--font-mono);
-    font-size: 8px;
+    /* 8px war unter der Lesbarkeitsgrenze, und die Zeile trägt Information. */
+    font-size: 9px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--accent);
     opacity: 0.8;
+    margin-bottom: 2px;
   }
-  .sotd-hero-title {
+  .way-title {
     font-family: var(--font-serif);
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     font-weight: 300;
     color: var(--text-deep);
-    line-height: 1.2;
+    line-height: 1.25;
   }
-  .sotd-hero-artist {
+  .way-meta {
     font-family: var(--font-mono);
-    font-size: 9px;
+    font-size: 10px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--accent);
     opacity: 0.7;
   }
-  .sotd-hero-note {
+  .way-note {
     font-family: var(--font-serif);
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     font-style: italic;
     color: var(--text-dim);
-    margin-top: 2px;
+    line-height: 1.5;
+    margin-top: 3px;
   }
 
-  /* ── Content ── */
-  .content-wrap {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 0 1.5rem 2rem;
+  @media (max-width: 760px) {
+    .ways { grid-template-columns: 1fr; }
   }
-  .section-label {
-    font-family: var(--font-mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    opacity: 0.6;
-    text-align: center;
-    margin-bottom: 0.9rem;
-  }
-  .card-label {
-    font-family: var(--font-mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 0.35rem;
-  }
-
   @media (max-width: 600px) {
-    .music-hero { padding: 2.5rem 0 1.5rem; }
+    .home-hero { padding: 3rem 0 2rem; }
   }
 </style>

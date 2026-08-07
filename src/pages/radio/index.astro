@@ -1,0 +1,134 @@
+---
+// src/pages/radio/index.astro
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SomaPlayer from '../../components/SomaPlayer.astro';
+import ArchiveRadio from '../../components/ArchiveRadio.astro';
+import UndergroundStations from '../../components/UndergroundStations.astro';
+
+const description =
+  'Live Radio, Archive.org und Underground-Sender — House, Tech House, Minimal, Dub Techno.';
+
+// Bisher hatte nur sotd/[slug] ein Schema. Die Radioseite ist die zweite Seite
+// mit eigenem Gegenstand, deshalb ein WebPage-Knoten am Website-Graph.
+const schema = {
+  '@type': 'WebPage',
+  '@id': 'https://infinite-circles.de/radio#webpage',
+  url: 'https://infinite-circles.de/radio',
+  name: 'Radio',
+  description,
+  inLanguage: 'de-DE',
+  isPartOf: { '@id': 'https://infinite-circles.de/#website' },
+};
+---
+
+<BaseLayout title="Radio — Infinite Circles" description={description} schema={schema}>
+
+  <!-- ══ HERO ══════════════════════════════════════════════════════════════ -->
+  <section class="music-hero">
+    <div class="hero-inner">
+      <p class="hero-eyebrow">
+        <span class="eyebrow-dot"></span>
+        infinite&#8209;circles.de&nbsp;/&nbsp;radio
+      </p>
+      <h1 class="hero-title">
+        <em>Radio.</em>
+      </h1>
+      <p class="hero-sub">House. Tech House. Minimal. Dub Techno.</p>
+    </div>
+  </section>
+
+  <!-- ══ PLAYERS ═══════════════════════════════════════════════════════════ -->
+  <div class="content-wrap">
+
+    <div class="section-label">Live Radio</div>
+    <div class="card-label">soma fm</div>
+    <SomaPlayer />
+
+    <div class="section-label" style="margin-top: 2rem;">Archive.org · Open Radio</div>
+    <ArchiveRadio />
+
+  </div>
+
+  <!-- UndergroundStations bringt ihr eigenes "Entdecken"-Label mit -->
+  <UndergroundStations />
+
+  <!-- Globale Bedienelemente liegen jetzt im BaseLayout -->
+
+</BaseLayout>
+
+
+<style>
+  /* ── Hero ── */
+  .music-hero {
+    width: 100%;
+    padding: 4rem 0 2.5rem;
+  }
+  .hero-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+  .hero-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 1rem;
+  }
+  .eyebrow-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent); flex-shrink: 0;
+  }
+  .hero-title {
+    font-family: var(--font-serif);
+    font-size: clamp(3rem, 7vw, 5rem);
+    font-weight: 300;
+    line-height: 1.05;
+    color: var(--text-deep);
+    margin: 0 0 0.75rem;
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .hero-sub {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin: 0 0 1.5rem;
+  }
+
+  /* ── Content ── */
+  .content-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1.5rem 2rem;
+  }
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    opacity: 0.6;
+    text-align: center;
+    margin-bottom: 0.9rem;
+  }
+  .card-label {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.35rem;
+  }
+
+  @media (max-width: 600px) {
+    .music-hero { padding: 2.5rem 0 1.5rem; }
+  }
+</style>

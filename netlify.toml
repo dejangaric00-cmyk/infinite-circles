@@ -5,18 +5,18 @@
 [build.environment]
   NODE_VERSION = "22"
 
-# /music moved to the homepage. src/pages/music.astro already redirects, but in a
+# /music now lives at /radio. src/pages/music.astro already redirects, but in a
 # static build that is only a meta-refresh — this gives search engines a real 301.
 # force = true is required, otherwise the built /music/index.html wins.
 [[redirects]]
   from = "/music"
-  to = "/"
+  to = "/radio"
   status = 301
   force = true
 
 [[redirects]]
   from = "/music/*"
-  to = "/"
+  to = "/radio"
   status = 301
   force = true
 

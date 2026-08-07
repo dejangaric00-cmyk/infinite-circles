@@ -7,7 +7,7 @@ export default defineConfig({
   site: 'https://infinite-circles.de',
   integrations: [
     sitemap({
-      // /music is a 301 to the homepage — keep it out of the index.
+      // /music is a 301 to /radio — keep it out of the index.
       filter: (page) => !/\/music\/?$/.test(page),
     }),
   ],

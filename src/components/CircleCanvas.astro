@@ -1,0 +1,152 @@
+---
+// src/components/CircleCanvas.astro
+// Namesake background: concentric rings with a light travelling along each one.
+// Rendered once from BaseLayout, so it sits behind every page.
+---
+
+<canvas id="circle-canvas" aria-hidden="true" transition:persist></canvas>
+
+<style>
+  #circle-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.7;
+    transition: opacity 0.5s var(--ease-ios);
+  }
+  /* Auf Lesestrecken gedämpft. Das Attribut setzt BaseLayout anhand des Pfads;
+     der Body wird bei jeder Navigation getauscht, das Canvas selbst bleibt. */
+  body[data-rings="dim"] #circle-canvas { opacity: 0.28; }
+</style>
+
+<script>
+  import { onPage, disposer } from '../utils/lifecycle';
+
+  // Module scope on purpose: the canvas carries transition:persist, so the rings
+  // must not jump back to their starting angle on every navigation.
+  let t = 0;
+
+  onPage(() => {
+    const bgCanvas = document.getElementById('circle-canvas') as HTMLCanvasElement | null;
+    if (!bgCanvas) return;
+
+    const ctx = bgCanvas.getContext('2d')!;
+    const off = disposer();
+    let W = 0, H = 0;
+    const resize = () => {
+      // Backing store in device pixels, drawing coordinates in CSS pixels. The
+      // canvas used to be sized 1:1, which rendered the 0.7 px rings soft on a
+      // Retina display. Capped at 2 — above that the fill cost grows faster
+      // than anyone can see the difference on a background.
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth;
+      H = window.innerHeight;
+      bgCanvas.width  = Math.round(W * dpr);
+      bgCanvas.height = Math.round(H * dpr);
+      // Resizing a canvas resets its context, so the scale goes on afterwards.
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    resize();
+    off.listen(window, 'resize', resize, { passive: true });
+
+    const isDark = () => document.documentElement.classList.contains('dark');
+
+    const rings = [
+      { rf: 0.10, speed: 0.0018, offset: 0.00 },
+      { rf: 0.18, speed: 0.0014, offset: 0.90 },
+      { rf: 0.27, speed: 0.0011, offset: 1.80 },
+      { rf: 0.37, speed: 0.0009, offset: 2.70 },
+      { rf: 0.47, speed: 0.0007, offset: 3.60 },
+      { rf: 0.58, speed: 0.0005, offset: 4.50 },
+      { rf: 0.70, speed: 0.0004, offset: 5.40 },
+    ];
+
+    let rafId = 0;
+    let stopped = false;
+
+    // The global CSS reduced-motion block only reaches CSS animations. A rAF
+    // loop has to opt out by itself, otherwise the rings keep circling for
+    // people who asked the system to stop moving things.
+    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    const draw = () => {
+      if (stopped) return;
+      ctx.clearRect(0, 0, W, H);
+      const dark  = isDark();
+      const cx    = W > 768 ? W * 0.72 : W * 0.5;
+      const cy    = H * 0.32;
+      const base  = Math.min(W, H);
+      const ringAlpha = dark ? 0.13 : 0.14;
+      const dotColor  = dark ? '180,215,255' : '255,255,255';
+      const trailColor= dark ? '160,200,255' : '255,255,255';
+      const trailAlpha= dark ? 0.20 : 0.20;
+
+      for (const ring of rings) {
+        const r = base * ring.rf;
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.strokeStyle = dark
+          ? `rgba(140,190,255,${ringAlpha})`
+          : `rgba(255,255,255,${ringAlpha})`;
+        ctx.lineWidth = 0.7;
+        ctx.stroke();
+
+        const angle = t * ring.speed + ring.offset;
+        const dx = cx + Math.cos(angle) * r;
+        const dy = cy + Math.sin(angle) * r;
+        const dotR = r * 0.07;
+        const glow = ctx.createRadialGradient(dx, dy, 0, dx, dy, dotR);
+        glow.addColorStop(0,   `rgba(${dotColor},${dark ? 0.95 : 0.92})`);
+        glow.addColorStop(0.3, `rgba(${dotColor},${dark ? 0.45 : 0.35})`);
+        glow.addColorStop(1,   'rgba(180,220,255,0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(dx, dy, dotR, 0, Math.PI * 2);
+        ctx.fill();
+
+        const trailLen   = Math.PI * 0.32;
+        const trailStart = angle - trailLen;
+        const trail = ctx.createLinearGradient(
+          cx + Math.cos(trailStart) * r, cy + Math.sin(trailStart) * r, dx, dy
+        );
+        trail.addColorStop(0, `rgba(${trailColor},0)`);
+        trail.addColorStop(1, `rgba(${trailColor},${trailAlpha})`);
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, trailStart, angle);
+        ctx.strokeStyle = trail;
+        ctx.lineWidth = dark ? 1.2 : 1.3;
+        ctx.stroke();
+      }
+
+      // Reduced motion: paint the rings once and leave them standing.
+      if (motionQuery.matches) return;
+
+      t++;
+      rafId = requestAnimationFrame(draw);
+    };
+
+    const start = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(draw);
+    };
+
+    // Pause rAF when tab is hidden to save CPU/GPU
+    off.listen(document, 'visibilitychange', () => {
+      if (document.hidden) cancelAnimationFrame(rafId);
+      else start();
+    });
+
+    // Repaint when the visitor flips the setting, and after a resize in the
+    // static case — nothing else would redraw the cleared canvas.
+    off.listen(motionQuery, 'change', start);
+    off.listen(window, 'resize', start, { passive: true });
+
+    start();
+    off.add(() => { stopped = true; cancelAnimationFrame(rafId); });
+
+    return off.run;
+  });
+</script>
