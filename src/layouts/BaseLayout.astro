@@ -1,4 +1,10 @@
 ---
+import { ClientRouter } from 'astro:transitions';
+import MiniPlayer from '../components/MiniPlayer.astro';
+import LikeSidebar from '../components/LikeSidebar.astro';
+import KeyboardController from '../components/KeyboardController.astro';
+import MediaSessionController from '../components/MediaSessionController.astro';
+
 const SITE = 'https://infinite-circles.de';
 const SITE_DESCRIPTION =
   'Persönliche Seite von Dejan. Musikjournal, Radio, Texte und Links, die es wert sind.';
@@ -79,6 +85,9 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
     <meta name="twitter:image" content={ogImage} />
     <meta name="theme-color" content="#0a1a2e" />
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    <!-- Client-side routing. The body is swapped instead of reloaded, so the
+         detached audio element in utils/player.ts keeps playing. -->
+    <ClientRouter />
     <!-- Fonts: preconnect + load -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -122,6 +131,13 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
     </nav>
 
     <slot />
+
+    <!-- Site-wide playback UI. Lives here rather than on the radio page so the
+         stream stays operable wherever the visitor navigates. -->
+    <MiniPlayer />
+    <LikeSidebar />
+    <KeyboardController />
+    <MediaSessionController />
 
     <script>
       // Static build freezes relative dates at deploy time — recompute them for

@@ -3,10 +3,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import SomaPlayer from '../components/SomaPlayer.astro';
 import ArchiveRadio from '../components/ArchiveRadio.astro';
 import UndergroundStations from '../components/UndergroundStations.astro';
-import KeyboardController from '../components/KeyboardController.astro';
-import MiniPlayer from '../components/MiniPlayer.astro';
-import LikeSidebar from '../components/LikeSidebar.astro';
-import MediaSessionController from '../components/MediaSessionController.astro';
 import { getLatestSotd } from '../utils/sotd';
 
 const latestSotd = await getLatestSotd();
@@ -55,11 +51,7 @@ const latestSotd = await getLatestSotd();
   <!-- UndergroundStations bringt ihr eigenes "Entdecken"-Label mit -->
   <UndergroundStations />
 
-  <!-- ══ GLOBAL UI ══════════════════════════════════════════════════════════ -->
-  <KeyboardController />
-  <MiniPlayer />
-  <LikeSidebar />
-  <MediaSessionController />
+  <!-- Globale Bedienelemente liegen jetzt im BaseLayout -->
 
 </BaseLayout>
 

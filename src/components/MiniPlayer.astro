@@ -4,7 +4,7 @@
 // Renders purely from src/utils/player.ts, so it works on every page.
 ---
 
-<div class="mini-player" id="mini-player" aria-label="Mini Player" hidden>
+<div class="mini-player" id="mini-player" aria-label="Mini Player" transition:persist hidden>
   <div class="mp-left">
     <div class="mp-dot" id="mp-dot"></div>
     <div class="mp-info">
@@ -246,12 +246,13 @@
     }));
 
     // ── Controls ─────────────────────────────────────────────────────────────
-    // These sit on nodes inside the swapped body and die with it, so they need
-    // no teardown of their own.
-    mpPlay.addEventListener('click', () => toggle());
-    mpSkip.addEventListener('click', () => requestNext());
+    // The bar carries transition:persist, so these nodes survive the swap —
+    // which means their listeners survive too and would stack up. They go
+    // through the disposer like everything else.
+    off.listen(mpPlay, 'click', () => toggle());
+    off.listen(mpSkip, 'click', () => requestNext());
 
-    mpScrollUp.addEventListener('click', () => {
+    off.listen(mpScrollUp, 'click', () => {
       const target = getState().source === 'archive'
         ? document.querySelector('.ar-wrap')
         : document.querySelector('.soma-wrap');
