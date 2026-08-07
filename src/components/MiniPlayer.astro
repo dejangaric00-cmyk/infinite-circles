@@ -173,6 +173,7 @@
 </style>
 
 <script>
+  import { navigate } from 'astro:transitions/client';
   import { subscribe, toggle, getState } from '../utils/player';
   import { requestNext } from '../utils/archive';
   import { onPage, disposer } from '../utils/lifecycle';
@@ -256,8 +257,11 @@
       const target = getState().source === 'archive'
         ? document.querySelector('.ar-wrap')
         : document.querySelector('.soma-wrap');
-      // Not on this page — send the visitor to the radio instead.
-      if (!target) { window.location.href = '/'; return; }
+      // Not on this page — send the visitor to the radio instead. This has to
+      // go through the router: a location assignment reloads the document, the
+      // module is evaluated again and utils/player.ts builds a second Audio
+      // element. The running stream would die on the way to the player.
+      if (!target) { void navigate('/radio'); return; }
       target.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
 

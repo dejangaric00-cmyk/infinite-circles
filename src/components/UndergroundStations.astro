@@ -507,6 +507,12 @@ const linkOnly: LinkStation[] = [
     box-shadow: 0 0 20px -6px var(--sc);
   }
   .station-card[data-state="playing"]::before { opacity: 1; width: 3px; }
+  /* Pausiert: der Sender bleibt der ausgewählte, nur eben still. */
+  .station-card[data-state="paused"] {
+    border-color: color-mix(in srgb, var(--sc) 45%, transparent);
+    background: var(--glass-bg-strong);
+  }
+  .station-card[data-state="paused"]::before { opacity: 0.7; width: 3px; }
   .station-card[data-state="error"] { border-color: rgba(255,100,100,0.3); }
 
   .card-top {
@@ -677,7 +683,7 @@ const linkOnly: LinkStation[] = [
 
     const off = disposer();
 
-    function setCardState(card: HTMLElement, state: 'idle'|'loading'|'playing'|'error') {
+    function setCardState(card: HTMLElement, state: 'idle'|'loading'|'playing'|'paused'|'error') {
       card.dataset.state = state;
       const icon  = card.querySelector<HTMLElement>('.btn-icon');
       const label = card.querySelector<HTMLElement>('.btn-label');
@@ -686,6 +692,9 @@ const linkOnly: LinkStation[] = [
         case 'idle':    icon.textContent = '▶'; label.textContent = 'Play'; break;
         case 'loading': icon.textContent = '…'; label.textContent = 'Loading'; break;
         case 'playing': icon.textContent = '■'; label.textContent = 'Stop'; break;
+        // Bewusst "Play", nicht "Weiter": ein Klick baut den Live-Stream neu
+        // auf, statt aus einem veralteten Puffer weiterzulaufen.
+        case 'paused':  icon.textContent = '▶'; label.textContent = 'Play'; break;
         case 'error':   icon.textContent = '✕'; label.textContent = 'Error'; break;
       }
     }
@@ -728,7 +737,10 @@ const linkOnly: LinkStation[] = [
         // A card that failed keeps its error badge until it is clicked again.
         if (card.dataset.state === 'error') continue;
         if (mine && card.dataset.url === s.stationSlug) {
-          setCardState(card, s.playing ? 'playing' : 'loading');
+          // Three states, not two: pausing left the card spinning on "loading"
+          // forever, because source and slug still point here. s.loading is the
+          // engine's own answer to "is something on its way?".
+          setCardState(card, s.playing ? 'playing' : s.loading ? 'loading' : 'paused');
         } else {
           setCardState(card, 'idle');
         }

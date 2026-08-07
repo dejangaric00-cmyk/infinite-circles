@@ -3,9 +3,14 @@
 // Global keyboard shortcuts for Infinite Circles
 // Space → Play/Pause active player
 // → Arrow Right → Skip (ArchiveRadio)
-// ↑ / ↓ → Volume +/- 10%
+// + / -  → Volume +/- 10%
 // 1–4 → SomaFM station switch
 // ? → Toggle shortcut overlay
+//
+// The handler sits on document and is therefore live on every page, including
+// the long reading pages. It must not swallow keys the browser needs for
+// scrolling: the arrow keys stay with the page, and Space is only claimed when
+// something is actually loaded and the focus is not on a control of its own.
 ---
 
 <!-- Shortcut Overlay -->
@@ -25,7 +30,7 @@
         <span>Skip (Archive.org)</span>
       </div>
       <div class="kb-row">
-        <kbd>↑</kbd><kbd>↓</kbd>
+        <kbd>+</kbd><kbd>−</kbd>
         <span>Lautstärke +/− 10%</span>
       </div>
       <div class="kb-row">
@@ -41,7 +46,7 @@
         <span>Schließen</span>
       </div>
     </div>
-    <p class="kb-hint">Shortcuts sind deaktiviert, wenn ein Textfeld aktiv ist.</p>
+    <p class="kb-hint">Shortcuts sind deaktiviert, wenn ein Textfeld oder ein Bedienelement den Fokus hat. Die Pfeiltasten gehören dem Scrollen.</p>
   </div>
 </div>
 
@@ -297,13 +302,33 @@
     hintBadge.addEventListener('click', toggleOverlay);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) closeOverlay(); });
 
-    // ── Helper: is user typing? ─────────────────────────────────────────────────
-    function isTyping(): boolean {
-      const el = document.activeElement;
+    // ── Helpers: who owns the key? ──────────────────────────────────────────────
+    /** A text field owns every key. */
+    function isTextEntry(): boolean {
+      const el = document.activeElement as HTMLElement | null;
       if (!el) return false;
+      if (el.isContentEditable) return true;
       const tag = el.tagName.toLowerCase();
-      return tag === 'input' || tag === 'textarea' || tag === 'select'
-        || (el as HTMLElement).isContentEditable;
+      return tag === 'input' || tag === 'textarea' || tag === 'select';
+    }
+
+    /**
+     * A focused button or link owns Space and Enter — that is how they are
+     * activated. Stealing Space here meant one press both clicked the button
+     * and toggled the player. The other shortcuts are unaffected, so this is
+     * checked per key rather than for the whole handler.
+     */
+    function focusActivatable(): boolean {
+      const el = document.activeElement as HTMLElement | null;
+      if (!el || el === document.body) return false;
+      const tag = el.tagName.toLowerCase();
+      return tag === 'button' || tag === 'a'
+        || el.hasAttribute('tabindex') || el.hasAttribute('role');
+    }
+
+    /** Nothing loaded yet — leave every key to the browser. */
+    function playerIdle(): boolean {
+      return getState().source === null;
     }
 
     // ── Player controls ─────────────────────────────────────────────────────────
@@ -324,6 +349,8 @@
 
     // ── Volume control ──────────────────────────────────────────────────────────
     let volToastTimer: ReturnType<typeof setTimeout>;
+    // A pending timeout would fire into nodes the router has already discarded.
+    off.add(() => clearTimeout(volToastTimer));
 
     function showVolToast(vol: number) {
       const pct = Math.round(vol * 100);
@@ -351,23 +378,37 @@
         if (!overlay.hidden) { closeOverlay(); e.preventDefault(); }
         return;
       }
-      if (isTyping()) return;
+      // Browser and OS shortcuts keep priority.
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (isTextEntry()) return;
 
       switch (e.key) {
         case ' ':
         case 'Spacebar':
+          // Space scrolls a page. Only claim it once there is something to
+          // pause — otherwise reading pages lose their page-down key.
+          if (playerIdle() || focusActivatable()) return;
           e.preventDefault();
           handleSpace();
           break;
         case 'ArrowRight':
+          // Vertical scrolling is unaffected, but only the archive queue can
+          // actually skip — leave the key alone everywhere else.
+          if (getState().source !== 'archive') return;
           e.preventDefault();
           archiveSkip();
           break;
-        case 'ArrowUp':
+        // Volume used to sit on ArrowUp/ArrowDown, which blocked scrolling on
+        // every page the controller is mounted on — that is all of them.
+        case '+':
+        case '=':
+          if (playerIdle()) return;
           e.preventDefault();
           adjustVolume(0.1);
           break;
-        case 'ArrowDown':
+        case '-':
+        case '_':
+          if (playerIdle()) return;
           e.preventDefault();
           adjustVolume(-0.1);
           break;

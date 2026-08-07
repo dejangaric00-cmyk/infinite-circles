@@ -166,7 +166,7 @@
   letter-spacing: -0.01em;
 }
 .ar-artist {
-  font-family: var(--font-mono); font-size: 9px;
+  font-family: var(--font-mono); font-size: 10px;
   letter-spacing: .06em; color: var(--text-mid);
 }
 .ar-controls {
@@ -337,7 +337,7 @@
   text-overflow: ellipsis; white-space: nowrap; flex: 1;
 }
 .ar-history-meta {
-  font-family: var(--font-mono); font-size: 8px;
+  font-family: var(--font-mono); font-size: 9px;
   color: var(--text-dim); flex-shrink: 0; opacity: 0.6;
   white-space: nowrap;
 }
@@ -347,7 +347,8 @@
 import {
   playDoc, isLiked, toggleLike, addToHistory,
   loadHistory, clearHistory, fmtTime, fmtAgo,
-  HISTORY_CHANGED, ARCHIVE_NEXT, type ArchiveDoc,
+  HISTORY_CHANGED, ARCHIVE_NEXT, GENRE_QUERIES, GENRE_LABELS,
+  type ArchiveDoc, type StoredTrack,
 } from '../utils/archive';
 import {
   subscribe, subscribeTime, registerSourceHandlers,
@@ -364,132 +365,6 @@ let nextHandler: (() => void) | null = null;
 window.addEventListener(ARCHIVE_NEXT, () => nextHandler?.());
 
 onPage(() => {
-  // ── Genre → query map ─────────────────────────────────────────────────────────
-  const GENRE_QUERIES: Record<string, string[]> = {
-    'all': [
-      'subject:(dub+techno)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(minimal+techno)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(deep+house)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(ambient)+mediatype:audio+collection:netlabels',
-      'subject:(electro)+mediatype:audio+collection:netlabels',
-      'subject:(IDM)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(drone)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(downtempo)+mediatype:audio+collection:netlabels',
-    ],
-    'dub-techno': [
-      'subject:(dub+techno)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(dub+techno)+mediatype:audio+collection:netlabels',
-      'subject:(dub)+subject:(techno)+mediatype:audio',
-    ],
-    'minimal': [
-      'subject:(minimal+techno)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(minimal)+mediatype:audio+collection:netlabels',
-      'subject:(minimal+house)+mediatype:audio+licenseurl:*creativecommons*',
-    ],
-    'deep-house': [
-      'subject:(deep+house)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(deep+house)+mediatype:audio+collection:netlabels',
-      'subject:(house)+subject:(deep)+mediatype:audio+licenseurl:*creativecommons*',
-    ],
-    'ambient': [
-      'subject:(ambient)+mediatype:audio+collection:netlabels',
-      'subject:(ambient)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(ambient+electronic)+mediatype:audio+licenseurl:*creativecommons*',
-    ],
-    'electro': [
-      'subject:(electro)+mediatype:audio+collection:netlabels',
-      'subject:(electro)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(electronica)+mediatype:audio+collection:netlabels',
-    ],
-    'netlabels': [
-      'mediatype:audio+collection:netlabels',
-      'subject:(electronic)+mediatype:audio+collection:netlabels',
-      'subject:(dance)+mediatype:audio+collection:netlabels',
-    ],
-    'drone': [
-      'subject:(drone)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(drone+music)+mediatype:audio',
-      'subject:(drone+ambient)+mediatype:audio+licenseurl:*creativecommons*',
-    ],
-    'dark-ambient': [
-      'subject:(dark+ambient)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(dark+ambient)+mediatype:audio+collection:netlabels',
-      'subject:(dark+electronic)+mediatype:audio+licenseurl:*creativecommons*',
-    ],
-    'industrial': [
-      'subject:(industrial)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(industrial)+mediatype:audio+collection:netlabels',
-      'subject:(post-industrial)+mediatype:audio+licenseurl:*creativecommons*',
-    ],
-    'idm': [
-      'subject:(IDM)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(intelligent+dance+music)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(IDM)+mediatype:audio+collection:netlabels',
-    ],
-    'breakbeat': [
-      'subject:(breakbeat)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(breaks)+mediatype:audio+collection:netlabels',
-      'subject:(breakbeat)+mediatype:audio+collection:netlabels',
-    ],
-    'downtempo': [
-      'subject:(downtempo)+mediatype:audio+collection:netlabels',
-      'subject:(downtempo)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(trip-hop)+mediatype:audio+licenseurl:*creativecommons*',
-    ],
-    'experimental': [
-      'subject:(experimental)+mediatype:audio+collection:netlabels',
-      'subject:(experimental+electronic)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(avant-garde)+mediatype:audio+licenseurl:*creativecommons*',
-    ],
-    'noise': [
-      'subject:(noise)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(harsh+noise)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(noise+music)+mediatype:audio+collection:netlabels',
-    ],
-    'jungle': [
-      'subject:(jungle)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(drum+and+bass)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(jungle)+mediatype:audio+collection:netlabels',
-    ],
-    'acid': [
-      'subject:(acid+techno)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(acid+house)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(acid)+mediatype:audio+collection:netlabels',
-    ],
-    'detroit': [
-      'subject:(detroit+techno)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(detroit)+subject:(techno)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(techno)+mediatype:audio+collection:netlabels',
-    ],
-    'field-recordings': [
-      'subject:(field+recordings)+mediatype:audio+licenseurl:*creativecommons*',
-      'subject:(field+recording)+mediatype:audio',
-      'subject:(soundscape)+mediatype:audio+licenseurl:*creativecommons*',
-    ],
-  };
-
-  const GENRE_LABELS: Record<string, string> = {
-    'all':              'archive.org · netlabels',
-    'dub-techno':       'archive.org · dub techno',
-    'minimal':          'archive.org · minimal',
-    'deep-house':       'archive.org · deep house',
-    'ambient':          'archive.org · ambient',
-    'electro':          'archive.org · electro',
-    'netlabels':        'archive.org · netlabels',
-    'drone':            'archive.org · drone',
-    'dark-ambient':     'archive.org · dark ambient',
-    'industrial':       'archive.org · industrial',
-    'idm':              'archive.org · IDM',
-    'breakbeat':        'archive.org · breakbeat',
-    'downtempo':        'archive.org · downtempo',
-    'experimental':     'archive.org · experimental',
-    'noise':            'archive.org · noise',
-    'jungle':           'archive.org · jungle',
-    'acid':             'archive.org · acid',
-    'detroit':          'archive.org · detroit techno',
-    'field-recordings': 'archive.org · field recordings',
-  };
-
   let activeGenre = 'all';
 
   let rpTracks: ArchiveDoc[] = [];
@@ -549,21 +424,35 @@ onPage(() => {
     if (!arHistory || !arHistItems) return;
     if (!history.length) { arHistory.style.display = 'none'; return; }
     arHistory.style.display = 'block';
-    arHistItems.innerHTML = history.map((x: any) => `
-      <div class="ar-history-item" data-id="${x.id}" data-title="${x.title}" data-artist="${x.artist}">
-        <span class="ar-history-title">${x.title.length > 44 ? x.title.slice(0, 44) + '…' : x.title}</span>
-        <span class="ar-history-meta">${x.artist ? x.artist.slice(0, 18) : ''} · ${fmtAgo(x.ts)}</span>
-      </div>
-    `).join('');
+    // Built node by node, never through innerHTML: title and creator come from
+    // archive.org metadata and are foreign input. A quotation mark in a title
+    // used to break straight out of the data-title attribute. Same rule as in
+    // the LikeSidebar — textContent escapes, string templates do not.
+    const frag = document.createDocumentFragment();
 
-    arHistItems.querySelectorAll<HTMLElement>('.ar-history-item').forEach(el => {
-      el.addEventListener('click', () => {
-        const id     = el.dataset.id     ?? '';
-        const title  = el.dataset.title  ?? '';
-        const artist = el.dataset.artist ?? '';
-        if (id) void playTrack({ identifier: id, title, creator: artist });
+    for (const x of history as StoredTrack[]) {
+      const row = document.createElement('div');
+      row.className = 'ar-history-item';
+
+      const titleEl = document.createElement('span');
+      titleEl.className = 'ar-history-title';
+      titleEl.textContent = x.title.length > 44 ? x.title.slice(0, 44) + '…' : x.title;
+
+      const metaEl = document.createElement('span');
+      metaEl.className = 'ar-history-meta';
+      metaEl.textContent = `${x.artist ? x.artist.slice(0, 18) : ''} · ${fmtAgo(x.ts)}`;
+
+      // The entry is captured by the closure, so no round trip through data-*
+      // attributes — and the full title survives instead of the truncated one.
+      row.addEventListener('click', () => {
+        if (x.id) void playTrack({ identifier: x.id, title: x.title, creator: x.artist });
       });
-    });
+
+      row.append(titleEl, metaEl);
+      frag.appendChild(row);
+    }
+
+    arHistItems.replaceChildren(frag);
   }
 
   // ── Seek bar ──────────────────────────────────────────────────────────────────
@@ -627,12 +516,32 @@ onPage(() => {
     seekReset();
   }
 
+  // Archive.org hands out plenty of items with no playable file, so skipping is
+  // the right reflex — but it needs a ceiling. Without one a bad batch turns
+  // into an endless rattle every 1.5 s that only a reload gets out of.
+  // The streak is reset by the subscribe() handler as soon as sound comes out.
+  const MAX_SKIPS = 5;
+  let failStreak = 0;
+
+  function noteFailure(message: string) {
+    failStreak++;
+    if (failStreak >= MAX_SKIPS) {
+      failStreak = 0;
+      setStatus('Nothing playable — tap to retry');
+      return;
+    }
+    setStatus(message);
+    setTimeout(() => void rpNext(), 1200);
+  }
+
   /** Resolve and start a track through the engine. */
   async function playTrack(doc: ArchiveDoc) {
     previewTrack(doc);
     setStatus('Loading…');
     const res = await playDoc(doc, true);
-    if (!res.ok) setStatus(res.reason === 'no-audio' ? 'No audio — skip' : 'Unavailable');
+    // A 'no-audio' item never engages the audio element, so onError would never
+    // fire — the queue used to come to a silent halt right here.
+    if (!res.ok) noteFailure(res.reason === 'no-audio' ? 'No audio — skip' : 'Unavailable — skip');
   }
 
   // ── Render from engine state ──────────────────────────────────────────────────
@@ -657,12 +566,15 @@ onPage(() => {
     if (rpLinkEl && s.track.link) rpLinkEl.href = s.track.link;
     syncLikeBtn();
     setStatus(rpPlaying ? '● Playing' : 'Ready');
+
+    // Audible proof that the queue is healthy again.
+    if (rpPlaying) failStreak = 0;
   }));
 
   // Autoplay the next track when one finishes, skip past dead links.
   registerSourceHandlers('archive', {
-    onEnded: () => { void rpNext(); },
-    onError: () => { setStatus('Error — skipping'); setTimeout(() => void rpNext(), 1500); },
+    onEnded: () => { failStreak = 0; void rpNext(); },
+    onError: () => noteFailure('Error — skipping'),
   });
 
   // ── Init ──────────────────────────────────────────────────────────────────────
@@ -710,6 +622,10 @@ onPage(() => {
 
   // ── Next ──────────────────────────────────────────────────────────────────────
   async function rpNext() {
+    // Modulo by zero yields NaN, and playDoc(undefined) throws. getFallback()
+    // happens to prevent that today — this makes it a rule rather than a
+    // side effect.
+    if (!rpTracks.length) { rpTracks = getFallback(); rpIdx = -1; }
     rpIdx = (rpIdx + 1) % rpTracks.length;
     if (rpIdx === 0) {
       try { const docs = await fetchTracks(); if (docs.length) rpTracks = docs.sort(() => Math.random() - 0.5); } catch {}
