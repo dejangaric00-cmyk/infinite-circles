@@ -23,38 +23,92 @@ const schema = {
 
 <BaseLayout title="Radio — Infinite Circles" description={description} schema={schema}>
 
-  <!-- ══ HERO ══════════════════════════════════════════════════════════════ -->
+  {/* ══ HERO ══════════════════════════════════════════════════════════════ */}
   <section class="music-hero">
     <div class="hero-inner">
       <p class="hero-eyebrow">
-        <span class="eyebrow-dot"></span>
         infinite&#8209;circles.de&nbsp;/&nbsp;radio
       </p>
       <h1 class="hero-title">
         <em>Radio.</em>
       </h1>
-      <p class="hero-sub">House. Tech House. Minimal. Dub Techno.</p>
+      <p class="hero-sub">
+        House. Tech House. Minimal. Dub Techno. Drei Quellen: SomaFM als ruhiger
+        Dauerlauf, Archive.org für Netlabel-Fundstücke, und ein Verzeichnis von
+        18 Undergroundsendern.
+      </p>
     </div>
   </section>
 
-  <!-- ══ PLAYERS ═══════════════════════════════════════════════════════════ -->
+  {/* ══ PLAYERS ═══════════════════════════════════════════════════════════ */}
   <div class="content-wrap">
 
-    <div class="section-label">Live Radio</div>
-    <div class="card-label">soma fm</div>
+    <header class="sec-head">
+      <p class="sec-eyebrow">I · Live Radio</p>
+      <div class="sec-row">
+        <h2 class="sec-h2">SomaFM</h2>
+        <span class="sec-meta">Community Radio · werbefrei</span>
+      </div>
+    </header>
     <SomaPlayer />
 
-    <div class="section-label" style="margin-top: 2rem;">Archive.org · Open Radio</div>
+    <header class="sec-head">
+      <p class="sec-eyebrow">II · Open Radio</p>
+      <div class="sec-row">
+        <h2 class="sec-h2">Archive.org · Netlabels</h2>
+        {/* id="rp-status" gehört ArchiveRadio: das Skript sucht per
+             getElementById, deshalb darf die Anzeige hier im Kopf stehen. */}
+        <span class="sec-meta sec-meta-btn" id="rp-status">bereit</span>
+      </div>
+    </header>
     <ArchiveRadio />
 
   </div>
 
-  <!-- UndergroundStations bringt ihr eigenes "Entdecken"-Label mit -->
+  {/* UndergroundStations bringt ihr eigenes "Entdecken"-Label mit */}
   <UndergroundStations />
 
-  <!-- Globale Bedienelemente liegen jetzt im BaseLayout -->
+  {/* Globale Bedienelemente liegen jetzt im BaseLayout */}
 
 </BaseLayout>
+
+
+{/* ══════════════════════════════════════════════════════════════════════════
+     KARTEIKARTEN — nur auf dieser Seite
+     ─────────────────────────────────────────────────────────────────────────
+     Der Entwurf zeichnet flache Karten auf den Himmel des BaseLayout: 3px
+     Radius durchgehend, eine Kante, keine Wölbung, kein Schatten. Der Himmel
+     selbst bleibt unverändert, deshalb steht hier nur die Abweichung.
+     Astro lädt dieses Blatt nur mit /radio, alle anderen Seiten bleiben, wie
+     sie sind. Spezifität html:root:root (0,2,1) schlägt html.dark (0,1,1) aus
+     dem Layout, unabhängig von der Bündelreihenfolge.
+     ══════════════════════════════════════════════════════════════════════════ */}
+<style is:global>
+  html:root:root {
+    /* Entwurf: ein Radius für Panel, Karte und Bedienelement */
+    --r-panel: 3px;
+    --r-card: 3px;
+    --r-ctrl: 3px;
+
+    /* Gezeichnete Kanten. Karten behalten die helle Kante — im Entwurf liegen
+       sie auf dem Grund, Knöpfe und Marken stehen darin. Knopf kräftiger als
+       Marke: gemessen 50 % gegen 24 %. */
+    --line-ctrl: rgba(10, 26, 46, 0.50);
+    --line-chip: rgba(10, 26, 46, 0.24);
+  }
+
+  html.dark:root:root {
+    --line-ctrl: rgba(232, 242, 255, 0.45);
+    --line-chip: rgba(232, 242, 255, 0.22);
+  }
+
+  /* Halb so deckend wie das Glas-Panel, ohne Wölbung, ohne Schatten. */
+  html:root:root .glass-surface {
+    background: var(--glass-bg);
+    box-shadow: inset 0 0 0 1px var(--glass-border);
+  }
+  html:root:root .glass-surface::before { content: none; }
+</style>
 
 
 <style>
@@ -64,14 +118,11 @@ const schema = {
     padding: 4rem 0 2.5rem;
   }
   .hero-inner {
-    max-width: 900px;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 0 1.5rem;
   }
   .hero-eyebrow {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
     font-family: var(--font-mono);
     font-size: 0.65rem;
     letter-spacing: 0.18em;
@@ -79,56 +130,84 @@ const schema = {
     color: var(--text-dim);
     margin-bottom: 1rem;
   }
-  .eyebrow-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--accent); flex-shrink: 0;
-  }
   .hero-title {
     font-family: var(--font-serif);
     font-size: clamp(3rem, 7vw, 5rem);
     font-weight: 300;
     line-height: 1.05;
-    color: var(--text-deep);
+    color: var(--heading);
     margin: 0 0 0.75rem;
   }
   .hero-title em {
     font-style: italic;
-    color: var(--accent);
+    color: inherit;
   }
   .hero-sub {
     font-family: var(--font-mono);
     font-size: 0.72rem;
-    letter-spacing: 0.08em;
+    line-height: 1.9;
+    letter-spacing: 0.04em;
     color: var(--text-dim);
+    max-width: 46em;
     margin: 0 0 1.5rem;
   }
 
   /* ── Content ── */
   .content-wrap {
-    max-width: 900px;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 0 1.5rem 2rem;
   }
-  .section-label {
+
+  /* ── Abschnittskopf: Ziffer + Titel + Randnotiz ──
+     Dasselbe Muster wie in UndergroundStations, damit die vier Abschnitte
+     der Seite auf einer Kante stehen. */
+  .sec-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin: 2.75rem 0 1rem;
+  }
+  .content-wrap > .sec-head:first-child { margin-top: 0; }
+  .sec-eyebrow {
     font-family: var(--font-mono);
-    font-size: 0.6rem;
+    font-size: 0.62rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--text-dim);
-    opacity: 0.6;
-    text-align: center;
-    margin-bottom: 0.9rem;
+    margin: 0;
   }
-  .card-label {
+  .sec-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1.5rem;
+    border-bottom: 0.5px solid var(--border-mid);
+    padding-bottom: 0.7rem;
+  }
+  .sec-h2 {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    font-weight: 300;
+    line-height: 1;
+    margin: 0;
+    color: var(--text-deep);
+  }
+  .sec-meta {
     font-family: var(--font-mono);
     font-size: 0.6rem;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--text-dim);
-    margin-bottom: 0.35rem;
+    white-space: nowrap;
   }
+  /* Der Status ist anklickbar — neu laden, wenn nichts läuft. */
+  .sec-meta-btn { cursor: pointer; transition: color 0.2s ease; }
+  .sec-meta-btn:hover { color: var(--text-deep); }
 
   @media (max-width: 600px) {
     .music-hero { padding: 2.5rem 0 1.5rem; }
+    .sec-h2 { font-size: 1.6rem; }
+    .sec-row { flex-wrap: wrap; gap: 0.4rem; }
   }
 </style>

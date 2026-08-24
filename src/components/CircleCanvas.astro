@@ -16,9 +16,8 @@
     opacity: 0.7;
     transition: opacity 0.5s var(--ease-ios);
   }
-  /* Auf Lesestrecken gedämpft. Das Attribut setzt BaseLayout anhand des Pfads;
-     der Body wird bei jeder Navigation getauscht, das Canvas selbst bleibt. */
-  body[data-rings="dim"] #circle-canvas { opacity: 0.28; }
+  /* Früher stand hier eine Dämpfung auf 0.28 für Lesestrecken, gesteuert über
+     body[data-rings]. Die Ringe sind jetzt auf jeder Seite gleich stark. */
 </style>
 
 <script>

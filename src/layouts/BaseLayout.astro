@@ -39,10 +39,9 @@ function isActive(href: string): boolean {
   return currentPath === href || currentPath.startsWith(href + '/');
 }
 
-// Die Ringe sind der Hintergrund der Startseite und des Radios. Hinter
-// Lesestrecken bleiben sie, aber gedämpft — der Text steht dort im Vordergrund.
-const showcasePages = ['/', '/radio'];
-const dimRings = !showcasePages.includes(currentPath.replace(/\/$/, '') || '/');
+// Die Ringe liefen auf Lesestrecken gedämpft (0.28 statt 0.7). Das machte den
+// Hintergrund von Seite zu Seite unterschiedlich; jetzt tragen alle Seiten die
+// Fassung der Startseite.
 
 // Site-wide structured data. Page-specific nodes get appended.
 const graph: Record<string, unknown>[] = [
@@ -89,52 +88,69 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
-    <meta name="theme-color" content="#0a1a2e" />
+    {/* Ein fester Wert färbte die Browserleiste auch im hellen Modus dunkelblau. */}
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#82c1f2" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#060c1a" />
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
-    <!-- Client-side routing. The body is swapped instead of reloaded, so the
-         detached audio element in utils/player.ts keeps playing. -->
+    {/* Client-side routing. The body is swapped instead of reloaded, so the
+         detached audio element in utils/player.ts keeps playing. */}
     <ClientRouter />
-    <!-- Fonts: preconnect + load -->
+    {/* Fonts: preconnect + load */}
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Mono:wght@300;400&display=swap" />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
-    <!-- RSS -->
+    {/* RSS */}
     <link rel="alternate" type="application/rss+xml" title="Song of the Day — Infinite Circles" href="/sotd/rss.xml" />
     <title>{title}</title>
-    <!-- Favicons -->
+    {/* Favicons */}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
-    <!-- PWA -->
+    {/* PWA */}
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Infinite Circles" />
-    <!-- Dark mode: apply before paint to avoid flash -->
-    <script>
-      try {
-        const stored = localStorage.getItem('ic_dark');
-        const sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const dark = stored === '1' || (stored === null && sysDark);
-        document.documentElement.classList.add(dark ? 'dark' : 'light');
-      } catch(e) {}
+    {/* Vor dem ersten Anstrich — und nach jedem Seitentausch erneut.
+        Der ClientRouter übernimmt die Attribute des <html> aus dem
+        eingehenden Dokument, und dort steht die Klasse nicht drin: sie wird
+        ja erst hier zur Laufzeit gesetzt. Nach einem Klick in der Navigation
+        stand deshalb gar keine Klasse mehr auf <html> und die Seite fiel auf
+        hell zurück.
+        is:inline hält es als klassisches Skript, das sofort läuft. Ohne das
+        bündelt Astro es als Modul, und Module sind aufgeschoben — die helle
+        Fassung blitzte beim Laden kurz auf. */}
+    <script is:inline>
+      (function () {
+        function applyTheme() {
+          try {
+            var stored = localStorage.getItem('ic_dark');
+            var sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            var dark = stored === '1' || (stored === null && sysDark);
+            var el = document.documentElement;
+            el.classList.toggle('dark', dark);
+            el.classList.toggle('light', !dark);
+          } catch (e) {}
+        }
+        applyTheme();
+        document.addEventListener('astro:after-swap', applyTheme);
+      })();
     </script>
   </head>
-  <body data-rings={dimRings ? 'dim' : undefined}>
-    <!-- Namensgebender Hintergrund — liegt hinter allen Seiten -->
+  <body>
+    {/* Namensgebender Hintergrund — liegt hinter allen Seiten */}
     <CircleCanvas />
 
-    <nav>
+    <nav class="site-nav">
       <a class="logo" href="/">Infinite Circles</a>
       <ul class="nav-links">
         <li><a href="/" aria-current={isActive('/') ? 'page' : undefined}>Home</a></li>
         <li><a href="/radio" aria-current={isActive('/radio') ? 'page' : undefined}>Radio</a></li>
         <li><a href="/sotd" aria-current={isActive('/sotd') ? 'page' : undefined}>Song of the Day</a></li>
-        <li><a href="/journal" aria-current={isActive('/journal') ? 'page' : undefined}>Journal</a></li>
         <li><a href="/now" aria-current={isActive('/now') ? 'page' : undefined}>Now</a></li>
         <li><a href="/about" aria-current={isActive('/about') ? 'page' : undefined}>About</a></li>
       </ul>
@@ -143,8 +159,8 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
 
     <slot />
 
-    <!-- Site-wide playback UI. Lives here rather than on the radio page so the
-         stream stays operable wherever the visitor navigates. -->
+    {/* Site-wide playback UI. Lives here rather than on the radio page so the
+         stream stays operable wherever the visitor navigates. */}
     <MiniPlayer />
     <LikeSidebar />
     <KeyboardController />
@@ -171,7 +187,15 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
   html { scroll-behavior: smooth; }
 
   :root {
-    --sky-top: #4a90d9;
+    /* Ohne das bleiben Scrollbalken, Formularelemente und die Auswahlfarbe
+       auch im Dunkelmodus hell. */
+    color-scheme: light;
+    /* War #4a90d9. Der Verlauf steht per position:fixed im Fenster, oben am
+       Bildschirmrand lag also bei jedem Scrollstand der dunkelste Blauton —
+       und darauf erreichte selbst volle Tinte nur 5,23:1. Für kleine Schrift
+       blieb kein Spielraum. #82c1f2 ist der Wert aus dem Claude-Design-Entwurf
+       der Radioseite, nachgemessen aus dem Screenshot. */
+    --sky-top: #82c1f2;
     --sky-mid: #87ceeb;
     --sky-bot: #d4eef9;
     --glass-bg: rgba(255,255,255,0.22);
@@ -179,12 +203,33 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
     --glass-border: rgba(255,255,255,0.65);
     --glass-border-dim: rgba(255,255,255,0.35);
     --text-deep: #0a1a2e;
-    --text-mid: rgba(10,26,46,0.65);
-    /* War 0.42. Auf Glas lag der Kontrast damit unter 4,5:1 — und --text-dim
-       trägt nicht nur Dekoration, sondern Datum, Genre und Interpret. */
-    --text-dim: rgba(10,26,46,0.58);
-    --accent: #1a6bb5;
+    --text-mid: rgba(10,26,46,0.78);
+    /* War 0.42, dann 0.58 — beides zu wenig. Nachgemessen über allen drei
+       Himmelsstufen und beiden Flächen: 0.70 ist der niedrigste Wert, der
+       überall 4,5:1 hält (schlechtester Fall 4,61:1). --text-dim trägt Datum,
+       Genre und Interpret, nicht bloß Zierrat. */
+    --text-dim: rgba(10,26,46,0.70);
+    /* --accent ist die Grafikfarbe: Ränder, Punkte, Wellenform, Fokusring.
+       3:1 reichen dort, #1a6bb5 kam auf 2,85:1. --accent-ink ist dieselbe
+       Farbe für Text, dunkel genug für 4,5:1 auf jedem Grund (min 4,67:1). */
+    --accent: #1866ac;
+    --accent-ink: #114a82;
     --accent2: #4a90d9;
+    /* Nebenakzente. Sie standen als feste Werte in den Komponenten und waren
+       am Dunkelmodus ausgerichtet: Neongrün kam auf hellem Blau auf 1,02:1,
+       Neonpink auf 1,23:1, das Fehlerrot auf 2,10:1. */
+    --accent-archive: #05512f;
+    --accent-like: #7d0f78;
+    --danger: #8c1d16;
+    /* Überschriftenblau. Kommt von der Now-Seite — dort ist es der Grundton
+       der atmenden Animation. Als eigenes Token, damit eine Änderung eine
+       Zeile ist und nicht neun Dateien. --heading-lift ist der helle Scheitel
+       des Atmens. */
+    --heading: var(--accent-ink);
+    /* Der Scheitel des Atmens — zurück auf die ursprüngliche Spanne, hell nach
+       hell statt der Reise ins Violett. Weiter aufhellen geht nicht: #87ceeb
+       aus der allerersten Fassung kam auf dem Himmel auf 1,00:1. */
+    --heading-lift: var(--accent);
     --border-light: rgba(255,255,255,0.5);
     --border-mid: rgba(10,26,46,0.12);
     --t: all 0.2s ease;
@@ -193,7 +238,11 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
 
     /* Glas-System — theme-unabhängig */
     --glass-blur: 32px;
-    --glass-sat: 190%;
+    /* War 190%. Auf dem alten, kräftigen #4a90d9 fiel das kaum auf; auf dem
+       helleren Himmel kippt jede Glasfläche und die Navigationsleiste sichtbar
+       ins Türkise, während sie im Entwurf ein neutraler Weißschleier sind.
+       Im Dunkelmodus ändert der Wert ohnehin fast nichts. */
+    --glass-sat: 100%;
     --r-panel: 20px;
     --r-card: 14px;
     --r-ctrl: 11px;
@@ -221,6 +270,7 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
   }
 
   html.dark {
+    color-scheme: dark;
     --sky-top: #060c1a;
     --sky-mid: #0d1b35;
     --sky-bot: #0a1228;
@@ -230,9 +280,21 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
     --glass-border-dim: rgba(255,255,255,0.10);
     --text-deep: #e8f2ff;
     --text-mid: rgba(200,220,255,0.65);
-    --text-dim: rgba(180,210,255,0.55);
+    /* War 0.55 und lag damit bei 4,21:1. */
+    --text-dim: rgba(180,210,255,0.62);
+    /* Im Dunkeln trägt der helle Akzent den Text ohne Weiteres (min 7,99:1),
+       Grafik- und Textfarbe fallen deshalb zusammen. */
     --accent: #7ab8f0;
+    --accent-ink: #7ab8f0;
     --accent2: #4a90d9;
+    /* Auf dunklem Grund tragen die Neontöne (12,6:1 und 7,1:1); nur das
+       Fehlerrot war mit 4,17:1 knapp und wird aufgehellt. */
+    --accent-archive: #00ff87;
+    --accent-like: #ff6ef7;
+    --danger: #ff8a80;
+    /* Im Dunkeln fallen --accent und --accent-ink zusammen, der Scheitel
+       braucht deshalb einen eigenen Wert. */
+    --heading-lift: #b8dff8;
     --border-light: rgba(255,255,255,0.12);
     --border-mid: rgba(255,255,255,0.1);
 
@@ -250,37 +312,13 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
       0 24px 64px rgba(0,0,0,0.40);
   }
 
-  @media (prefers-color-scheme: dark) {
-    html:not(.light) {
-      --sky-top: #060c1a;
-      --sky-mid: #0d1b35;
-      --sky-bot: #0a1228;
-      --glass-bg: rgba(10,20,50,0.28);
-      --glass-bg-strong: rgba(10,20,50,0.45);
-      --glass-border: rgba(255,255,255,0.18);
-      --glass-border-dim: rgba(255,255,255,0.10);
-      --text-deep: #e8f2ff;
-      --text-mid: rgba(200,220,255,0.65);
-      --text-dim: rgba(180,210,255,0.55);
-      --accent: #7ab8f0;
-      --accent2: #4a90d9;
-      --border-light: rgba(255,255,255,0.12);
-      --border-mid: rgba(255,255,255,0.1);
-
-      /* Glas-System — dunkel */
-      --glass-panel: rgba(16,30,62,0.44);
-      --glass-sheen: rgba(255,255,255,0.10);
-      --glass-hairline: rgba(255,255,255,0.16);
-      --glass-inner-lo: rgba(0,0,0,0.22);
-      --glass-sep: rgba(255,255,255,0.07);
-      --glass-ctrl: rgba(255,255,255,0.07);
-      --glass-ctrl-hover: rgba(255,255,255,0.14);
-      --glass-shadow:
-        0 1px 1px rgba(0,0,0,0.30),
-        0 8px 24px rgba(0,0,0,0.34),
-        0 24px 64px rgba(0,0,0,0.40);
-    }
-  }
+  /* Hier stand derselbe Tokensatz ein zweites Mal, unter
+     @media (prefers-color-scheme: dark) { html:not(.light) }. Er konnte nie
+     greifen: das Skript im <head> läuft vor dem ersten Anstrich und setzt
+     immer entweder .light oder .dark auf <html>. Übrig blieb der Fall ohne
+     JavaScript — auf einer Seite, deren Zweck drei Abspieler sind. Der Block
+     ist raus, jedes Token steht jetzt genau einmal hell und einmal dunkel.
+     Preis: ohne JavaScript sieht man die helle Fassung. */
 
   /* ── Glas-Oberfläche — gemeinsame Basis für Player-Module ────────────────── */
   .glass-surface {
@@ -342,7 +380,11 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
   }
 
   /* NAV */
-  nav {
+  /* Der Wähler war blank `nav` und traf damit auch die Wegeleiste der
+     Startseite (<nav class="ways">): die bekam Glasfläche, Unterkante,
+     backdrop-filter und position:sticky mitgeliefert und stand als blasser
+     Kasten hinter den drei Karten. Jetzt trägt nur die Kopfleiste die Klasse. */
+  nav.site-nav {
     position: sticky;
     top: 0;
     z-index: 200;
@@ -351,8 +393,8 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
     align-items: center;
     padding: 0.9rem 4rem;
     background: var(--glass-bg-strong);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    backdrop-filter: blur(28px) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(28px) saturate(var(--glass-sat));
     border-bottom: 0.5px solid var(--glass-border);
   }
   .logo {
@@ -364,7 +406,7 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
     text-decoration: none;
     transition: var(--t);
   }
-  .logo:hover { color: var(--accent); }
+  .logo:hover { color: var(--accent-ink); }
   .nav-links { display: flex; gap: 2.2rem; list-style: none; }
   .nav-links a {
     font-size: 10px;
@@ -392,11 +434,29 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
   .dm-btn:hover { color: var(--text-deep); border-color: var(--glass-border); }
 
   @media (max-width: 768px) {
-    nav { padding: 0.9rem 1.5rem; }
+    nav.site-nav { padding: 0.9rem 1.5rem; }
     /* Sechs Punkte passen auf einem Telefon nicht in eine Zeile — umbrechen
        statt überlaufen lassen. */
     .nav-links { gap: 0.5rem 1.1rem; flex-wrap: wrap; justify-content: flex-end; }
     .nav-links a { font-size: 10px; }
+  }
+
+  /* Atmende Überschrift. Liegt global, weil Now und Startseite sie sich
+     teilen — in einem seitenlokalen <style> würde Astro den Namen umbenennen
+     und die jeweils andere Seite fände sie nicht. Der reduced-motion-Block
+     weiter unten friert sie ein; deshalb tragen beide Überschriften zusätzlich
+     ein eigenes color, auf das sie dann zurückfallen. */
+  @keyframes ic-heading-breathe {
+    0%, 100% { color: var(--heading); }
+    50%      { color: var(--heading-lift); }
+  }
+
+  /* Jede Seitenüberschrift atmet, nicht mehr nur Now und Startseite. Steht
+     hier einmal statt in neun Seitenblättern; die Seiten regeln nur noch
+     Schriftgrad und Abstände. Takt wie in der ursprünglichen Now-Fassung. */
+  h1 {
+    color: var(--heading);
+    animation: ic-heading-breathe 3.8s ease-in-out infinite;
   }
 
   /* Shared reveal animation — used across multiple pages */

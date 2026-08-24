@@ -206,7 +206,12 @@ export async function load(
   state.playing = false;
   notify();
 
-  if (el.src !== opts.src) {
+  // Reloading only on a changed src left two holes: a station that had errored
+  // could never be retried, and re-selecting a live stream resumed from a stale
+  // buffer instead of reconnecting — which is what the UI promises. Finite
+  // archive tracks keep their position, so they stay on the old condition.
+  const live = opts.source !== 'archive';
+  if (el.src !== opts.src || live || el.error) {
     el.src = opts.src;
     el.load();
   }

@@ -1,11 +1,14 @@
 {
   "name": "Infinite Circles",
   "short_name": "Infinite Circles",
-  "description": "Music journal, writing, experiments and links worth keeping.",
+  "description": "Musikjournal, Radio, Texte und Links, die es wert sind.",
+  "lang": "de",
+  "dir": "ltr",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#0a1a2e",
-  "theme_color": "#0a1a2e",
+  "background_color": "#82c1f2",
+  "theme_color": "#82c1f2",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -16,6 +19,12 @@
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/apple-touch-icon.png",

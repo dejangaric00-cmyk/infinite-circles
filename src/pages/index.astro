@@ -2,25 +2,13 @@
 // src/pages/index.astro
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getLatestSotd } from '../utils/sotd';
-import { relativeDayLabel } from '../utils/date';
-import { getCollection } from 'astro:content';
 
 const latestSotd = await getLatestSotd();
-
-const journal = (await getCollection('journal', ({ data }) => !data.draft))
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
-const latestJournal = journal[0];
-
-// [data-rel-date] is recomputed client-side by BaseLayout, so the value has to
-// be YYYY-MM-DD — the journal schema coerces to Date.
-const latestJournalIso = latestJournal
-  ? latestJournal.data.date.toISOString().slice(0, 10)
-  : '';
 ---
 
 <BaseLayout title="Grooves & Rhythms — Infinite Circles">
 
-  <!-- ══ HERO ══════════════════════════════════════════════════════════════ -->
+  {/* ══ HERO ══════════════════════════════════════════════════════════════ */}
   <section class="home-hero">
     <div class="hero-inner">
       <p class="hero-eyebrow">
@@ -34,7 +22,7 @@ const latestJournalIso = latestJournal
     </div>
   </section>
 
-  <!-- ══ WEGE ══════════════════════════════════════════════════════════════ -->
+  {/* ══ WEGE ══════════════════════════════════════════════════════════════ */}
   <nav class="ways" aria-label="Bereiche">
 
     <a href="/radio" class="way">
@@ -56,16 +44,10 @@ const latestJournalIso = latestJournal
       )}
     </a>
 
-    <a href="/journal" class="way">
-      <span class="way-label">// journal</span>
-      {latestJournal ? (
-        <>
-          <span class="way-title">{latestJournal.data.title}</span>
-          <span class="way-meta" data-rel-date={latestJournalIso}>{relativeDayLabel(latestJournalIso)}</span>
-        </>
-      ) : (
-        <span class="way-title">Notizen.</span>
-      )}
+    <a href="/now" class="way">
+      <span class="way-label">// now</span>
+      <span class="way-title">Woran ich gerade bin.</span>
+      <span class="way-note">Werkzeuge und Orte, die ich benutze.</span>
     </a>
 
   </nav>
@@ -103,12 +85,12 @@ const latestJournalIso = latestJournal
     font-size: clamp(3rem, 7vw, 5rem);
     font-weight: 300;
     line-height: 1.05;
-    color: var(--text-deep);
+    color: var(--heading);
     margin: 0 0 0.75rem;
   }
   .hero-title em {
     font-style: italic;
-    color: var(--accent);
+    color: inherit;
   }
   .hero-sub {
     font-family: var(--font-mono);
@@ -160,7 +142,7 @@ const latestJournalIso = latestJournal
     font-size: 9px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--accent);
+    color: var(--accent-ink);
     opacity: 0.8;
     margin-bottom: 2px;
   }
@@ -176,7 +158,7 @@ const latestJournalIso = latestJournal
     font-size: 10px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--accent);
+    color: var(--accent-ink);
     opacity: 0.7;
   }
   .way-note {

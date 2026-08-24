@@ -42,7 +42,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     font-size: 9px;
     letter-spacing: .22em;
     text-transform: uppercase;
-    color: var(--accent);
+    color: var(--accent-ink);
     margin-bottom: 2rem;
   }
 
@@ -51,13 +51,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     font-size: clamp(48px, 6vw, 80px);
     font-weight: 300;
     line-height: 1.05;
-    color: var(--text-deep);
+    color: var(--heading);
     margin-bottom: 2rem;
   }
 
   .about-title em {
     font-style: italic;
-    color: var(--accent);
+    color: inherit;
   }
 
   .about-intro {
@@ -71,7 +71,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   .about-intro em {
     font-style: italic;
-    color: var(--accent);
+    color: var(--accent-ink);
   }
 
   .about-grid {

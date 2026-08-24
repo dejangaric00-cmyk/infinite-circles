@@ -11,7 +11,8 @@ export default defineConfig({
       filter: (page) => !/\/music\/?$/.test(page),
     }),
   ],
-  // Static output — no SSR adapter needed.
-  // @astrojs/netlify is listed in devDependencies only for potential future SSR use.
+  // Static output — no SSR adapter needed. @astrojs/netlify was listed in
+  // devDependencies "for later" and pulled the whole Netlify dev stack in with
+  // it; it is gone. Add it back the day SSR is actually wanted.
   output: 'static',
 });

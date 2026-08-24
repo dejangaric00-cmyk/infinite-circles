@@ -1,19 +1,17 @@
 ---
 // src/components/ArchiveRadio.astro
+//
+// Karteikarten-Redesign. Skript, IDs, Klassennamen und die Player-/archive-
+// Anbindung sind unverändert — neu sind Markup-Struktur und CSS: Genre-Filter
+// als umrandete Marken, Titel in Serifen-Kursiv, Bedienelemente als Striche
+// statt Neonflächen, Verlauf rechts an einer Haarlinie.
 ---
 
 <div class="ar-wrap glass-surface">
-  <div class="ar-header">
-    <div class="ar-left">
-      <span class="ar-badge-row">
-        <span class="ar-dot" id="ar-dot"></span>
-        <span class="ar-badge" id="ar-badge">archive.org · netlabels</span>
-      </span>
-    </div>
-    <span class="ar-status" id="rp-status">· Feeds</span>
-  </div>
+  {/* Kopfzeile und Statusanzeige liegen im Abschnittskopf der Seite
+       (src/pages/radio/index.astro) — die Karte beginnt mit den Marken. */}
 
-  <!-- ── Genre Filter ── -->
+  {/* ── Genre Filter ── */}
   <div class="ar-genres" id="ar-genres">
     <button class="ar-genre-btn active" data-genre="all">all</button>
     <button class="ar-genre-btn" data-genre="dub-techno">dub techno</button>
@@ -36,310 +34,230 @@
     <button class="ar-genre-btn" data-genre="field-recordings">field recordings</button>
   </div>
 
-  <div class="ar-body">
-    <div class="ar-loading" id="rp-loading">Searching Archive.org…</div>
+  <div class="ar-columns">
+    <div class="ar-body">
+      <div class="ar-loading" id="rp-loading">Archive.org wird durchsucht…</div>
 
-    <div id="rp-main" style="display:none">
-      <div class="ar-track-block">
-        <div class="ar-track" id="rp-track">—</div>
-        <div class="ar-artist" id="rp-artist">—</div>
-      </div>
-
-      <div class="ar-controls">
-        <button class="ar-play-btn" id="rp-play-btn">▶</button>
-        <button class="ar-skip-btn" id="rp-skip-btn">⏭</button>
-        <button class="ar-like-btn" id="rp-like-btn">♡ like</button>
-        <div class="ar-wave" id="rp-wave">
-          <span class="rpwb"></span><span class="rpwb"></span>
-          <span class="rpwb"></span><span class="rpwb"></span>
-          <span class="rpwb"></span>
+      <div id="rp-main" style="display:none">
+        <div class="ar-track-block">
+          <div class="ar-track" id="rp-track">—</div>
+          <div class="ar-artist" id="rp-artist">—</div>
         </div>
-      </div>
 
-      <div class="ar-seek-row">
-        <span class="ar-time" id="ar-current">0:00</span>
-        <div class="ar-seek-wrap">
-          <div class="ar-seek-bg">
-            <div class="ar-seek-fill" id="ar-seek-fill"></div>
+        <div class="ar-rule"></div>
+
+        <div class="ar-controls">
+          <button class="ar-btn" id="rp-play-btn" type="button">
+            <span class="ar-btn-icon">▶</span><span class="ar-btn-label">Play</span>
+          </button>
+          <button class="ar-btn" id="rp-skip-btn" type="button">
+            <span class="ar-btn-icon">⏭</span><span class="ar-btn-label">Skip</span>
+          </button>
+          <button class="ar-btn" id="rp-like-btn" type="button">
+            <span class="ar-btn-icon">♡</span><span class="ar-btn-label">Like</span>
+          </button>
+        </div>
+
+        <div class="ar-seek-row">
+          <span class="ar-time" id="ar-current">0:00</span>
+          <div class="ar-seek-wrap">
+            <div class="ar-seek-bg">
+              <div class="ar-seek-fill" id="ar-seek-fill"></div>
+            </div>
+            <input type="range" id="ar-seek" min="0" max="100" value="0" step="0.1"
+              class="ar-seek-input" aria-label="Position">
           </div>
-          <input type="range" id="ar-seek" min="0" max="100" value="0" step="0.1"
-            class="ar-seek-input" aria-label="Position">
+          <span class="ar-time" id="ar-duration">—</span>
         </div>
-        <span class="ar-time" id="ar-duration">—</span>
-      </div>
 
-      <div class="ar-track-info">
-        <span>Archive.org</span>&ensp;·&ensp;
-        <a class="ar-archive-link" id="rp-link" href="#" target="_blank" rel="noopener">Open original →</a>
+        <div class="ar-track-info">
+          <span>Archive.org</span>&ensp;·&ensp;
+          <a class="ar-archive-link" id="rp-link" href="#" target="_blank" rel="noopener">Original öffnen ↗</a>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- ── Song History ── -->
-  <div class="ar-history" id="ar-history" style="display:none">
-    <div class="ar-history-header">
-      <span class="ar-history-label">◷ Zuletzt gespielt</span>
-      <button class="ar-history-clear" id="ar-history-clear">clear</button>
+    {/* ── Song History ── */}
+    {/* Steht auch leer da: die Spalte trägt die halbe Karte, ihr Wegblenden
+         würde das Raster jedes Mal springen lassen. */}
+    <div class="ar-history" id="ar-history">
+      <div class="ar-history-header">
+        <span class="ar-history-label">Zuletzt gespielt</span>
+        <button class="ar-history-clear" id="ar-history-clear">clear</button>
+      </div>
+      <div class="ar-history-items" id="ar-history-items"></div>
+      <p class="ar-history-empty" id="ar-history-empty">Noch nichts gespielt.</p>
     </div>
-    <div class="ar-history-items" id="ar-history-items"></div>
   </div>
 </div>
 
 <style>
 .ar-wrap {
   overflow: hidden;
-  --ar-green: #00ff87;
-  --sep: 0.5px solid var(--glass-sep);
+  --sep: 1px solid var(--border-mid);
 }
-.ar-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0.7rem 1.1rem 0.6rem;
-}
-.ar-left { display: flex; align-items: center; }
-.ar-badge-row { display: flex; align-items: center; gap: 8px; }
-.ar-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--ar-green); opacity: 0.35;
-  transition: opacity 0.3s var(--ease-ios), box-shadow 0.3s var(--ease-ios);
-}
-.ar-dot.playing {
-  opacity: 1;
-  animation: ar-pulse 2.4s ease-in-out infinite;
-  box-shadow: 0 0 0 3px rgba(0,255,135,0.18), 0 0 10px rgba(0,255,135,0.5);
-}
-@keyframes ar-pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
-.ar-badge {
-  font-family: var(--font-mono); font-size: 8px;
-  letter-spacing: .12em; text-transform: uppercase; color: var(--text-dim);
-}
-#rp-status {
-  font-family: var(--font-mono); font-size: 8px;
-  letter-spacing: .06em; color: var(--text-dim);
-  cursor: pointer; transition: color 0.2s var(--ease-ios);
-}
-#rp-status:hover { color: var(--text-deep); }
 
-/* ── Genre-Filter ── */
+/* ── Genre-Filter: umrandete Marken statt gefüllter Pillen ──────────────── */
 .ar-genres {
   display: flex; flex-wrap: wrap; gap: 5px;
-  padding: 0.35rem 1.1rem 0.8rem;
+  padding: 0.75rem 1.2rem;
+  border-bottom: var(--sep);
 }
 .ar-genre-btn {
   all: unset; cursor: pointer;
-  font-family: var(--font-mono); font-size: 8px; letter-spacing: .08em;
-  color: var(--text-mid);
-  padding: 4px 10px;
-  border-radius: 999px;
-  white-space: nowrap;
-  background: var(--glass-ctrl);
-  box-shadow:
-    inset 0 0.5px 0 var(--glass-hairline),
-    inset 0 0 0 0.5px var(--glass-border-dim);
-  transition:
-    color 0.28s var(--ease-ios),
-    background 0.28s var(--ease-ios),
-    box-shadow 0.28s var(--ease-ios),
-    transform 0.18s var(--ease-ios);
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--text-dim);
+  padding: 4px 10px; white-space: nowrap;
+  border-radius: var(--r-ctrl);
+  box-shadow: inset 0 0 0 1px var(--line-chip, var(--border-mid));
+  transition: color 0.28s var(--ease-ios), box-shadow 0.28s var(--ease-ios), background 0.28s var(--ease-ios);
 }
-.ar-genre-btn:hover { color: var(--text-deep); background: var(--glass-ctrl-hover); }
-.ar-genre-btn:active { transform: scale(0.94); }
-.ar-genre-btn:focus-visible { outline: 2px solid var(--ar-green); outline-offset: 2px; }
+.ar-genre-btn:hover { color: var(--text-deep); box-shadow: inset 0 0 0 1px var(--accent); }
+.ar-genre-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .ar-genre-btn.active {
-  color: var(--ar-green);
-  background: rgba(0,255,135,0.10);
-  box-shadow:
-    inset 0 0.5px 0 var(--glass-hairline),
-    inset 0 0 0 0.5px rgba(0,255,135,0.4),
-    0 2px 10px rgba(0,255,135,0.16);
+  color: var(--text-deep);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
-.ar-body { padding: 0.95rem 1.1rem 0.8rem; border-top: var(--sep); }
+/* ── Zwei Spalten: Stück links, Verlauf rechts ──────────────────────────── */
+.ar-columns { display: grid; grid-template-columns: 1.5fr 1fr; align-items: start; }
+
+.ar-body { padding: 1.1rem 1.2rem 0.9rem; }
 .ar-loading {
   font-family: var(--font-mono); font-size: 9px;
-  letter-spacing: .06em; color: var(--text-dim); padding: 0.25rem 0;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--text-dim);
+  padding: 0.25rem 0;
 }
-.ar-track-block { margin-bottom: 0.9rem; }
+.ar-track-block { display: flex; flex-direction: column; gap: 4px; }
 .ar-track {
-  font-family: var(--font-serif); font-size: 19px;
+  font-family: var(--font-serif); font-size: 1.65rem;
   font-weight: 300; font-style: italic;
-  color: var(--text-deep); line-height: 1.25; margin-bottom: 3px;
-  letter-spacing: -0.01em;
+  color: var(--text-deep); line-height: 1.15;
 }
 .ar-artist {
-  font-family: var(--font-mono); font-size: 10px;
-  letter-spacing: .06em; color: var(--text-mid);
+  font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: .16em; text-transform: uppercase; color: var(--text-mid);
 }
-.ar-controls {
-  display: flex; align-items: center; gap: 0.55rem;
-  margin-bottom: 0.9rem;
-}
-.ar-play-btn {
-  all: unset; cursor: pointer;
-  width: 38px; height: 38px; border-radius: 50%;
-  background: linear-gradient(180deg, #4dffab 0%, var(--ar-green) 55%, #00d971 100%);
-  display: flex; align-items: center; justify-content: center;
-  color: #04231a; font-size: 12px; font-family: var(--font-mono);
-  flex-shrink: 0;
-  box-shadow:
-    inset 0 0.5px 0 rgba(255,255,255,0.65),
-    0 1px 2px rgba(0,0,0,0.18),
-    0 4px 16px rgba(0,255,135,0.30);
-  transition: transform 0.2s var(--ease-ios), box-shadow 0.28s var(--ease-ios);
-}
-.ar-play-btn:hover {
-  transform: scale(1.06);
-  box-shadow:
-    inset 0 0.5px 0 rgba(255,255,255,0.65),
-    0 2px 4px rgba(0,0,0,0.18),
-    0 6px 24px rgba(0,255,135,0.45);
-}
-.ar-play-btn:active { transform: scale(0.94); }
-.ar-play-btn:focus-visible { outline: 2px solid var(--ar-green); outline-offset: 3px; }
-.ar-skip-btn {
-  all: unset; cursor: pointer;
-  width: 32px; height: 32px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--text-mid); font-size: 12px;
-  flex-shrink: 0;
-  background: var(--glass-ctrl);
-  box-shadow:
-    inset 0 0.5px 0 var(--glass-hairline),
-    inset 0 0 0 0.5px var(--glass-border-dim);
-  transition:
-    background 0.28s var(--ease-ios), color 0.28s var(--ease-ios),
-    transform 0.18s var(--ease-ios);
-}
-.ar-skip-btn:hover { background: var(--glass-ctrl-hover); color: var(--text-deep); }
-.ar-skip-btn:active { transform: scale(0.9); }
-.ar-skip-btn:focus-visible { outline: 2px solid var(--ar-green); outline-offset: 2px; }
-.ar-like-btn {
-  all: unset; cursor: pointer;
-  font-family: var(--font-mono); font-size: 9px; letter-spacing: .06em;
-  color: var(--text-mid); padding: 6px 12px;
-  border-radius: 999px;
-  background: var(--glass-ctrl);
-  box-shadow:
-    inset 0 0.5px 0 var(--glass-hairline),
-    inset 0 0 0 0.5px var(--glass-border-dim);
-  transition:
-    color 0.28s var(--ease-ios), background 0.28s var(--ease-ios),
-    box-shadow 0.28s var(--ease-ios), transform 0.18s var(--ease-ios);
-}
-.ar-like-btn:hover { color: #ff6ef7; background: var(--glass-ctrl-hover); }
-.ar-like-btn:active { transform: scale(0.94); }
-.ar-like-btn:focus-visible { outline: 2px solid #ff6ef7; outline-offset: 2px; }
-.ar-like-btn.liked {
-  color: #ff6ef7;
-  background: rgba(255,110,247,0.10);
-  box-shadow:
-    inset 0 0.5px 0 var(--glass-hairline),
-    inset 0 0 0 0.5px rgba(255,110,247,0.4),
-    0 2px 10px rgba(255,110,247,0.16);
-}
-.ar-wave {
-  display: flex; align-items: flex-end; gap: 3px;
-  height: 20px; margin-left: 6px;
-}
-.rpwb {
-  display: block; width: 3px; background: var(--ar-green);
-  border-radius: 999px; height: 4px; opacity: 0.25;
-}
-.rpwb.active { opacity: 0.75; animation: ar-bar 1s ease-in-out infinite; }
-.rpwb:nth-child(1){animation-delay:0s;height:6px}
-.rpwb:nth-child(2){animation-delay:.12s;height:12px}
-.rpwb:nth-child(3){animation-delay:.24s;height:8px}
-.rpwb:nth-child(4){animation-delay:.08s;height:15px}
-.rpwb:nth-child(5){animation-delay:.18s;height:10px}
-@keyframes ar-bar { 0%,100%{transform:scaleY(0.3);opacity:0.4} 50%{transform:scaleY(1);opacity:0.9} }
+.ar-rule { height: 0.5px; background: var(--border-mid); margin: 0.9rem 0; }
 
-.ar-seek-row {
-  display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.8rem;
+.ar-controls { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.9rem; }
+
+/* Drei gleich gebaute Marken statt zweier Ringe und einer Pille — dieselbe
+   Form wie „Listen" auf den Senderkarten. */
+.ar-btn {
+  all: unset; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--r-ctrl);
+  box-shadow: inset 0 0 0 1px var(--line-ctrl, var(--border-mid));
+  font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--text-deep); white-space: nowrap;
+  transition: color 0.28s var(--ease-ios), box-shadow 0.28s var(--ease-ios), background 0.28s var(--ease-ios);
 }
+.ar-btn:hover { background: var(--glass-ctrl); box-shadow: inset 0 0 0 1px var(--accent); }
+.ar-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ar-btn-icon { font-size: 0.58rem; color: var(--accent-ink); }
+.ar-btn.playing { box-shadow: inset 0 0 0 1px var(--accent); background: var(--glass-ctrl); }
+.ar-btn.liked {
+  box-shadow: inset 0 0 0 1px var(--accent);
+  background: var(--glass-ctrl);
+}
+
+.ar-seek-row { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.85rem; }
 .ar-time {
-  font-family: var(--font-mono); font-size: 8.5px;
-  letter-spacing: .04em; color: var(--text-dim);
-  flex-shrink: 0; min-width: 28px; font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: .08em; color: var(--text-dim);
+  flex-shrink: 0; min-width: 30px; font-variant-numeric: tabular-nums;
 }
 .ar-time:last-child { text-align: right; }
-.ar-seek-wrap {
-  flex: 1; position: relative; height: 18px;
-  display: flex; align-items: center; cursor: pointer;
-}
+.ar-seek-wrap { flex: 1; position: relative; height: 18px; display: flex; align-items: center; cursor: pointer; }
 .ar-seek-bg {
-  position: absolute; left: 0; right: 0; height: 4px;
-  background: var(--glass-sep); border-radius: 999px; overflow: hidden;
-  pointer-events: none;
-  box-shadow: inset 0 0 0 0.5px var(--glass-border-dim);
+  position: absolute; left: 0; right: 0; height: 1px;
+  background: var(--border-mid); overflow: hidden; pointer-events: none;
   transition: height 0.25s var(--ease-ios);
 }
-.ar-seek-wrap:hover .ar-seek-bg { height: 7px; }
-.ar-seek-fill {
-  height: 100%; border-radius: 999px;
-  background: linear-gradient(90deg, rgba(0,255,135,0.75), var(--ar-green));
-  width: 0%; transition: width 0.25s linear;
-}
+.ar-seek-wrap:hover .ar-seek-bg { height: 3px; }
+.ar-seek-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.25s linear; }
 .ar-seek-input {
   position: absolute; left: 0; right: 0; width: 100%; height: 18px;
   opacity: 0; cursor: pointer; margin: 0; padding: 0;
   -webkit-appearance: none; appearance: none;
 }
 .ar-seek-input:focus-visible + .ar-seek-bg,
-.ar-seek-wrap:focus-within .ar-seek-bg { outline: 2px solid var(--ar-green); outline-offset: 3px; }
+.ar-seek-wrap:focus-within .ar-seek-bg { outline: 2px solid var(--accent); outline-offset: 3px; }
+
 .ar-track-info {
   font-family: var(--font-mono); font-size: 9px;
-  color: var(--text-dim); letter-spacing: .04em;
-  padding-top: 0.7rem;
+  letter-spacing: .13em; text-transform: uppercase;
+  color: var(--text-dim);
+  padding-top: 0.8rem;
   border-top: var(--sep);
 }
-.ar-archive-link { color: var(--accent); text-decoration: none; }
-.ar-archive-link:hover { text-decoration: underline; }
+.ar-archive-link { color: var(--text-mid); text-decoration: none; }
+.ar-archive-link:hover { color: var(--accent-ink); }
 
-/* ── Song History ── */
+/* ── Verlauf ────────────────────────────────────────────────────────────── */
 .ar-history {
-  border-top: var(--sep);
-  padding: 0.7rem 1.1rem 0.85rem;
+  border-left: var(--sep);
+  padding: 1.1rem 1.2rem 0.9rem;
 }
 .ar-history-header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 0.5rem;
+  display: flex; align-items: baseline; justify-content: space-between;
+  border-bottom: var(--sep);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.3rem;
 }
 .ar-history-label {
-  font-family: var(--font-mono); font-size: 8px;
-  letter-spacing: .14em; text-transform: uppercase;
-  color: var(--text-dim); opacity: 0.6;
+  font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: .2em; text-transform: uppercase; color: var(--text-dim);
 }
 .ar-history-clear {
   all: unset; cursor: pointer;
-  font-family: var(--font-mono); font-size: 8px;
-  letter-spacing: .08em; color: var(--text-dim);
-  opacity: 0.4; transition: opacity 0.15s;
+  font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: .13em; text-transform: uppercase; color: var(--text-dim);
+  opacity: 0.6; transition: opacity 0.15s, color 0.15s;
 }
-.ar-history-clear:hover { opacity: 0.9; }
+.ar-history-clear:hover { opacity: 1; color: var(--accent-ink); }
 .ar-history-items {
-  display: flex; flex-direction: column; gap: 2px;
-  max-height: 120px; overflow-y: auto;
+  display: flex; flex-direction: column;
+  max-height: 190px; overflow-y: auto;
 }
-.ar-history-item {
-  display: flex; align-items: baseline;
-  justify-content: space-between; gap: 0.75rem;
-  padding: 0.35rem 0.5rem;
-  margin: 0 -0.5rem;
-  border-radius: var(--r-ctrl);
+.ar-history-empty {
+  font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--text-dim);
+  opacity: 0.7; margin: 0.6rem 0 0;
+}
+.ar-history-empty[hidden] { display: none; }
+.ar-history-clear[hidden] { display: none; }
+/* :global, weil renderHistory() die Zeilen per createElement baut — solche
+   Knoten tragen Astros data-astro-cid nicht, die gescopten Regeln griffen
+   nie und die Zeilen liefen ungestylt aus der Karte heraus. */
+.ar-history-items :global(.ar-history-item) {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline; gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: var(--sep);
   cursor: pointer;
-  background: transparent;
-  transition: background 0.28s var(--ease-ios), transform 0.18s var(--ease-ios);
+  transition: background 0.28s var(--ease-ios);
 }
-.ar-history-item:hover { background: var(--glass-ctrl); }
-.ar-history-item:active { transform: scale(0.985); }
-.ar-history-title {
-  font-family: var(--font-mono); font-size: 9px;
-  color: var(--text-deep); overflow: hidden;
-  text-overflow: ellipsis; white-space: nowrap; flex: 1;
+.ar-history-items :global(.ar-history-item:last-child) { border-bottom: none; }
+.ar-history-items :global(.ar-history-item:hover) { background: var(--glass-ctrl); }
+.ar-history-items :global(.ar-history-title) {
+  font-family: var(--font-serif); font-size: 0.95rem; line-height: 1.35;
+  color: var(--text-deep); min-width: 0; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
 }
-.ar-history-meta {
+.ar-history-items :global(.ar-history-meta) {
   font-family: var(--font-mono); font-size: 9px;
-  color: var(--text-dim); flex-shrink: 0; opacity: 0.6;
-  white-space: nowrap;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--text-dim); white-space: nowrap;
+  font-feature-settings: 'tnum';
+}
+
+@media (max-width: 640px) {
+  .ar-columns { grid-template-columns: 1fr; }
+  .ar-history { border-left: none; border-top: var(--sep); }
 }
 </style>
 
@@ -347,7 +265,7 @@
 import {
   playDoc, isLiked, toggleLike, addToHistory,
   loadHistory, clearHistory, fmtTime, fmtAgo,
-  HISTORY_CHANGED, ARCHIVE_NEXT, GENRE_QUERIES, GENRE_LABELS,
+  HISTORY_CHANGED, ARCHIVE_NEXT, GENRE_QUERIES,
   type ArchiveDoc, type StoredTrack,
 } from '../utils/archive';
 import {
@@ -358,9 +276,7 @@ import { onPage, disposer } from '../utils/lifecycle';
 
 // Skip requests can arrive from the MiniPlayer, the media keys or the keyboard
 // on any page. The queue lives inside the setup closure below, so a module-level
-// dispatcher forwards to whichever setup ran last. Registering the window
-// listener out here keeps it at exactly one, no matter how often the visitor
-// returns to the radio.
+// dispatcher forwards to whichever setup ran last.
 let nextHandler: (() => void) | null = null;
 window.addEventListener(ARCHIVE_NEXT, () => nextHandler?.());
 
@@ -376,7 +292,6 @@ onPage(() => {
   const rpPlayBtn   = $('rp-play-btn')   as HTMLButtonElement;
   const rpSkipBtn   = $('rp-skip-btn')   as HTMLButtonElement;
   const rpLikeBtn   = $('rp-like-btn')   as HTMLButtonElement;
-  const rpDot       = $('ar-dot')        as HTMLElement;
   const rpStatus    = $('rp-status')     as HTMLElement;
   const rpTrackEl   = $('rp-track')      as HTMLElement;
   const rpArtistEl  = $('rp-artist')     as HTMLElement;
@@ -390,14 +305,13 @@ onPage(() => {
   const arHistory   = $('ar-history')    as HTMLElement;
   const arHistItems = $('ar-history-items') as HTMLElement;
   const arHistClear = $('ar-history-clear') as HTMLButtonElement;
-  const arBadge     = $('ar-badge')      as HTMLElement;
-  const genreBtns   = document.querySelectorAll<HTMLButtonElement>('.ar-genre-btn');
+  const arHistEmpty = $('ar-history-empty') as HTMLElement;
+  const genreBtns  = document.querySelectorAll<HTMLButtonElement>('.ar-genre-btn');
 
   if (!rpPlayBtn) return; // component not on this page
 
   const off = disposer();
 
-  // Storage and formatting live in src/utils/archive.ts — see imports above.
   function setStatus(s: string) { if (rpStatus) rpStatus.textContent = s; }
   function setTrack(title: string, artist: string) {
     if (rpTrackEl)  rpTrackEl.textContent  = title.length > 60 ? title.slice(0, 60) + '…' : title;
@@ -411,7 +325,6 @@ onPage(() => {
       if (genre === activeGenre) return;
       activeGenre = genre;
       genreBtns.forEach(b => b.classList.toggle('active', b.dataset.genre === genre));
-      if (arBadge) arBadge.textContent = GENRE_LABELS[genre] ?? 'archive.org';
       // Stop current playback and reload with new genre
       if (getState().source === 'archive') playerPause();
       await rpInit();
@@ -422,12 +335,11 @@ onPage(() => {
   function renderHistory() {
     const history = loadHistory();
     if (!arHistory || !arHistItems) return;
-    if (!history.length) { arHistory.style.display = 'none'; return; }
-    arHistory.style.display = 'block';
+    if (arHistEmpty) arHistEmpty.hidden = history.length > 0;
+    if (arHistClear) arHistClear.hidden = history.length === 0;
+    if (!history.length) { arHistItems.replaceChildren(); return; }
     // Built node by node, never through innerHTML: title and creator come from
-    // archive.org metadata and are foreign input. A quotation mark in a title
-    // used to break straight out of the data-title attribute. Same rule as in
-    // the LikeSidebar — textContent escapes, string templates do not.
+    // archive.org metadata and are foreign input.
     const frag = document.createDocumentFragment();
 
     for (const x of history as StoredTrack[]) {
@@ -436,14 +348,15 @@ onPage(() => {
 
       const titleEl = document.createElement('span');
       titleEl.className = 'ar-history-title';
-      titleEl.textContent = x.title.length > 44 ? x.title.slice(0, 44) + '…' : x.title;
+      titleEl.textContent = x.title;
+      titleEl.title = x.artist ? `${x.title} — ${x.artist}` : x.title;
 
+      // Nur das Alter: der Interpret steckt bei Archive.org fast immer schon
+      // im Titel und würde die Zeile ein zweites Mal umbrechen.
       const metaEl = document.createElement('span');
       metaEl.className = 'ar-history-meta';
-      metaEl.textContent = `${x.artist ? x.artist.slice(0, 18) : ''} · ${fmtAgo(x.ts)}`;
+      metaEl.textContent = fmtAgo(x.ts);
 
-      // The entry is captured by the closure, so no round trip through data-*
-      // attributes — and the full title survives instead of the truncated one.
       row.addEventListener('click', () => {
         if (x.id) void playTrack({ identifier: x.id, title: x.title, creator: x.artist });
       });
@@ -463,8 +376,6 @@ onPage(() => {
     if (arDuration)  arDuration.textContent = '—';
   }
 
-  // Position comes from the engine. Ignore it while soma holds the element —
-  // a live stream has no meaningful duration.
   off.add(subscribeTime((currentTime, duration) => {
     if (getState().source !== 'archive') return;
     const pct = duration ? (currentTime / duration) * 100 : 0;
@@ -492,17 +403,23 @@ onPage(() => {
     return data?.response?.docs ?? [];
   }
 
-  // ── The track currently shown in this UI ──────────────────────────────────────
-  // Not necessarily the one the engine is playing: on page load we preview the
-  // first track without touching playback, so an already running soma stream
-  // keeps going.
   let rpCurrentDoc: ArchiveDoc | null = null;
+
+  /** Icon und Beschriftung sitzen in eigenen Spans — textContent würde beide
+      überschreiben und den Knopf auf ein nacktes Zeichen zurückwerfen. */
+  function paintBtn(btn: HTMLButtonElement | null, icon: string, label: string) {
+    if (!btn) return;
+    const i = btn.querySelector('.ar-btn-icon');
+    const l = btn.querySelector('.ar-btn-label');
+    if (i) i.textContent = icon;
+    if (l) l.textContent = label;
+  }
 
   function syncLikeBtn() {
     if (!rpLikeBtn) return;
     const liked = isLiked(rpCurrentId);
-    rpLikeBtn.textContent = liked ? '♥ liked' : '♡ like';
-    rpLikeBtn.className   = 'ar-like-btn' + (liked ? ' liked' : '');
+    paintBtn(rpLikeBtn, liked ? '♥' : '♡', liked ? 'Liked' : 'Like');
+    rpLikeBtn.classList.toggle('liked', liked);
   }
 
   /** Paint track info without engaging the engine. */
@@ -516,10 +433,6 @@ onPage(() => {
     seekReset();
   }
 
-  // Archive.org hands out plenty of items with no playable file, so skipping is
-  // the right reflex — but it needs a ceiling. Without one a bad batch turns
-  // into an endless rattle every 1.5 s that only a reload gets out of.
-  // The streak is reset by the subscribe() handler as soon as sound comes out.
   const MAX_SKIPS = 5;
   let failStreak = 0;
 
@@ -527,7 +440,7 @@ onPage(() => {
     failStreak++;
     if (failStreak >= MAX_SKIPS) {
       failStreak = 0;
-      setStatus('Nothing playable — tap to retry');
+      setStatus('Nichts abspielbar — tippen für neu');
       return;
     }
     setStatus(message);
@@ -537,11 +450,9 @@ onPage(() => {
   /** Resolve and start a track through the engine. */
   async function playTrack(doc: ArchiveDoc) {
     previewTrack(doc);
-    setStatus('Loading…');
+    setStatus('Lädt…');
     const res = await playDoc(doc, true);
-    // A 'no-audio' item never engages the audio element, so onError would never
-    // fire — the queue used to come to a silent halt right here.
-    if (!res.ok) noteFailure(res.reason === 'no-audio' ? 'No audio — skip' : 'Unavailable — skip');
+    if (!res.ok) noteFailure(res.reason === 'no-audio' ? 'Kein Audio — weiter' : 'Nicht verfügbar — weiter');
   }
 
   // ── Render from engine state ──────────────────────────────────────────────────
@@ -549,13 +460,11 @@ onPage(() => {
     const mine = s.source === 'archive';
     rpPlaying = mine && s.playing;
 
-    if (rpPlayBtn) rpPlayBtn.textContent = rpPlaying ? '❚❚' : '▶';
-    document.querySelectorAll('.rpwb').forEach(b => b.classList.toggle('active', rpPlaying));
-    if (rpDot) rpDot.classList.toggle('playing', rpPlaying);
+    paintBtn(rpPlayBtn, rpPlaying ? '❚❚' : '▶', rpPlaying ? 'Pause' : 'Play');
+    if (rpPlayBtn) rpPlayBtn.classList.toggle('playing', rpPlaying);
 
     if (!mine) return;
 
-    // A track may have been started elsewhere — history, LikeSidebar, autoplay.
     const id = s.track.link.split('/details/')[1] ?? '';
     if (id && id !== rpCurrentId) {
       rpCurrentId  = id;
@@ -565,16 +474,14 @@ onPage(() => {
     setTrack(s.track.title, s.track.artist);
     if (rpLinkEl && s.track.link) rpLinkEl.href = s.track.link;
     syncLikeBtn();
-    setStatus(rpPlaying ? '● Playing' : 'Ready');
+    setStatus(rpPlaying ? '● spielt' : 'bereit');
 
-    // Audible proof that the queue is healthy again.
     if (rpPlaying) failStreak = 0;
   }));
 
-  // Autoplay the next track when one finishes, skip past dead links.
   registerSourceHandlers('archive', {
     onEnded: () => { failStreak = 0; void rpNext(); },
-    onError: () => noteFailure('Error — skipping'),
+    onError: () => noteFailure('Fehler — weiter'),
   });
 
   // ── Init ──────────────────────────────────────────────────────────────────────
@@ -589,11 +496,10 @@ onPage(() => {
     if (rpLoading) rpLoading.style.display = 'none';
     if (rpMain)    rpMain.style.display    = 'block';
 
-    // Don't disturb whatever is already running.
     if (getState().source === 'archive') {
-      setStatus(getState().playing ? '● Playing' : 'Ready');
+      setStatus(getState().playing ? '● spielt' : 'bereit');
     } else {
-      setStatus('Ready');
+      setStatus('bereit');
       previewTrack(rpTracks[0]);
     }
     renderHistory();
@@ -608,7 +514,6 @@ onPage(() => {
 
   // ── Toggle ────────────────────────────────────────────────────────────────────
   function rpToggle() {
-    // Engine already holds this track — just flip it.
     if (getState().source === 'archive') {
       playerToggle();
       if (!rpPlaying && rpCurrentId) {
@@ -616,15 +521,11 @@ onPage(() => {
       }
       return;
     }
-    // Coming from soma or a cold start — load the previewed track.
     if (rpCurrentDoc) void playTrack(rpCurrentDoc);
   }
 
   // ── Next ──────────────────────────────────────────────────────────────────────
   async function rpNext() {
-    // Modulo by zero yields NaN, and playDoc(undefined) throws. getFallback()
-    // happens to prevent that today — this makes it a rule rather than a
-    // side effect.
     if (!rpTracks.length) { rpTracks = getFallback(); rpIdx = -1; }
     rpIdx = (rpIdx + 1) % rpTracks.length;
     if (rpIdx === 0) {
@@ -648,7 +549,6 @@ onPage(() => {
   arHistClear?.addEventListener('click', () => clearHistory());
   off.listen(window, HISTORY_CHANGED, renderHistory);
 
-  // Point the module-level dispatcher at this setup's queue.
   nextHandler = () => void rpNext();
 
   void rpInit();

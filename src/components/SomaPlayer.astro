@@ -1,262 +1,262 @@
 ---
 // src/components/SomaPlayer.astro
+//
+// Register links, Plattenfeld rechts. Die Bedienelemente sitzen im Jetzt-Feld,
+// nicht mehr in einer eigenen Leiste unter der Karte — der Kopfbalken mit dem
+// LIVE-Abzeichen ist weggefallen, die Angabe steht jetzt im Abschnittskopf.
+// Lautstärke als Zahl statt als Regler: Klick +10 %, Scrollen ±10 %.
 ---
 
-<div class="soma-wrap glass-surface">
-  <div class="soma-header">
-    <span class="soma-badge"><span class="live-dot" id="live-dot"></span>live</span>
-    <span class="soma-source">soma fm · community radio</span>
-  </div>
-
-  <div class="station-grid">
-    <button class="station-btn active" data-stream="https://ice5.somafm.com/dronezone-128-mp3" data-name="drone zone" data-slug="dronezone">
-      <span class="station-name">Drone Zone</span>
-      <span class="station-genre">ambient · dub · space</span>
-    </button>
-    <button class="station-btn" data-stream="https://ice5.somafm.com/deepspaceone-128-mp3" data-name="deep space one" data-slug="deepspaceone">
-      <span class="station-name">Deep Space One</span>
-      <span class="station-genre">deep ambient · experimental</span>
-    </button>
-    <button class="station-btn" data-stream="https://ice5.somafm.com/groovesalad-128-mp3" data-name="groove salad" data-slug="groovesalad">
-      <span class="station-name">Groove Salad</span>
-      <span class="station-genre">ambient groove · downtempo</span>
-    </button>
-    <button class="station-btn" data-stream="https://ice5.somafm.com/thetrip-128-mp3" data-name="the trip" data-slug="thetrip">
-      <span class="station-name">The Trip</span>
-      <span class="station-genre">psychedelic · progressive</span>
-    </button>
-    <button class="station-btn" data-stream="https://ice5.somafm.com/fluid-128-mp3" data-name="fluid" data-slug="fluid">
-      <span class="station-name">Fluid</span>
-      <span class="station-genre">new age · ambient · chill</span>
-    </button>
-    <button class="station-btn" data-stream="https://ice5.somafm.com/illstreet-128-mp3" data-name="illinois street lounge" data-slug="illstreet">
-      <span class="station-name">Illinois Street Lounge</span>
-      <span class="station-genre">vintage lounge · cocktail</span>
-    </button>
-    <button class="station-btn" data-stream="https://ice5.somafm.com/thistle-128-mp3" data-name="thistle radio" data-slug="thistle">
-      <span class="station-name">Thistle Radio</span>
-      <span class="station-genre">celtic · folk · world</span>
-    </button>
-    <button class="station-btn" data-stream="https://ice5.somafm.com/lush-128-mp3" data-name="lush" data-slug="lush">
-      <span class="station-name">Lush</span>
-      <span class="station-genre">indie · shoegaze · dream pop</span>
-    </button>
-  </div>
-
-  <div class="now-playing-track" id="soma-np-bar">
-    <img class="np-cover" id="soma-np-cover" src="" alt="" aria-hidden="true">
-    <div class="np-text">
-      <span class="np-track" id="soma-np-track">—</span>
-      <span class="np-artist" id="soma-np-artist"></span>
-      <span class="np-album" id="soma-np-album"></span>
+<div class="soma-wrap">
+  <div class="soma-body">
+    <div class="station-grid glass-surface">
+      <button class="station-btn active" data-stream="https://ice5.somafm.com/dronezone-128-mp3" data-name="drone zone" data-slug="dronezone" data-genre="ambient · dub · space">
+        <span class="st-num">01</span>
+        <span class="st-text">
+          <span class="station-name">Drone Zone</span>
+          <span class="station-genre">ambient · dub · space</span>
+        </span>
+        <span class="st-mark">on air</span>
+      </button>
+      <button class="station-btn" data-stream="https://ice5.somafm.com/deepspaceone-128-mp3" data-name="deep space one" data-slug="deepspaceone" data-genre="deep ambient · experimental">
+        <span class="st-num">02</span>
+        <span class="st-text">
+          <span class="station-name">Deep Space One</span>
+          <span class="station-genre">deep ambient · experimental</span>
+        </span>
+        <span class="st-mark">on air</span>
+      </button>
+      <button class="station-btn" data-stream="https://ice5.somafm.com/groovesalad-128-mp3" data-name="groove salad" data-slug="groovesalad" data-genre="ambient groove · downtempo">
+        <span class="st-num">03</span>
+        <span class="st-text">
+          <span class="station-name">Groove Salad</span>
+          <span class="station-genre">ambient groove · downtempo</span>
+        </span>
+        <span class="st-mark">on air</span>
+      </button>
+      <button class="station-btn" data-stream="https://ice5.somafm.com/thetrip-128-mp3" data-name="the trip" data-slug="thetrip" data-genre="psychedelic · progressive">
+        <span class="st-num">04</span>
+        <span class="st-text">
+          <span class="station-name">The Trip</span>
+          <span class="station-genre">psychedelic · progressive</span>
+        </span>
+        <span class="st-mark">on air</span>
+      </button>
+      <button class="station-btn" data-stream="https://ice5.somafm.com/fluid-128-mp3" data-name="fluid" data-slug="fluid" data-genre="new age · ambient · chill">
+        <span class="st-num">05</span>
+        <span class="st-text">
+          <span class="station-name">Fluid</span>
+          <span class="station-genre">new age · ambient · chill</span>
+        </span>
+        <span class="st-mark">on air</span>
+      </button>
+      <button class="station-btn" data-stream="https://ice5.somafm.com/illstreet-128-mp3" data-name="illinois street lounge" data-slug="illstreet" data-genre="vintage lounge · cocktail">
+        <span class="st-num">06</span>
+        <span class="st-text">
+          <span class="station-name">Illinois Street Lounge</span>
+          <span class="station-genre">vintage lounge · cocktail</span>
+        </span>
+        <span class="st-mark">on air</span>
+      </button>
+      <button class="station-btn" data-stream="https://ice5.somafm.com/thistle-128-mp3" data-name="thistle radio" data-slug="thistle" data-genre="celtic · folk · world">
+        <span class="st-num">07</span>
+        <span class="st-text">
+          <span class="station-name">Thistle Radio</span>
+          <span class="station-genre">celtic · folk · world</span>
+        </span>
+        <span class="st-mark">on air</span>
+      </button>
+      <button class="station-btn" data-stream="https://ice5.somafm.com/lush-128-mp3" data-name="lush" data-slug="lush" data-genre="indie · shoegaze · dream pop">
+        <span class="st-num">08</span>
+        <span class="st-text">
+          <span class="station-name">Lush</span>
+          <span class="station-genre">indie · shoegaze · dream pop</span>
+        </span>
+        <span class="st-mark">on air</span>
+      </button>
     </div>
-  </div>
 
-  <canvas class="soma-viz" id="soma-viz" aria-hidden="true"></canvas>
+    <div class="now-playing-track glass-surface" id="soma-np-bar">
+      <span class="np-kicker"><span class="np-dot" id="live-dot"></span>jetzt</span>
+      <img class="np-cover" id="soma-np-cover" src="" alt="" aria-hidden="true">
+      <div class="np-text">
+        <span class="np-track" id="soma-np-track">—</span>
+        <span class="np-album" id="soma-np-album"></span>
+        <span class="np-artist" id="soma-np-artist"></span>
+      </div>
 
-  <div class="player-bar">
-    <button class="play-btn" id="play-btn" aria-label="Play/Pause">
-      <svg id="icon-play" width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><polygon points="2,1 11,6 2,11"/></svg>
-      <svg id="icon-pause" width="12" height="12" viewBox="0 0 12 12" fill="currentColor" style="display:none"><rect x="1.5" y="1" width="3" height="10" rx="1"/><rect x="7.5" y="1" width="3" height="10" rx="1"/></svg>
-    </button>
-    <div class="now-info">
-      <span class="now-label">// now</span>
-      <span class="now-station" id="now-station">drone zone</span>
-    </div>
-    <div class="volume-wrap">
-      <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true" style="opacity:.4"><path d="M1 4h2l3-3v10L3 8H1V4zm7.5.5a3 3 0 010 3"/></svg>
-      <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.8" aria-label="Lautstärke">
+      <div class="np-rule"></div>
+
+      <div class="np-controls">
+        <button class="play-btn" id="play-btn" aria-label="Play/Pause">
+          <svg id="icon-play" width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><polygon points="2,1 11,6 2,11"/></svg>
+          <svg id="icon-pause" width="12" height="12" viewBox="0 0 12 12" fill="currentColor" style="display:none"><rect x="1.5" y="1" width="3" height="10" rx="1"/><rect x="7.5" y="1" width="3" height="10" rx="1"/></svg>
+        </button>
+        <span class="np-state">
+          <span id="np-state-word">bereit</span>
+          <span class="np-state-sep">·</span>
+          <span id="now-station">ambient · dub · space</span>
+        </span>
+        <button class="vol-btn" id="volume-btn" type="button"
+          title="Klick: +10 % · Scrollen: ±10 %"
+          aria-label="Lautstärke">Vol&nbsp;<span id="volume-val">80</span>&nbsp;%</button>
+      </div>
     </div>
   </div>
 </div>
 
 <style>
-.soma-wrap {
-  overflow: hidden;
-  --sep: 0.5px solid var(--glass-sep);
+.soma-wrap { --sep: 1px solid var(--border-mid); }
+
+/* ── Register + Jetzt-Feld ──
+   Zwei eigenständige Karten nebeneinander, nicht eine geteilte: das Feld
+   rechts endet unter seinen Bedienelementen, statt sich auf die Höhe der
+   acht Kanäle zu strecken und eine leere Fläche aufzuspannen. */
+.soma-body {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 0.9rem;
+  align-items: start;
 }
 
-/* ── Header ─────────────────────────────────────────────────────────────── */
-.soma-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0.7rem 1.1rem 0.65rem;
-}
-.soma-badge {
-  display: flex; align-items: center; gap: 6px;
-  font-family: var(--font-mono); font-size: 8px; letter-spacing: .16em;
-  text-transform: uppercase; color: var(--accent);
-}
-.live-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--accent); opacity: 0.3;
-  transition: opacity 0.3s var(--ease-ios), box-shadow 0.3s var(--ease-ios);
-}
-.live-dot.active {
-  opacity: 1;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
-  animation: pulse-dot 2.4s ease-in-out infinite;
-}
-@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
-.soma-source { font-family: var(--font-mono); font-size: 8px; letter-spacing: .08em; color: var(--text-dim); }
+.station-grid { display: flex; flex-direction: column; overflow: hidden; }
 
-/* ── Sender-Kacheln ─────────────────────────────────────────────────────── */
-.station-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
-  padding: 0 0.75rem 0.75rem;
-}
+/* Zeile statt Kachel: Nummer, Name, Genre, rechts die Kennzeichnung. */
 .station-btn {
   all: unset; cursor: pointer;
-  padding: 0.6rem 0.75rem;
-  display: flex; flex-direction: column; gap: 2px;
-  border-radius: var(--r-card);
-  background: transparent;
-  box-shadow: inset 0 0 0 0.5px transparent;
-  transition:
-    background 0.35s var(--ease-ios),
-    box-shadow 0.35s var(--ease-ios),
-    transform 0.2s var(--ease-ios);
+  display: grid;
+  grid-template-columns: 26px 1fr auto;
+  align-items: baseline;
+  gap: 0.9rem;
+  padding: 0.7rem 1.2rem;
+  border-bottom: var(--sep);
+  transition: background 0.3s var(--ease-ios);
 }
+.station-btn:last-child { border-bottom: none; }
 .station-btn:hover { background: var(--glass-ctrl); }
-.station-btn:active { transform: scale(0.975); }
-.station-btn.active {
-  background: color-mix(in srgb, var(--accent) 12%, var(--glass-ctrl));
-  box-shadow:
-    inset 0 0.5px 0 var(--glass-hairline),
-    inset 0 0 0 0.5px color-mix(in srgb, var(--accent) 30%, transparent),
-    0 2px 8px color-mix(in srgb, var(--accent) 14%, transparent);
+.station-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* Die aktive Zeile trägt im Entwurf keine Fläche — Ziffer und „on air" in
+   Akzentfarbe sind die Kennzeichnung. */
+
+.st-num {
+  font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);
+  font-feature-settings: 'tnum';
 }
-.station-btn:focus-visible {
-  outline: 2px solid var(--accent); outline-offset: 2px;
-}
+.station-btn.active .st-num { color: var(--accent-ink); }
+
+.st-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .station-name {
-  font-family: var(--font-mono); font-size: 10px; color: var(--text-mid);
-  letter-spacing: .02em; transition: color 0.25s var(--ease-ios);
+  font-family: var(--font-serif); font-size: 1.15rem; line-height: 1.15;
+  color: var(--text-deep); letter-spacing: .01em;
 }
-.station-btn.active .station-name { color: var(--accent); }
 .station-genre {
-  font-family: var(--font-mono); font-size: 8.5px; color: var(--text-dim);
-  letter-spacing: .03em;
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--text-dim);
 }
 
-/* ── Now Playing ────────────────────────────────────────────────────────── */
+.st-mark {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--accent-ink);
+  opacity: 0; transition: opacity 0.3s var(--ease-ios);
+}
+.station-btn.active .st-mark { opacity: 1; }
+
+/* ── Jetzt läuft ────────────────────────────────────────────────────────── */
 .now-playing-track {
-  display: flex; align-items: center; gap: 0.7rem;
-  padding: 0.7rem 1.1rem;
-  border-top: var(--sep);
+  display: flex; flex-direction: column; gap: 0.7rem;
+  padding: 1.1rem 1.2rem 1rem;
   min-width: 0;
 }
+.np-kicker {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--accent-ink);
+}
+.np-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); opacity: 0.3;
+  transition: opacity 0.3s var(--ease-ios);
+}
+.np-dot.active { opacity: 1; animation: pulse-dot 2.4s ease-in-out infinite; }
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
 .np-cover {
-  width: 44px; height: 44px; border-radius: 10px;
-  object-fit: cover; flex-shrink: 0;
+  width: 96px; height: 96px; border-radius: 4px;
+  object-fit: cover;
   background: var(--glass-ctrl);
   display: none; opacity: 0;
-  box-shadow:
-    0 1px 2px rgba(0,0,0,0.14),
-    0 6px 16px rgba(0,0,0,0.16),
-    inset 0 0 0 0.5px var(--glass-hairline);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.12), 0 6px 16px rgba(0,0,0,0.12);
   transition: opacity 0.5s var(--ease-ios);
 }
 .np-cover.loaded { display: block; opacity: 1; }
-.np-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.np-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .np-track {
-  font-family: var(--font-mono); font-size: 10px; color: var(--text-deep);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.35;
-}
-.np-artist {
-  font-family: var(--font-mono); font-size: 8.5px; color: var(--text-mid);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.35;
+  font-family: var(--font-serif); font-size: 1.55rem; line-height: 1.15;
+  color: var(--text-deep);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .np-album {
-  font-family: var(--font-mono); font-size: 8px; color: var(--text-dim);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  line-height: 1.35; font-style: italic;
+  font-family: var(--font-serif); font-style: italic; font-size: 1rem;
+  color: var(--text-mid); line-height: 1.4;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+.np-artist {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--text-dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.np-album:empty, .np-artist:empty { display: none; }
 
-/* ── Visualizer ─────────────────────────────────────────────────────────── */
-.soma-viz {
-  display: block; height: 52px;
-  width: calc(100% - 2.2rem); margin: 0 1.1rem;
-  background: transparent;
-}
+/* ── Bedienelemente im Feld ─────────────────────────────────────────────── */
+.np-rule { height: 0.5px; background: var(--glass-sep); margin: 0.3rem 0 0.1rem; }
 
-/* ── Player-Leiste ──────────────────────────────────────────────────────── */
-.player-bar {
-  display: flex; align-items: center; gap: 0.8rem;
-  padding: 0.7rem 1.1rem 0.85rem;
-  border-top: var(--sep);
+.np-controls {
+  display: flex; align-items: center; gap: 0.75rem;
+  min-width: 0;
 }
+/* Umrandet statt gefüllt — der Ring ist die einzige Fläche, die der Knopf braucht. */
 .play-btn {
   all: unset; cursor: pointer;
-  width: 34px; height: 34px; border-radius: 50%;
+  width: 38px; height: 38px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   color: var(--text-deep); flex-shrink: 0;
-  background: var(--glass-ctrl);
-  box-shadow:
-    inset 0 0.5px 0 var(--glass-hairline),
-    inset 0 0 0 0.5px var(--glass-border-dim),
-    0 1px 3px rgba(0,0,0,0.10);
-  transition:
-    background 0.3s var(--ease-ios),
-    color 0.3s var(--ease-ios),
-    box-shadow 0.3s var(--ease-ios),
-    transform 0.18s var(--ease-ios);
+  box-shadow: inset 0 0 0 0.5px var(--text-dim);
+  transition: color 0.3s var(--ease-ios), box-shadow 0.3s var(--ease-ios), background 0.3s var(--ease-ios);
 }
-.play-btn:hover { background: var(--glass-ctrl-hover); }
-.play-btn:active { transform: scale(0.92); }
+.play-btn:hover { background: var(--glass-ctrl); box-shadow: inset 0 0 0 0.5px var(--accent); }
 .play-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .play-btn.playing {
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 16%, var(--glass-ctrl));
-  box-shadow:
-    inset 0 0.5px 0 var(--glass-hairline),
-    inset 0 0 0 0.5px color-mix(in srgb, var(--accent) 34%, transparent),
-    0 2px 10px color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--accent-ink);
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
-.now-info { flex: 1; display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
-.now-label { font-family: var(--font-mono); font-size: 8px; letter-spacing: .12em; color: var(--accent); flex-shrink: 0; opacity: 0.7; }
-.now-station { font-family: var(--font-mono); font-size: 10px; color: var(--text-deep); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: .04em; }
 
-/* ── Lautstärke ─────────────────────────────────────────────────────────── */
-.volume-wrap {
-  display: flex; align-items: center; gap: 7px; flex-shrink: 0;
-  padding: 5px 9px; border-radius: 999px;
-  background: var(--glass-ctrl);
-  box-shadow:
-    inset 0 0.5px 0 var(--glass-hairline),
-    inset 0 0 0 0.5px var(--glass-border-dim);
+.np-state {
+  flex: 1; min-width: 0;
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--text-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-input[type="range"] {
-  -webkit-appearance: none; appearance: none;
-  width: 64px; height: 4px; border-radius: 999px; outline: none; cursor: pointer;
-  background: linear-gradient(
-    to right,
-    var(--accent) 0%,
-    var(--accent) calc(var(--vol, 0.8) * 100%),
-    var(--glass-sep) calc(var(--vol, 0.8) * 100%),
-    var(--glass-sep) 100%
-  );
-}
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%;
-  background: #fff; cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.28), 0 0 0 0.5px rgba(0,0,0,0.06);
-  transition: transform 0.18s var(--ease-ios);
-}
-input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.2); }
-input[type="range"]::-moz-range-thumb {
-  width: 12px; height: 12px; border-radius: 50%;
-  background: #fff; border: none; cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.28);
-}
-input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.np-state-sep { opacity: 0.5; margin: 0 0.3em; }
+#np-state-word { color: var(--accent-ink); }
 
-@media (max-width: 500px) {
-  .station-grid { grid-template-columns: 1fr; }
+.vol-btn {
+  all: unset; cursor: pointer; flex-shrink: 0;
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--text-dim);
+  font-feature-settings: 'tnum';
+  transition: color 0.2s var(--ease-ios);
+}
+.vol-btn:hover { color: var(--text-deep); }
+.vol-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+
+@media (max-width: 640px) {
+  .soma-body { grid-template-columns: 1fr; }
+  .np-cover { width: 72px; height: 72px; }
 }
 </style>
 
 <script>
-  import { load, toggle, setVolume, setTrack, setStation, subscribe, getState } from '../utils/player';
+  import { load, toggle, setVolume, setTrack, subscribe, getState } from '../utils/player';
   import { onPage, disposer } from '../utils/lifecycle';
 
   onPage(() => {
@@ -264,8 +264,10 @@ input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-of
     const iconPlay = document.getElementById('icon-play') as SVGElement;
     const iconPause = document.getElementById('icon-pause') as SVGElement;
     const nowStation = document.getElementById('now-station') as HTMLSpanElement;
+    const stateWord = document.getElementById('np-state-word') as HTMLSpanElement;
     const liveDot = document.getElementById('live-dot') as HTMLSpanElement;
-    const volumeSlider = document.getElementById('volume-slider') as HTMLInputElement;
+    const volBtn = document.getElementById('volume-btn') as HTMLButtonElement;
+    const volVal = document.getElementById('volume-val') as HTMLSpanElement;
     const stationBtns = document.querySelectorAll<HTMLButtonElement>('.station-btn');
 
     const npTrack  = document.getElementById('soma-np-track')  as HTMLElement;
@@ -277,16 +279,27 @@ input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-of
 
     const off = disposer();
 
-    // Mirrors the engine — read by the visualizer, never written directly.
-    let isPlaying = false;
-
-    // Slider fill is painted via --vol on the input itself
-    function syncVolumeFill() {
-      volumeSlider.style.setProperty('--vol', volumeSlider.value);
+    // ── Lautstärke als Zahl ────────────────────────────────────────────────
+    function paintVolume(v: number) {
+      volVal.textContent = String(Math.round(v * 100));
     }
+    /** Steps of ten, wrapping back to zero past the top. */
+    function stepVolume(dir: number) {
+      const cur = Math.round(getState().volume * 10);
+      const next = ((cur + dir) % 11 + 11) % 11;
+      setVolume(next / 10);
+    }
+    paintVolume(getState().volume);
 
-    volumeSlider.value = String(getState().volume);
-    syncVolumeFill();
+    volBtn.addEventListener('click', () => stepVolume(1));
+    volBtn.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      stepVolume(e.deltaY < 0 ? 1 : -1);
+    }, { passive: false });
+    volBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp' || e.key === 'ArrowRight') { e.preventDefault(); stepVolume(1); }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') { e.preventDefault(); stepVolume(-1); }
+    });
 
     function activeBtn(): HTMLButtonElement | null {
       return document.querySelector<HTMLButtonElement>('.station-btn.active');
@@ -295,7 +308,7 @@ input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-of
     function markActive(btn: HTMLButtonElement) {
       stationBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      nowStation.textContent = btn.dataset.name ?? '';
+      nowStation.textContent = btn.dataset.genre ?? btn.dataset.name ?? '';
     }
 
     // ── URL State ──────────────────────────────────────────────────────────────
@@ -351,167 +364,25 @@ input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-of
       btn.addEventListener('click', () => playStation(btn));
     });
 
-    volumeSlider.addEventListener('input', () => {
-      setVolume(parseFloat(volumeSlider.value));
-      syncVolumeFill();
-    });
-
     // ── Render from engine state ───────────────────────────────────────────────
     off.add(subscribe((s) => {
       const mine = s.source === 'soma';
-      isPlaying = mine && s.playing;
+      const isPlaying = mine && s.playing;
 
       playBtn.classList.toggle('playing', isPlaying);
       iconPlay.style.display = isPlaying ? 'none' : 'block';
       iconPause.style.display = isPlaying ? 'block' : 'none';
       liveDot.classList.toggle('active', isPlaying);
+      stateWord.textContent = isPlaying ? 'läuft' : mine && s.loading ? 'lädt' : 'bereit';
 
-      if (volumeSlider.value !== String(s.volume)) {
-        volumeSlider.value = String(s.volume);
-        syncVolumeFill();
-      }
-      if (mine && s.stationName) nowStation.textContent = s.stationName;
+      paintVolume(s.volume);
     }));
 
-    // ── Visualizer ─────────────────────────────────────────────────────────────
-    const vizCanvas = document.getElementById('soma-viz') as HTMLCanvasElement;
-    const vizCtx    = vizCanvas?.getContext('2d');
-    const BAR_COUNT = 48;
-
-    function resizeViz() {
-      if (!vizCanvas) return;
-      vizCanvas.width  = vizCanvas.offsetWidth  * devicePixelRatio;
-      vizCanvas.height = vizCanvas.offsetHeight * devicePixelRatio;
-    }
-    resizeViz();
-    off.listen(window, 'resize', resizeViz, { passive: true });
-
-    // --accent only changes when the theme flips, but this used to be read once
-    // per frame — sixty forced style lookups a second for a constant.
-    let accentCache = '';
-    function getAccent(): string {
-      if (!accentCache) {
-        accentCache = getComputedStyle(document.documentElement)
-          .getPropertyValue('--accent').trim() || '#1a6bb5';
-      }
-      return accentCache;
-    }
-    const themeWatcher = new MutationObserver(() => { accentCache = ''; vizStart(); });
-    themeWatcher.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    off.add(() => themeWatcher.disconnect());
-
-    const fakePhases  = Array.from({ length: BAR_COUNT }, () => Math.random() * Math.PI * 2);
-    const fakeSpeeds  = Array.from({ length: BAR_COUNT }, (_, i) => 0.018 + (i / BAR_COUNT) * 0.022 + Math.random() * 0.01);
-    const fakeProfile = Array.from({ length: BAR_COUNT }, (_, i) => {
-      const x = i / BAR_COUNT;
-      return 0.15 + 0.85 * Math.exp(-Math.pow((x - 0.18) * 2.2, 2))
-                  + 0.45 * Math.exp(-Math.pow((x - 0.55) * 3.0, 2))
-                  + 0.25 * Math.exp(-Math.pow((x - 0.80) * 4.0, 2));
-    });
-    let fakeT = 0;
-
-    function getFakeBar(i: number): number {
-      const p = fakePhases[i];
-      const s = fakeSpeeds[i];
-      const v = 0.5
-        + 0.28 * Math.sin(fakeT * s           + p)
-        + 0.14 * Math.sin(fakeT * s * 2.3     + p * 1.7)
-        + 0.08 * Math.sin(fakeT * s * 0.5     + p * 0.6)
-        + 0.06 * Math.sin(fakeT * (i * 0.04)  + p * 2.1);
-      return Math.max(0.04, Math.min(1, v * fakeProfile[i]));
-    }
-
-    const REST = 0.04;
-    const smoothed = new Float32Array(BAR_COUNT).fill(REST);
-
-    // The loop used to run from page load until navigation, playing or not, in
-    // background tabs too, and it ignored prefers-reduced-motion — all three of
-    // which CircleCanvas already got right. It now runs only while something is
-    // still moving.
-    const vizMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let vizRafId = 0;
-    let vizStopped = false;
-    off.add(() => { vizStopped = true; cancelAnimationFrame(vizRafId); vizRafId = 0; });
-
-    /** Bars have come to rest — another frame would repaint the same picture. */
-    function vizAtRest(): boolean {
-      for (let i = 0; i < BAR_COUNT; i++) {
-        if (Math.abs(smoothed[i] - REST) > 0.002) return false;
-      }
-      return true;
-    }
-
-    /** Reduced motion: the shape of the spectrum, standing still. */
-    function staticBar(i: number): number {
-      return Math.max(0.06, Math.min(1, fakeProfile[i] * 0.55));
-    }
-
-    function drawViz() {
-      vizRafId = 0;
-      if (vizStopped || !vizCanvas || !vizCtx) return;
-
-      const still   = vizMotion.matches;
-      const playing = isPlaying;
-      const accent  = getAccent();
-      const W = vizCanvas.width, H = vizCanvas.height;
-      vizCtx.clearRect(0, 0, W, H);
-      if (playing && !still) fakeT++;
-
-      const gap  = 2 * devicePixelRatio;
-      const barW = (W - gap * (BAR_COUNT - 1)) / BAR_COUNT;
-      const maxH = H * 0.88, centerY = H / 2;
-      for (let i = 0; i < BAR_COUNT; i++) {
-        const target = playing ? (still ? staticBar(i) : getFakeBar(i)) : REST;
-        if (still) {
-          smoothed[i] = target;
-        } else {
-          const speed = target > smoothed[i] ? 0.18 : 0.10;
-          smoothed[i] += (target - smoothed[i]) * speed;
-        }
-        const bH = Math.max(2 * devicePixelRatio, smoothed[i] * maxH);
-        const x  = i * (barW + gap), y = centerY - bH / 2;
-        const grad = vizCtx.createLinearGradient(0, y, 0, y + bH);
-        grad.addColorStop(0,   accent + 'd9');
-        grad.addColorStop(0.5, accent + 'a6');
-        grad.addColorStop(1,   accent + '40');
-        vizCtx.fillStyle = grad;
-        vizCtx.beginPath();
-        vizCtx.roundRect(x, y, barW, bH, Math.min(barW / 2, bH / 2));
-        vizCtx.fill();
-      }
-
-      if (still) return;                       // one frame, then leave it standing
-      if (!playing && vizAtRest()) return;     // faded out, nothing left to do
-      vizRafId = requestAnimationFrame(drawViz);
-    }
-
-    function vizStart() {
-      if (vizStopped || vizRafId || document.hidden) return;
-      vizRafId = requestAnimationFrame(drawViz);
-    }
-
-    off.listen(document, 'visibilitychange', () => {
-      if (document.hidden) { cancelAnimationFrame(vizRafId); vizRafId = 0; }
-      else vizStart();
-    });
-    off.listen(vizMotion, 'change', vizStart);
-    off.listen(window, 'resize', vizStart, { passive: true });
-
-    // Play or pause has to wake the loop again. Deliberately a second, separate
-    // subscription: the render subscription above runs before these bindings
-    // exist, and calling into them from there would hit the temporal dead zone.
-    off.add(subscribe(() => vizStart()));
-
-    vizStart();
-
     // ── SomaFM Now Playing — only polls while playing ─────────────────────────
-    // data-slug is the SomaFM channel id, so no second URL table is needed.
-    // The old map was keyed by stream URL and would have rotted along with the
-    // direct server hostnames.
     async function fetchNowPlaying() {
-      const activeBtn = document.querySelector<HTMLButtonElement>('.station-btn.active');
-      if (!activeBtn) return;
-      const channelId = activeBtn.dataset.slug ?? '';
+      const active = document.querySelector<HTMLButtonElement>('.station-btn.active');
+      if (!active) return;
+      const channelId = active.dataset.slug ?? '';
       if (!channelId) return;
       try {
         const resp = await fetch(`https://somafm.com/songs/${channelId}.json`, {
@@ -569,7 +440,6 @@ input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-of
       }
     }
 
-    // Initial fetch (shows track info if e.g. station URL param preselects one)
     fetchNowPlaying();
 
     // Poll only while soma is actually playing — zero requests when idle
@@ -583,8 +453,6 @@ input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-of
         npInterval = null;
       }
     }));
-    // The stream keeps running after leaving the page, but this UI does not —
-    // the poll would write into discarded nodes.
     off.add(() => { if (npInterval) { clearInterval(npInterval); npInterval = null; } });
 
     return off.run;

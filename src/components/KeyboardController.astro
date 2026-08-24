@@ -13,7 +13,7 @@
 // something is actually loaded and the focus is not on a control of its own.
 ---
 
-<!-- Shortcut Overlay -->
+{/* Shortcut Overlay */}
 <div class="kb-overlay" id="kb-overlay" aria-modal="true" role="dialog" aria-label="Keyboard Shortcuts" hidden>
   <div class="kb-panel">
     <div class="kb-header">
@@ -50,12 +50,12 @@
   </div>
 </div>
 
-<!-- Shortcut hint badge (bottom-right) -->
+{/* Shortcut hint badge (bottom-right) */}
 <button class="kb-hint-badge" id="kb-hint-badge" aria-label="Keyboard Shortcuts anzeigen" title="Keyboard Shortcuts">
   <span class="kb-badge-key">?</span>
 </button>
 
-<!-- Volume toast -->
+{/* Volume toast */}
 <div class="kb-vol-toast" id="kb-vol-toast" aria-live="polite" aria-atomic="true" hidden>
   <span class="kb-vol-icon" id="kb-vol-icon">🔊</span>
   <div class="kb-vol-track">
@@ -77,16 +77,27 @@
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     opacity: 0;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.2s ease, visibility 0.2s;
     pointer-events: none;
   }
+  /* Beim Öffnen schaltet visibility ohne Übergang um — sonst hinge es davon ab,
+     wann der Browser den Stil neu berechnet, und openOverlay() ruft direkt
+     danach focus() auf dem Schließen-Knopf. Beim Schließen gilt die Angabe der
+     Grundregel, damit das Ausblenden nicht abgeschnitten wird. */
   .kb-overlay:not([hidden]) {
     opacity: 1;
+    visibility: visible;
+    transition: opacity 0.2s ease, visibility 0s;
     pointer-events: auto;
   }
+  /* display:none würde die Blende springen lassen, deshalb bleibt sie im Fluss.
+     visibility ist trotzdem Pflicht: ohne sie steht der Dialog dauerhaft im
+     Fokuslauf und im Accessibility-Baum, und seine backdrop-filter-Ebene
+     bleibt auf jeder Seite im Compositing. */
   .kb-overlay[hidden] {
     display: flex !important;
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
   }
 
@@ -119,7 +130,7 @@
     font-size: 0.68rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--accent, #4a90d9);
+    color: var(--accent-ink, #114a82);
   }
   .kb-close {
     all: unset;
@@ -181,11 +192,13 @@
 
   /* ── Badge ── */
   .kb-hint-badge {
+    /* Wie beim ♥-Knopf: all: unset gehört an den Anfang, sonst verwirft es die
+       vier Zeilen darüber und das Abzeichen rutscht ans Dokumentende. */
+    all: unset;
     position: fixed;
     bottom: 1.25rem;
     right: 1.25rem;
     z-index: 500;
-    all: unset;
     cursor: pointer;
     width: 30px;
     height: 30px;
@@ -210,7 +223,7 @@
     line-height: 1;
     transition: color 0.15s;
   }
-  .kb-hint-badge:hover .kb-badge-key { color: var(--accent, #4a90d9); }
+  .kb-hint-badge:hover .kb-badge-key { color: var(--accent-ink, #114a82); }
 
   /* ── Volume Toast ── */
   .kb-vol-toast {
@@ -230,16 +243,19 @@
     -webkit-backdrop-filter: blur(16px);
     box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     opacity: 0;
-    transition: opacity 0.15s ease, transform 0.15s ease;
+    transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
     pointer-events: none;
   }
   .kb-vol-toast:not([hidden]) {
     opacity: 1;
+    visibility: visible;
+    transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s;
     transform: translateX(-50%) translateY(0);
   }
   .kb-vol-toast[hidden] {
     display: flex !important;
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
     transform: translateX(-50%) translateY(-8px);
   }

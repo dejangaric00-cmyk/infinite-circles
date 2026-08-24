@@ -42,7 +42,7 @@ const grouped = sorted.reduce<Record<string, SotdEntry[]>>((acc, entry) => {
     <button class="random-btn" id="random-btn">Zufälliger Track ↝</button>
   </section>
 
-  <!-- FEATURED PLAYER -->
+  {/* FEATURED PLAYER */}
   {(() => {
     const latest = sorted[0];
     const vid = latest?.data.link ? getYouTubeId(latest.data.link) : null;
@@ -80,7 +80,7 @@ const grouped = sorted.reduce<Record<string, SotdEntry[]>>((acc, entry) => {
     );
   })()}
 
-  <!-- FILTER BAR -->
+  {/* FILTER BAR */}
   <div class="filter-bar reveal" style="transition-delay:.08s">
     <div class="filter-group">
       <span class="filter-label">Mood</span>
@@ -192,7 +192,7 @@ const grouped = sorted.reduce<Record<string, SotdEntry[]>>((acc, entry) => {
   font-size: 9px;
   letter-spacing: .22em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--accent-ink);
   margin-bottom: 1.5rem;
 }
 .section-label::before { content: '·'; margin-right: .45em; font-size: 1.4em; line-height: 0; vertical-align: middle; }
@@ -201,10 +201,10 @@ h1 {
   font-size: clamp(40px, 5vw, 64px);
   font-weight: 300;
   line-height: 1.05;
-  color: var(--text-deep);
+  color: var(--heading);
   margin-bottom: 1rem;
 }
-h1 em { font-style: italic; color: var(--accent); }
+h1 em { font-style: italic; color: inherit; }
 .header-desc {
   font-size: 11px;
   color: var(--text-dim);
@@ -225,7 +225,7 @@ h1 em { font-style: italic; color: var(--accent); }
   transition: all 0.15s ease;
   display: inline-block;
 }
-.random-btn:hover { color: var(--accent); border-color: var(--accent); }
+.random-btn:hover { color: var(--accent-ink); border-color: var(--accent); }
 
 /* FEATURED */
 .featured { margin-bottom: 2.5rem; }
@@ -273,15 +273,15 @@ h1 em { font-style: italic; color: var(--accent); }
   justify-content: center; flex-wrap: wrap; gap: 0.5rem 1.5rem; text-align: center;
 }
 .featured-eyebrow {
-  font-family: var(--font-mono); font-size: 8px; letter-spacing: .22em;
-  text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem;
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--accent-ink); margin-bottom: 0.4rem;
 }
 .featured-title-link { text-decoration: none; }
 .featured-title {
   font-family: var(--font-serif); font-size: 28px; font-weight: 300;
   line-height: 1.05; color: var(--text-deep); transition: color 0.15s;
 }
-.featured-title-link:hover .featured-title { color: var(--accent); }
+.featured-title-link:hover .featured-title { color: var(--accent-ink); }
 
 /* FILTER */
 .filter-bar {
@@ -291,7 +291,7 @@ h1 em { font-style: italic; color: var(--accent); }
 }
 .filter-group { display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
 .filter-label {
-  font-family: var(--font-mono); font-size: 8px; letter-spacing: .18em;
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .18em;
   text-transform: uppercase; color: var(--text-dim); padding-top: 4px; min-width: 40px;
 }
 .filter-pills { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -308,8 +308,8 @@ h1 em { font-style: italic; color: var(--accent); }
 .sotd-list { display: flex; flex-direction: column; gap: 0; padding-bottom: 5rem; }
 .sotd-month-group { margin-bottom: 1rem; }
 .sotd-month-label {
-  font-family: var(--font-mono); font-size: 8px; letter-spacing: .22em;
-  text-transform: uppercase; color: var(--accent); opacity: 0.7;
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--accent-ink); opacity: 0.7;
   padding: 1.5rem 0 0.75rem; border-top: 0.5px solid var(--border-light);
 }
 .sotd-item {
@@ -351,19 +351,19 @@ h1 em { font-style: italic; color: var(--accent); }
   font-family: var(--font-serif); font-size: 26px; font-weight: 300;
   color: var(--text-deep); line-height: 1.2; margin-bottom: .2rem; transition: color 0.15s;
 }
-.sotd-title-link:hover .sotd-item-title { color: var(--accent); }
+.sotd-title-link:hover .sotd-item-title { color: var(--accent-ink); }
 .sotd-item-artist {
   font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--accent); margin-bottom: .2rem;
+  color: var(--accent-ink); margin-bottom: .2rem;
 }
 .sotd-item-album { font-size: 10px; color: var(--text-dim); margin-bottom: .5rem; }
 .sotd-item-meta {
-  font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .08em;
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .08em;
   color: var(--text-dim); opacity: 0.6; margin-bottom: .4rem;
 }
 .sotd-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: .75rem; margin-top: .4rem; }
 .sotd-item-mood {
-  font-size: 8px; letter-spacing: .12em; text-transform: uppercase;
+  font-size: 9px; letter-spacing: .12em; text-transform: uppercase;
   padding: 3px 10px; border: 0.5px solid var(--glass-border); border-radius: 20px;
   color: var(--text-dim); display: inline-block;
 }

@@ -1,12 +1,26 @@
 ---
 // src/components/UndergroundStations.astro
+//
+// Karteikarten-Redesign. Daten, Player-Anbindung und Zustandslogik sind
+// unverändert aus der Vorversion übernommen — neu sind Markup-Struktur,
+// CSS und eine Filterleiste (Genre + Stadt) über dem Raster.
+//
+// Beibehaltene Haken für utils/player.ts: .station-card[data-url|data-name|
+// data-state], .play-btn, .btn-icon, .btn-label, .error-msg, .waveform,
+// #ugNowBar, #ugNowName, #ugStopAll.
 
+// Herkunft steht als Ländercode vor der Stadt, nicht als Flaggen-Emoji: die
+// Emoji rendern je nach System unterschiedlich breit und brechen die Laufweite
+// der Monoschrift. Sender ohne Ort lassen country leer.
 interface PlayableStation {
   type: 'playable';
   id: string;
   name: string;
+  country: string;
   city: string;
-  flag: string;
+  /** Nur für die Filterleiste, wenn der Ortsname feiner ist als der Filter —
+      Deptford liegt in London, die Karte nennt aber den Stadtteil. */
+  area?: string;
   genre: string[];
   url: string;
   site: string;
@@ -17,15 +31,17 @@ interface LinkStation {
   type: 'link';
   id: string;
   name: string;
+  country: string;
   city: string;
-  flag: string;
   genre: string[];
   site: string;
   color: string;
   desc: string;
 }
 
-type Station = PlayableStation | LinkStation;
+/** „DE · Berlin" — oder nur eines von beidem, wenn das andere fehlt. */
+const place = (s: { country: string; city: string }) =>
+  [s.country, s.city].filter(Boolean).join(' · ');
 
 const playable: PlayableStation[] = [
   {
@@ -33,7 +49,7 @@ const playable: PlayableStation[] = [
     id: 'nts1',
     name: 'NTS Radio 1',
     city: 'London',
-    flag: '🇬🇧',
+    country: 'UK',
     genre: ['Underground', 'Eclectic'],
     url: 'https://stream-relay-geo.ntslive.net/stream',
     site: 'https://www.nts.live',
@@ -44,7 +60,7 @@ const playable: PlayableStation[] = [
     id: 'nts2',
     name: 'NTS Radio 2',
     city: 'London',
-    flag: '🇬🇧',
+    country: 'UK',
     genre: ['Underground', 'Global'],
     url: 'https://stream-relay-geo.ntslive.net/stream2',
     site: 'https://www.nts.live/2',
@@ -55,7 +71,7 @@ const playable: PlayableStation[] = [
     id: 'frisky',
     name: 'Frisky Radio',
     city: 'Internet',
-    flag: '🌐',
+    country: '',
     genre: ['Deep House', 'Tech House'],
     url: 'https://stream.friskyradio.com/frisky_mp3_hi',
     site: 'https://www.friskyradio.com',
@@ -65,17 +81,16 @@ const playable: PlayableStation[] = [
   // Übernommen aus der kuratierten Liste github.com/deroverda/recommended-radio-streams
   // (abgerufen 2026-08-07). Das ist eine Fremdquelle, keine eigene Messung —
   // die URLs sind dokumentiert, aber nicht von uns gegengehört. Wenn eine Karte
-  // dauerhaft „Error“ zeigt: Station-Website öffnen → DevTools → Network → Media.
+  // dauerhaft „Error" zeigt: Station-Website öffnen → DevTools → Network → Media.
   //
   // Bedingung für diese Liste: https-Endpunkt (CSP media-src erlaubt kein http:)
-  // und ein Format, das <audio> nativ abspielt — also kein HLS/.m3u8, da der
-  // Player unten mit `new Audio()` arbeitet und hls.js nicht eingebunden ist.
+  // und ein Format, das <audio> nativ abspielt — also kein HLS/.m3u8.
   {
     type: 'playable',
     id: 'refuge',
     name: 'Refuge Worldwide',
     city: 'Berlin',
-    flag: '🇩🇪',
+    country: 'DE',
     genre: ['Dance', 'Techno', 'Community'],
     url: 'https://streaming.radio.co/s3699c5e49/listen',
     site: 'https://refugeworldwide.com',
@@ -86,7 +101,7 @@ const playable: PlayableStation[] = [
     id: 'noods',
     name: 'Noods Radio',
     city: 'Bristol',
-    flag: '🇬🇧',
+    country: 'UK',
     genre: ['Deep', 'Rare', 'Eclectic'],
     url: 'https://noods-radio.radiocult.fm/stream',
     site: 'https://noodsradio.com',
@@ -97,7 +112,7 @@ const playable: PlayableStation[] = [
     id: 'worldwidefm',
     name: 'Worldwide FM',
     city: 'London',
-    flag: '🇬🇧',
+    country: 'UK',
     genre: ['Global', 'Soul', 'Electronic'],
     // Alter airtime.pro-Endpunkt ist tot, Station auf radiocult umgezogen.
     url: 'https://worldwide-fm.radiocult.fm/stream',
@@ -109,7 +124,7 @@ const playable: PlayableStation[] = [
     id: 'kiosk',
     name: 'Kiosk Radio',
     city: 'Brüssel',
-    flag: '🇧🇪',
+    country: 'BE',
     genre: ['Electronic', 'Jazz'],
     url: 'https://kioskradiobxl.out.airtime.pro/kioskradiobxl_b',
     site: 'https://kioskradio.com',
@@ -120,7 +135,7 @@ const playable: PlayableStation[] = [
     id: 'tmradio',
     name: 'TM Radio',
     city: 'Internet',
-    flag: '🌐',
+    country: '',
     genre: ['Tech House', 'Deep Techno', 'Progressive'],
     url: 'https://stream.tm-radio.com/tribalmixes',
     site: 'https://tm-radio.com',
@@ -131,7 +146,7 @@ const playable: PlayableStation[] = [
     id: '54house',
     name: '54house.fm',
     city: 'Internet',
-    flag: '🌐',
+    country: '',
     genre: ['House', 'Nu Disco', 'Tech House'],
     url: 'https://54house.fm:9013/stream',
     site: 'https://www.54house.fm',
@@ -142,7 +157,7 @@ const playable: PlayableStation[] = [
     id: 'mutant',
     name: 'Mutant Radio',
     city: 'Tbilisi',
-    flag: '🇬🇪',
+    country: 'GE',
     genre: ['Experimental', 'Electronic'],
     url: 'https://listen.radioking.com/radio/282820/stream/328621',
     site: 'https://www.mutantradio.net',
@@ -153,7 +168,7 @@ const playable: PlayableStation[] = [
     id: 'datafruits',
     name: 'Datafruits',
     city: 'Internet',
-    flag: '🌐',
+    country: '',
     genre: ['Netlabel', 'Weird', 'Electronic'],
     url: 'https://streampusher-relay.club/datafruits.mp3',
     site: 'https://datafruits.fm',
@@ -164,7 +179,7 @@ const playable: PlayableStation[] = [
     id: '9128',
     name: '9128.live',
     city: 'Internet',
-    flag: '🌐',
+    country: '',
     genre: ['Ambient', 'Drone'],
     url: 'https://streams.radio.co/s0aa1e6f4a/listen',
     site: 'https://9128.live',
@@ -175,7 +190,7 @@ const playable: PlayableStation[] = [
     id: 'ntsslowfocus',
     name: 'NTS Slow Focus',
     city: 'London',
-    flag: '🇬🇧',
+    country: 'UK',
     genre: ['Drone', 'Ambient', 'Ragas'],
     url: 'https://stream-mixtape-geo.ntslive.net/mixtape',
     site: 'https://www.nts.live/infinite-mixtapes',
@@ -186,7 +201,7 @@ const playable: PlayableStation[] = [
     id: 'mellotron',
     name: 'Le Mellotron',
     city: 'Paris',
-    flag: '🇫🇷',
+    country: 'FR',
     genre: ['Soul', 'Funk', 'Jazz'],
     url: 'https://listen.radioking.com/radio/477719/stream/534044',
     site: 'https://lemellotron.com',
@@ -197,20 +212,18 @@ const playable: PlayableStation[] = [
     id: 'n10as',
     name: 'n10.as',
     city: 'Montreal',
-    flag: '🇨🇦',
+    country: 'CA',
     genre: ['Freeform', 'Eclectic'],
     url: 'https://n10as.radiocult.fm/stream',
     site: 'https://n10.as',
     color: '#7ed957',
   },
-  // Drei Sender, die bisher nur unter „Labels & Ressourcen“ verlinkt waren,
-  // obwohl dieselbe Quelle einen https-Direktstream für sie ausweist.
   {
     type: 'playable',
     id: 'rinse',
     name: 'Rinse FM',
     city: 'London',
-    flag: '🇬🇧',
+    country: 'UK',
     genre: ['House', 'Grime', 'Garage'],
     url: 'https://admin.stream.rinse.fm/proxy/rinse_uk/stream',
     site: 'https://rinse.fm',
@@ -221,7 +234,7 @@ const playable: PlayableStation[] = [
     id: 'cashmere',
     name: 'Cashmere Radio',
     city: 'Berlin',
-    flag: '🇩🇪',
+    country: 'DE',
     genre: ['Experimental', 'Community'],
     url: 'https://cashmereradio.out.airtime.pro/cashmereradio_a',
     site: 'https://cashmereradio.com',
@@ -231,8 +244,9 @@ const playable: PlayableStation[] = [
     type: 'playable',
     id: 'aaja',
     name: 'Aaja Music',
-    city: 'London · Deptford',
-    flag: '🇬🇧',
+    city: 'Deptford',
+    area: 'London',
+    country: 'UK',
     genre: ['Electronic', 'Live Sets', 'Underground'],
     url: 'https://aaja.radiocult.fm/stream',
     site: 'https://aajamusic.com',
@@ -240,101 +254,99 @@ const playable: PlayableStation[] = [
   },
 ];
 
-// Stationen ohne nutzbaren Direktstream. Als Link-Karte statt Play-Button,
-// damit kein Button erscheint, der sicher scheitert. Zurück nach `playable`
-// schieben, sobald eine URL feststeht — dazu Station-Website öffnen,
-// DevTools → Network → Media, URL kopieren.
+// Stationen ohne nutzbaren Direktstream. Als Zeile in einer Haarlinien-Liste
+// statt als Karte — so entsteht gar nicht erst ein Play-Knopf, der scheitert.
 const brokenStreams: LinkStation[] = [
   {
     type: 'link',
     id: 'fnoob',
     name: 'Fnoob Techno',
-    city: 'UK',
-    flag: '🇬🇧',
-    genre: ['Techno', 'Dark', 'Underground'],
+    city: '',
+    country: 'UK',
+    genre: ['Techno', 'Dark'],
     site: 'https://fnoob.com',
     color: '#7b2fff',
     // Stream-ID auf radiomast.io liefert 404 — Kennung wurde neu vergeben.
-    desc: 'Techno rund um die Uhr aus UK. Direktstream zurzeit nicht erreichbar.',
+    desc: 'Direktstream zurzeit nicht erreichbar.',
   },
   {
     type: 'link',
     id: 'thelot',
     name: 'The Lot Radio',
     city: 'New York',
-    flag: '🇺🇸',
-    genre: ['House', 'Techno', 'Eclectic'],
+    country: 'US',
+    genre: ['House', 'Techno'],
     site: 'https://www.thelotradio.com',
     color: '#f5a623',
-    // Es gibt einen erreichbaren Stream, aber als HLS-Playlist:
-    // https://livepeercdn.studio/hls/85c28sa2o8wppm58/index.m3u8
-    // `new Audio()` spielt .m3u8 nur in Safari nativ ab — Chrome und Firefox
-    // brauchen hls.js. Erst hochstufen, wenn der Player HLS beherrscht.
-    desc: 'Aus einem umgebauten Schiffscontainer in Greenpoint, Brooklyn. Stream läuft über HLS, dafür fehlt dem Player noch die Unterstützung.',
+    // Erreichbar, aber als HLS-Playlist — `new Audio()` spielt .m3u8 nur in
+    // Safari nativ ab. Erst hochstufen, wenn der Player HLS beherrscht.
+    desc: 'Aus einem Schiffscontainer in Greenpoint. Läuft über HLS.',
   },
   {
     type: 'link',
     id: 'radiojuicy',
     name: 'Radio Juicy',
     city: 'Berlin',
-    flag: '🇩🇪',
-    genre: ['Lo-Fi', 'Beats', 'Hip-Hop'],
+    country: 'DE',
+    genre: ['Lo-Fi', 'Beats'],
     site: 'https://www.radiojuicy.com',
     color: '#e91e8c',
-    desc: 'Lo-Fi und Beats aus Berlin. Streamserver antwortet nicht mehr.',
+    desc: 'Streamserver antwortet nicht mehr.',
   },
   {
     type: 'link',
     id: 'dubninja',
     name: 'Dub Ninja',
     city: 'London',
-    flag: '🇬🇧',
+    country: 'UK',
     genre: ['Electronic', 'AI DJ'],
     site: 'https://dub.ninja',
     color: '#2e8b8b',
-    // Stand in der Quellliste als Dub-Techno-Sender mit Stream https://dub.ninja/live.
-    // Die Seite selbst ist etwas anderes: ein automatisierter KI-DJ, der Wiedergabe
-    // hinter Login stellt und ohne Anmeldung nur 30-Sekunden-Ausschnitte liefert.
-    // Kein offener Radiostream — deshalb nur verlinkt.
-    desc: 'Autonomer KI-DJ aus London, 24/7 Underground Electronic. Kein offener Stream — Wiedergabe läuft nur auf der Seite.',
+    desc: 'Kein offener Stream — Wiedergabe nur auf der Seite.',
   },
 ];
 
 const linkOnly: LinkStation[] = [
   ...brokenStreams,
-  // Refuge Worldwide, Noods, Rinse FM, Cashmere Radio und Aaja Music stehen jetzt
-  // oben unter `playable` — für alle fünf weist die Quellliste einen https-Endpunkt
-  // aus, der ohne HLS auskommt.
   {
     type: 'link',
     id: 'dublab',
     name: 'dublab',
     city: 'Los Angeles',
-    flag: '🇺🇸',
+    country: 'US',
     genre: ['Experimental', 'Future Music'],
-    // Bleibt bewusst Link-Karte: der dokumentierte Endpunkt
-    // http://dublab.out.airtime.pro:8000/dublab_a ist reines http. Die CSP in
-    // netlify.toml erlaubt media-src nur über https, der Browser würde den
-    // Stream also blocken. Erst hochstufen, wenn dublab https anbietet.
+    // Bleibt Link-Karte: dokumentierter Endpunkt ist reines http, die CSP in
+    // netlify.toml erlaubt media-src nur über https.
     site: 'https://dublab.com',
     color: '#00897b',
-    desc: 'Non-profit radio aus LA seit 1999. Experimental, Jazz, Electronic, Future Music.',
+    desc: 'Non-profit radio aus LA seit 1999.',
   },
 ];
+
+// Filterleiste: erst Genres, dann Städte. Aus den Daten abgeleitet, damit sie
+// nicht auseinanderlaufen, wenn oben ein Sender dazukommt.
+const genreFilters = ['Techno', 'House', 'Ambient', 'Experimental', 'Eclectic', 'Jazz'];
+const cityFilters = ['London', 'Berlin', 'Internet'];
+const filters = ['Alle', ...genreFilters, ...cityFilters];
 ---
 
 <section class="underground-section">
 
-  <!-- ── Playable Stations ──────────────────────────────────────────────── -->
-
-  <div class="now-playing-bar" id="ugNowBar" hidden>
-    <div class="npb-left">
-      <span class="npb-dot"></span>
-      <span class="npb-label">Now Tuned:</span>
-      <strong class="npb-name" id="ugNowName">—</strong>
+  <header class="ug-head">
+    <p class="ug-kicker">
+      III · Stationen · {playable.length} · zeigt <span id="ugCount">alle</span>
+    </p>
+    <div class="ug-row">
+      <h2 class="ug-h2">Verzeichnis</h2>
+      <div class="ug-filters" role="group" aria-label="Sender filtern">
+        {filters.map((f, i) => (
+          <button type="button" class="ug-chip" data-filter={f} aria-pressed={i === 0 ? 'true' : 'false'}>
+            {f}
+          </button>
+        ))}
+      </div>
     </div>
-    <button class="npb-stop" id="ugStopAll" type="button">■ Stop</button>
-  </div>
+  </header>
 
   <div class="stations-grid" role="list">
     {playable.map((s) => (
@@ -344,31 +356,28 @@ const linkOnly: LinkStation[] = [
         data-url={s.url}
         data-site={s.site}
         data-name={s.name}
+        data-city={s.area ?? s.city}
+        data-genres={s.genre.join(' ').toLowerCase()}
         data-state="idle"
         style={`--sc: ${s.color}`}
         role="listitem"
       >
         <div class="card-top">
-          <span class="location-badge">
-            <span>{s.flag}</span>
-            <span class="location-city">{s.city}</span>
+          <span class="location-badge">{place(s)}</span>
+          <span class="state-badge">
+            <span class="live-badge">
+              <span class="live-dot-anim"></span>
+              <span>on air</span>
+            </span>
+            <span class="idle-badge">live</span>
           </span>
-          <div class="live-badge">
-            <span class="live-dot-anim"></span>
-            <span>LIVE</span>
-          </div>
         </div>
 
         <h3 class="station-name">{s.name}</h3>
 
-        <div class="genre-pills">
-          {s.genre.map((g) => <span class="genre-pill">{g}</span>)}
-        </div>
+        <div class="card-rule"></div>
 
-        <div class="waveform" aria-hidden="true">
-          <span></span><span></span><span></span>
-          <span></span><span></span><span></span>
-        </div>
+        <div class="genre-line">{s.genre.join(' · ')}</div>
 
         <p class="error-msg">
           Stream nicht erreichbar —{' '}
@@ -378,295 +387,448 @@ const linkOnly: LinkStation[] = [
         <div class="card-footer">
           <button class="play-btn" type="button">
             <span class="btn-icon">▶</span>
-            <span class="btn-label">Play</span>
+            <span class="btn-label">Listen</span>
           </button>
-          <a class="site-link" href={s.site} target="_blank" rel="noopener noreferrer">↗</a>
+          <div class="footer-right">
+            <div class="waveform" aria-hidden="true">
+              <span></span><span></span><span></span><span></span>
+            </div>
+            <a class="site-link" href={s.site} target="_blank" rel="noopener noreferrer">Site ↗</a>
+          </div>
         </div>
       </article>
     ))}
   </div>
 
-  <!-- ── Link-only Stations ─────────────────────────────────────────────── -->
-  <div class="section-label section-label--links">Labels &amp; Ressourcen</div>
+  {/* Bleibt stehen, auch wenn nichts läuft: der Balken ist die Fußkante des
+       Rasters. Leer trägt er den Hinweis, der Stopp-Knopf erscheint erst mit
+       einem laufenden Stream. */}
+  <div class="now-playing-bar" id="ugNowBar" data-idle="true">
+    <div class="npb-left">
+      <span class="npb-label">Now tuned</span>
+      <span class="npb-dash">—</span>
+      <strong class="npb-name" id="ugNowName"></strong>
+      <span class="npb-empty">kein Stream aktiv</span>
+    </div>
+    <button class="npb-stop" id="ugStopAll" type="button">■ Stop</button>
+  </div>
 
-  <div class="link-grid" role="list">
+  <header class="links-head">
+    <p class="ug-kicker">IV · Verweise</p>
+    <div class="ug-row">
+      <h2 class="ug-h3">Labels &amp; Ressourcen</h2>
+      <span class="ug-kicker">kein eigener Stream</span>
+    </div>
+  </header>
+
+  <div class="link-list" role="list">
     {linkOnly.map((s) => (
       <a
-        class="link-card"
+        class="link-row"
         href={s.site}
         target="_blank"
         rel="noopener noreferrer"
         style={`--sc: ${s.color}`}
         role="listitem"
       >
-        <div class="lc-top">
-          <span class="lc-location">
-            <span>{s.flag}</span>
-            <span>{s.city}</span>
-          </span>
-          <span class="lc-arrow">↗</span>
-        </div>
-
-        <div class="lc-name">{s.name}</div>
-        <div class="lc-desc">{s.desc}</div>
-
-        <div class="lc-pills">
-          {s.genre.map((g) => <span class="genre-pill">{g}</span>)}
-        </div>
+        <span class="lr-name">{s.name}</span>
+        <span class="lr-desc">{s.desc}</span>
+        <span class="lr-meta">
+          {place(s)} · {s.genre.join(' · ')} <span class="lr-arrow">↗</span>
+        </span>
       </a>
     ))}
   </div>
 
-  <p class="streams-note">
-    Stream-URLs können sich ändern. Bei dauerhaften Fehlern: Station-Website öffnen →
-    DevTools → Network → Media → aktuelle URL kopieren.
-  </p>
+  {/* Die Kürzel sitzen global im KeyboardController — hier stehen sie, damit
+       sie überhaupt jemand findet, ohne erst „?" zu drücken. */}
+  <div class="foot-grid">
+    <div class="foot-col">
+      <p class="ug-kicker">Tastatur</p>
+      <dl class="kb-list">
+        <dt><kbd>Space</kbd></dt><dd>Play / Pause</dd>
+        <dt><kbd>→</kbd></dt><dd>Skip (Archive.org)</dd>
+        <dt><kbd>+</kbd> <kbd>−</kbd></dt><dd>Lautstärke ± 10 %</dd>
+        <dt><kbd>1</kbd> – <kbd>4</kbd></dt><dd>SomaFM-Station wechseln</dd>
+        <dt><kbd>?</kbd></dt><dd>Übersicht öffnen / schließen</dd>
+      </dl>
+    </div>
+    <div class="foot-col">
+      <p class="ug-kicker">Hinweis</p>
+      <p class="streams-note">
+        Stream-URLs ändern sich. Bei dauerhaften Fehlern die Station-Website öffnen,
+        dort DevTools → Network → Media, und die aktuelle URL kopieren. Sender ohne
+        offenen Stream stehen unter <em>Labels &amp; Ressourcen</em> — dort führt die
+        Karte bewusst nur nach außen statt einen toten Play-Knopf zu zeigen.
+      </p>
+    </div>
+  </div>
 </section>
 
 <style>
   .underground-section {
     width: 100%;
-    max-width: 900px;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 0 1.5rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
   }
 
-  .section-label {
+  /* ── Kopf mit Filterleiste ──
+     Gleiches Muster wie .sec-head auf der Radioseite: Ziffer und Kennung als
+     Zeile darüber, Titel und Randnotiz an einer Haarlinie. */
+  .ug-head { display: flex; flex-direction: column; gap: 0.4rem; }
+  .ug-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    border-bottom: 0.5px solid var(--border-mid);
+    padding-bottom: 0.7rem;
+  }
+  .ug-kicker {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    font-feature-settings: 'tnum';
+  }
+  .ug-h2 {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    font-weight: 300;
+    line-height: 1;
+    margin: 0;
+    color: var(--text-deep);
+  }
+  .ug-h3 {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    font-weight: 300;
+    line-height: 1;
+    margin: 0;
+    color: var(--text-deep);
+  }
+
+  .ug-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: flex-end; }
+  .ug-chip {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--line-chip, var(--border-mid));
+    border-radius: var(--r-ctrl);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: var(--t);
+  }
+  .ug-chip:hover { color: var(--text-deep); border-color: var(--accent); }
+  .ug-chip[aria-pressed='true'] {
+    color: var(--text-deep);
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+
+  /* ── Karteikarten ── */
+  .stations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.9rem;
+  }
+
+  .station-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 1.1rem 1.1rem 0.9rem;
+    background: var(--glass-bg);
+    border: 1px solid var(--border-light);
+    border-radius: var(--r-card);
+    backdrop-filter: blur(10px);
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .station-card:hover { background: var(--glass-bg-strong); border-color: var(--accent); }
+  .station-card[data-state='playing'],
+  .station-card[data-state='paused'] {
+    background: var(--glass-bg-strong);
+    border-color: var(--accent);
+  }
+  .station-card[data-state='error'] { border-color: color-mix(in srgb, var(--danger) 45%, transparent); }
+  .station-card[hidden] { display: none; }
+
+  .card-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .location-badge { white-space: nowrap; }
+
+  .live-badge { display: none; align-items: center; gap: 0.3rem; color: var(--accent-ink); }
+  [data-state='playing'] .live-badge { display: flex; }
+  [data-state='playing'] .idle-badge { display: none; }
+  [data-state='loading'] .idle-badge::after { content: '…'; }
+  .live-dot-anim {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--accent);
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+  .station-name {
+    font-family: var(--font-serif);
+    font-size: 1.65rem;
+    font-weight: 400;
+    line-height: 1.05;
+    margin: 0;
+    color: var(--text-deep);
+  }
+
+  .card-rule { height: 0.5px; background: var(--border-mid); }
+
+  .genre-line {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .error-msg {
+    display: none;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--danger);
+    margin: 0;
+    line-height: 1.5;
+  }
+  .error-msg a { color: var(--danger); text-decoration: underline; }
+  [data-state='error'] .error-msg { display: block; }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.7rem;
+    margin-top: auto;
+    padding-top: 0.3rem;
+  }
+  .footer-right { display: flex; align-items: center; gap: 0.7rem; }
+
+  .play-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--line-ctrl, var(--border-mid));
+    border-radius: var(--r-ctrl);
+    background: transparent;
+    color: var(--text-deep);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: var(--t);
+    white-space: nowrap;
+  }
+  .play-btn:hover { border-color: var(--accent); background: var(--glass-bg-strong); }
+  [data-state='loading'] .play-btn { border-color: var(--accent); cursor: wait; }
+  [data-state='playing'] .play-btn { border-color: var(--accent); background: var(--glass-bg-strong); }
+  [data-state='error'] .play-btn { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, transparent); }
+  .btn-icon { font-size: 0.58rem; }
+
+  /* Vier Striche als Puls der laufenden Karte. Im Ruhezustand unsichtbar —
+     sichtbar standen sie als vier Punkte vor „Site ↗" und sahen aus wie ein
+     Darstellungsfehler. Platz bleibt reserviert, damit nichts springt. */
+  .waveform {
+    display: flex; align-items: flex-end; gap: 2px; height: 14px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  [data-state='loading'] .waveform,
+  [data-state='playing'] .waveform { opacity: 1; }
+  .waveform span {
+    flex: 0 0 2px;
+    height: 100%;
+    background: var(--accent);
+    transform: scaleY(0.25);
+    transform-origin: bottom;
+  }
+  [data-state='loading'] .waveform span,
+  [data-state='playing'] .waveform span {
+    animation: wave-play 0.9s ease-in-out infinite alternate;
+  }
+  [data-state='playing'] .waveform span:nth-child(1) { animation-delay: 0s; animation-duration: 0.8s; }
+  [data-state='playing'] .waveform span:nth-child(2) { animation-delay: 0.12s; animation-duration: 0.95s; }
+  [data-state='playing'] .waveform span:nth-child(3) { animation-delay: 0.24s; animation-duration: 0.7s; }
+  [data-state='playing'] .waveform span:nth-child(4) { animation-delay: 0.36s; animation-duration: 1s; }
+  @keyframes wave-play { from { transform: scaleY(0.25); } to { transform: scaleY(1); } }
+
+  .site-link {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: var(--t);
+    white-space: nowrap;
+  }
+  .site-link:hover { color: var(--text-deep); }
+
+  /* ── Now tuned ── */
+  .now-playing-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-top: 0.5px solid var(--border-mid);
+    padding-top: 0.9rem;
+  }
+  .npb-left { display: flex; align-items: baseline; gap: 0.8rem; flex-wrap: wrap; }
+  .npb-label {
     font-family: var(--font-mono);
     font-size: 0.6rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;
+    color: var(--accent-ink);
+  }
+  .npb-dash { color: var(--text-dim); }
+  .npb-name {
+    font-family: var(--font-serif);
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: var(--text-deep);
+  }
+  .npb-empty {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
     color: var(--text-dim);
-    opacity: 0.6;
-    text-align: center;
-    margin-bottom: 0.9rem;
   }
-
-  .section-label--links {
-    margin-top: 2.5rem;
-  }
-
-  /* ── Now Playing Bar ── */
-  .now-playing-bar {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0.6rem 1rem; margin-bottom: 1rem;
-    background: var(--glass-bg-strong);
-    border: 0.5px solid var(--border-mid);
-    border-radius: 8px;
-    backdrop-filter: blur(12px);
-  }
-  .npb-left {
-    display: flex; align-items: center; gap: 0.5rem;
-    font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim);
-  }
-  .npb-dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--accent); animation: blink 1s step-end infinite;
-  }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
-  .npb-name { color: var(--text-deep); font-weight: 500; }
+  /* Leerzustand: Hinweis statt Name, kein Stopp-Knopf für nichts. */
+  .now-playing-bar:not([data-idle]) .npb-empty { display: none; }
+  .now-playing-bar[data-idle] .npb-name,
+  .now-playing-bar[data-idle] .npb-stop { display: none; }
   .npb-stop {
-    font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em;
-    padding: 0.3rem 0.8rem; border: 0.5px solid var(--border-mid);
-    border-radius: 20px; background: transparent; color: var(--text-dim);
-    cursor: pointer; transition: all 0.2s;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--line-ctrl, var(--border-mid));
+    border-radius: var(--r-ctrl);
+    background: transparent;
+    color: var(--text-deep);
+    cursor: pointer;
+    transition: var(--t);
+    white-space: nowrap;
   }
-  .npb-stop:hover { background: rgba(255,100,100,0.12); border-color: rgba(255,100,100,0.5); color: #ff7777; }
+  .npb-stop:hover { border-color: var(--accent); background: var(--glass-bg-strong); }
 
-  /* ── Playable Grid ── */
-  .stations-grid {
+  /* ── Labels & Ressourcen ── */
+  .links-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: 1.2rem;
+  }
+  .link-list { display: flex; flex-direction: column; }
+  .link-row {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-  }
-  @media (max-width: 580px) { .stations-grid { grid-template-columns: 1fr; } }
-
-  /* ── Playable Card ── */
-  .station-card {
-    position: relative;
-    display: flex; flex-direction: column; gap: 0.45rem;
-    padding: 1rem;
-    background: var(--glass-bg);
-    border: 0.5px solid var(--border-mid);
-    border-radius: 8px;
-    backdrop-filter: blur(10px);
-    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
-    overflow: hidden;
-  }
-  .station-card::before {
-    content: '';
-    position: absolute; inset-block: 0; left: 0;
-    width: 2px; background: var(--sc); opacity: 0.4;
-    border-radius: 0 1px 1px 0; transition: opacity 0.2s;
-  }
-  .station-card:hover { background: var(--glass-bg-strong); }
-  .station-card:hover::before { opacity: 1; }
-  .station-card[data-state="playing"] {
-    border-color: var(--sc);
-    background: var(--glass-bg-strong);
-    box-shadow: 0 0 20px -6px var(--sc);
-  }
-  .station-card[data-state="playing"]::before { opacity: 1; width: 3px; }
-  /* Pausiert: der Sender bleibt der ausgewählte, nur eben still. */
-  .station-card[data-state="paused"] {
-    border-color: color-mix(in srgb, var(--sc) 45%, transparent);
-    background: var(--glass-bg-strong);
-  }
-  .station-card[data-state="paused"]::before { opacity: 0.7; width: 3px; }
-  .station-card[data-state="error"] { border-color: rgba(255,100,100,0.3); }
-
-  .card-top {
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .location-badge {
-    display: flex; align-items: center; gap: 0.3rem;
-    font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-dim);
-  }
-  .live-badge {
-    display: none; align-items: center; gap: 0.3rem;
-    font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.12em;
-    color: var(--sc); opacity: 0; transition: opacity 0.3s;
-  }
-  [data-state="playing"] .live-badge { display: flex; opacity: 1; }
-  .live-dot-anim {
-    width: 5px; height: 5px; border-radius: 50%;
-    background: var(--sc); animation: blink 1s step-end infinite;
-  }
-
-  .station-name {
-    font-family: var(--font-mono); font-size: 0.85rem; font-weight: 500;
-    color: var(--text-deep); margin: 0; line-height: 1.3;
-  }
-
-  .genre-pills { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-  .genre-pill {
-    font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.06em;
-    text-transform: uppercase; padding: 0.12rem 0.4rem;
-    border-radius: 20px; border: 0.5px solid var(--border-mid); color: var(--text-dim);
-    transition: border-color 0.2s, color 0.2s;
-  }
-  [data-state="playing"] .genre-pill { border-color: var(--sc); color: var(--text-deep); }
-
-  .waveform {
-    display: flex; align-items: center; gap: 3px; height: 24px; margin: 0.2rem 0;
-  }
-  .waveform span {
-    flex: 0 0 3px; height: 100%; background: var(--sc); border-radius: 2px;
-    transform: scaleY(0.2); transform-origin: center;
-    transition: transform 0.3s, opacity 0.3s; opacity: 0.3;
-  }
-  [data-state="loading"] .waveform span {
-    opacity: 0.5; animation: wave-idle 1.6s ease-in-out infinite;
-  }
-  [data-state="loading"] .waveform span:nth-child(1){animation-delay:0s}
-  [data-state="loading"] .waveform span:nth-child(2){animation-delay:.15s}
-  [data-state="loading"] .waveform span:nth-child(3){animation-delay:.3s}
-  [data-state="loading"] .waveform span:nth-child(4){animation-delay:.45s}
-  [data-state="loading"] .waveform span:nth-child(5){animation-delay:.6s}
-  [data-state="loading"] .waveform span:nth-child(6){animation-delay:.75s}
-  @keyframes wave-idle { 0%,100%{transform:scaleY(0.2)} 50%{transform:scaleY(0.6)} }
-  [data-state="playing"] .waveform span {
-    opacity: 1; animation: wave-play 0.9s ease-in-out infinite alternate;
-  }
-  [data-state="playing"] .waveform span:nth-child(1){animation-delay:0s;animation-duration:.8s}
-  [data-state="playing"] .waveform span:nth-child(2){animation-delay:.12s;animation-duration:.95s}
-  [data-state="playing"] .waveform span:nth-child(3){animation-delay:.24s;animation-duration:.7s}
-  [data-state="playing"] .waveform span:nth-child(4){animation-delay:.36s;animation-duration:1s}
-  [data-state="playing"] .waveform span:nth-child(5){animation-delay:.18s;animation-duration:.85s}
-  [data-state="playing"] .waveform span:nth-child(6){animation-delay:.06s;animation-duration:.75s}
-  @keyframes wave-play { from{transform:scaleY(0.3)} to{transform:scaleY(1)} }
-
-  .error-msg {
-    display: none; font-family: var(--font-mono); font-size: 0.65rem;
-    color: #ff7777; margin: 0; line-height: 1.5;
-  }
-  .error-msg a { color: #ff9999; text-decoration: underline; }
-  [data-state="error"] .error-msg { display: block; }
-
-  .card-footer {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-top: auto; padding-top: 0.4rem;
-  }
-  .play-btn {
-    display: inline-flex; align-items: center; gap: 0.35rem;
-    padding: 0.35rem 0.8rem;
-    border: 0.5px solid var(--border-mid); border-radius: 20px;
-    background: transparent; color: var(--text-dim);
-    font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em;
-    cursor: pointer; transition: all 0.2s; white-space: nowrap;
-  }
-  .play-btn:hover { background: var(--glass-bg-strong); border-color: var(--sc); color: var(--text-deep); }
-  [data-state="loading"] .play-btn { border-color: var(--sc); cursor: wait; }
-  [data-state="playing"] .play-btn { background: var(--sc); border-color: var(--sc); color: #fff; }
-  [data-state="error"] .play-btn { color: #ff7777; border-color: rgba(255,100,100,0.3); }
-  .btn-icon { font-size: 0.6rem; }
-  .site-link {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 26px; height: 26px; border: 0.5px solid var(--border-mid);
-    border-radius: 50%; color: var(--text-dim); font-size: 0.68rem;
-    text-decoration: none; transition: all 0.2s; flex-shrink: 0;
-  }
-  .site-link:hover { background: var(--glass-bg-strong); border-color: var(--sc); color: var(--text-deep); }
-
-  /* ── Link-only Grid ── */
-  .link-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-  }
-  @media (max-width: 580px) { .link-grid { grid-template-columns: 1fr; } }
-
-  /* ── Link Card ── */
-  .link-card {
-    position: relative;
-    display: flex; flex-direction: column; gap: 0.4rem;
-    padding: 0.9rem 1rem;
-    background: var(--glass-bg);
-    border: 0.5px solid var(--border-mid);
-    border-radius: 8px;
+    grid-template-columns: 190px 1fr auto;
+    align-items: baseline;
+    gap: 1.2rem;
+    padding: 0.8rem 0.2rem;
+    border-bottom: 0.5px solid var(--border-mid);
     text-decoration: none;
-    transition: border-color 0.2s, background 0.2s;
-    overflow: hidden;
+    transition: background 0.2s;
   }
-  .link-card::before {
-    content: '';
-    position: absolute; inset-block: 0; left: 0;
-    width: 2px; background: var(--sc); opacity: 0.3;
-    border-radius: 0 1px 1px 0; transition: opacity 0.2s;
+  .link-row:hover { background: var(--glass-bg); }
+  .lr-name {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    line-height: 1.1;
+    color: var(--text-deep);
   }
-  .link-card:hover {
-    background: var(--glass-bg-strong);
-    border-color: var(--sc);
+  .lr-desc {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    line-height: 1.55;
+    color: var(--text-dim);
   }
-  .link-card:hover::before { opacity: 1; }
+  .lr-meta {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .lr-arrow { color: var(--accent-ink); }
 
-  .lc-top {
-    display: flex; align-items: center; justify-content: space-between;
+  /* ── Fuß: Kürzel links, Hinweis rechts ── */
+  .foot-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    margin-top: 1.6rem;
+    padding-top: 1.2rem;
+    border-top: 0.5px solid var(--border-mid);
   }
-  .lc-location {
-    display: flex; align-items: center; gap: 0.3rem;
-    font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-dim);
-  }
-  .lc-arrow {
-    font-size: 0.75rem; color: var(--text-dim);
-    transition: color 0.2s, transform 0.2s;
-  }
-  .link-card:hover .lc-arrow { color: var(--sc); transform: translate(1px, -1px); }
+  .foot-col { display: flex; flex-direction: column; gap: 0.8rem; }
 
-  .lc-name {
-    font-family: var(--font-mono); font-size: 0.85rem; font-weight: 500;
-    color: var(--text-deep); line-height: 1.3;
+  .kb-list {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: baseline;
+    gap: 0.55rem 1.2rem;
+    margin: 0;
   }
-  .lc-desc {
-    font-family: var(--font-mono); font-size: 0.7rem;
-    color: var(--text-dim); line-height: 1.5;
+  .kb-list dt { display: flex; align-items: center; gap: 0.3rem; }
+  .kb-list dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--text-dim);
   }
-  .lc-pills { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.1rem; }
+  .kb-list kbd {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--accent-ink);
+    background: none;
+    border: none;
+    padding: 0;
+  }
 
-  /* ── Note ── */
   .streams-note {
-    margin-top: 1.5rem; font-family: var(--font-mono); font-size: 0.62rem;
-    color: var(--text-dim); opacity: 0.5; line-height: 1.6; text-align: center;
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--text-dim);
+    line-height: 1.75;
+  }
+  .streams-note em { font-family: var(--font-serif); font-size: 0.85rem; font-style: italic; }
+
+  @media (max-width: 700px) {
+    .ug-row { flex-direction: column; align-items: flex-start; gap: 0.7rem; }
+    .ug-filters { justify-content: flex-start; }
+    .link-row { grid-template-columns: 1fr; gap: 0.3rem; }
+    .lr-meta { white-space: normal; }
+    .foot-grid { grid-template-columns: 1fr; gap: 1.8rem; }
   }
 </style>
 
@@ -678,6 +840,7 @@ const linkOnly: LinkStation[] = [
     const nowBar  = document.getElementById('ugNowBar')  as HTMLElement;
     const nowName = document.getElementById('ugNowName') as HTMLElement;
     const stopBtn = document.getElementById('ugStopAll') as HTMLButtonElement;
+    const countEl = document.getElementById('ugCount')   as HTMLElement;
 
     if (!nowBar) return; // component not on this page
 
@@ -689,21 +852,47 @@ const linkOnly: LinkStation[] = [
       const label = card.querySelector<HTMLElement>('.btn-label');
       if (!icon || !label) return;
       switch (state) {
-        case 'idle':    icon.textContent = '▶'; label.textContent = 'Play'; break;
-        case 'loading': icon.textContent = '…'; label.textContent = 'Loading'; break;
-        case 'playing': icon.textContent = '■'; label.textContent = 'Stop'; break;
-        // Bewusst "Play", nicht "Weiter": ein Klick baut den Live-Stream neu
+        case 'idle':    icon.textContent = '▶'; label.textContent = 'Listen'; break;
+        case 'loading': icon.textContent = '…'; label.textContent = 'Lädt'; break;
+        case 'playing': icon.textContent = '❚❚'; label.textContent = 'Pause'; break;
+        // Bewusst "Listen", nicht "Weiter": ein Klick baut den Live-Stream neu
         // auf, statt aus einem veralteten Puffer weiterzulaufen.
-        case 'paused':  icon.textContent = '▶'; label.textContent = 'Play'; break;
+        case 'paused':  icon.textContent = '▶'; label.textContent = 'Listen'; break;
         case 'error':   icon.textContent = '✕'; label.textContent = 'Error'; break;
       }
     }
 
-    // The stream URL doubles as the station id — it is unique per card.
     function cards(): HTMLElement[] {
       return Array.from(document.querySelectorAll<HTMLElement>('.station-card'));
     }
 
+    // ── Filterleiste ───────────────────────────────────────────────────────
+    const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('.ug-chip'));
+
+    function applyFilter(f: string) {
+      const needle = f.toLowerCase();
+      let shown = 0;
+      for (const card of cards()) {
+        const hit =
+          f === 'Alle' ||
+          card.dataset.city === f ||
+          (card.dataset.genres ?? '').includes(needle);
+        card.hidden = !hit;
+        if (hit) shown++;
+      }
+      if (countEl) {
+        countEl.textContent = shown === cards().length ? 'alle' : `${shown} von ${cards().length}`;
+      }
+      for (const chip of chips) {
+        chip.setAttribute('aria-pressed', String(chip.dataset.filter === f));
+      }
+    }
+
+    for (const chip of chips) {
+      chip.addEventListener('click', () => applyFilter(chip.dataset.filter ?? 'Alle'));
+    }
+
+    // ── Wiedergabe ─────────────────────────────────────────────────────────
     function stopAll() {
       pause();
     }
@@ -729,29 +918,27 @@ const linkOnly: LinkStation[] = [
       });
     }
 
-    // ── Render from engine state ───────────────────────────────────────────────
     off.add(subscribe((s) => {
       const mine = s.source === 'underground';
 
       for (const card of cards()) {
-        // A card that failed keeps its error badge until it is clicked again.
         if (card.dataset.state === 'error') continue;
         if (mine && card.dataset.url === s.stationSlug) {
-          // Three states, not two: pausing left the card spinning on "loading"
-          // forever, because source and slug still point here. s.loading is the
-          // engine's own answer to "is something on its way?".
           setCardState(card, s.playing ? 'playing' : s.loading ? 'loading' : 'paused');
         } else {
           setCardState(card, 'idle');
         }
       }
 
+      // data-idle statt hidden: .now-playing-bar setzt display:flex und würde
+      // das hidden-Attribut aus dem Browser-Stylesheet überstimmen.
       if (nowBar && nowName) {
         if (mine && s.playing) {
           nowName.textContent = s.stationName;
-          nowBar.hidden = false;
+          nowBar.removeAttribute('data-idle');
         } else {
-          nowBar.hidden = true;
+          nowName.textContent = '';
+          nowBar.setAttribute('data-idle', 'true');
         }
       }
     }));
@@ -763,7 +950,7 @@ const linkOnly: LinkStation[] = [
         const slug = getState().stationSlug;
         const card = cards().find(c => c.dataset.url === slug);
         if (card) setCardState(card, 'error');
-        if (nowBar) nowBar.hidden = true;
+        if (nowBar) nowBar.setAttribute('data-idle', 'true');
       },
     });
 

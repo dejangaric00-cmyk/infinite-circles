@@ -1,81 +1,94 @@
 ---
+// src/pages/now.astro
+//
+// War eine Musikseite: Song of the Day, letzte Stücke, ein "Jetzt"-Abschnitt.
+// Das steht alles schon auf /sotd. Jetzt eine Linkliste — Orte und Werkzeuge,
+// die ich wirklich benutze.
+//
+// Neue Einträge kommen in LINK_GROUPS. Reihenfolge = Reihenfolge auf der Seite.
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getSortedSotd } from '../utils/sotd';
-import { getMoodDot } from '../utils/mood';
 import { relativeDayLabel } from '../utils/date';
 
-const sorted = await getSortedSotd();
-const latest = sorted[0];
-const recent = sorted.slice(1, 7);
+interface LinkItem {
+  name: string;
+  url: string;
+  /** Ein Halbsatz, keine Rezension. */
+  note?: string;
+  /** Rechts außen, klein: Art, Ort, Sprache — was gerade passt. */
+  meta?: string;
+}
+interface LinkGroup {
+  label: string;
+  items: LinkItem[];
+}
 
-const totalTracks = sorted.length;
-const totalLabels = [...new Set(sorted.map(e => e.data.label).filter(Boolean))].length;
-const years = sorted.map(e => e.data.year).filter(Boolean) as number[];
-const yearRange = years.length > 0 ? Math.min(...years) + '–' + Math.max(...years) : '';
+const LINK_GROUPS: LinkGroup[] = [
+  {
+    label: 'Musik',
+    items: [
+      {
+        name: 'Strudel',
+        url: 'https://strudel.cc',
+        note: 'Live-Coding im Browser. Läuft weiter unten direkt auf dieser Seite.',
+        meta: 'live coding · web audio',
+      },
+    ],
+  },
+];
 
-// Update this date whenever you manually update the /now page
-const NOW_UPDATED = '2026-04-01';
+// Datum der letzten Handpflege dieser Seite.
+const NOW_UPDATED = '2026-08-15';
 ---
 
 <BaseLayout
   title="Now — Infinite Circles"
-  description="Woran ich gerade bin: Musik, Projekte, Pläne. Manuell gepflegt."
+  description="Orte und Werkzeuge, die ich benutze. Manuell gepflegt."
 >
 <div class="now-wrap">
 
   <header class="now-header">
-    <div class="now-eyebrow">Now — Dejan</div>
+    <p class="now-eyebrow">Now — Dejan</p>
     <h1 class="now-title">Now.</h1>
     <p class="now-location">
       Zuletzt aktualisiert <span data-rel-date={NOW_UPDATED}>{relativeDayLabel(NOW_UPDATED)}</span> &middot; Hannover
     </p>
   </header>
 
-  <section class="now-section">
-    <div class="zone-label">Musik</div>
-
-    <div class="sotd-stats-row">
-      <div class="stat-pill">{totalTracks} tracks</div>
-      {totalLabels > 0 && <div class="stat-pill">{totalLabels} labels</div>}
-      {yearRange && <div class="stat-pill">{yearRange}</div>}
-      <a href="/sotd/rss.xml" class="stat-pill stat-pill-rss">RSS</a>
-    </div>
-
-    {latest && (
-      <a href={`/sotd/${latest.id}`} class="now-latest-track">
-        <div class="nlt-label" data-rel-date={latest.data.date}>{relativeDayLabel(latest.data.date)}</div>
-        <div class="nlt-title">{latest.data.title}</div>
-        <div class="nlt-artist">{latest.data.artist}</div>
-        {latest.data.note && <div class="nlt-note">{latest.data.note}</div>}
-      </a>
-    )}
-
-    <div class="recent-list">
-      {recent.map(entry => (
-        <a href={`/sotd/${entry.id}`} class="recent-item">
-          <span class="recent-dot" style={`background: ${getMoodDot(entry.data.mood)}`}></span>
-          <span class="recent-date">{entry.data.date}</span>
-          <span class="recent-title">{entry.data.title}</span>
-          <span class="recent-artist">{entry.data.artist}</span>
-        </a>
-      ))}
-    </div>
-
-    <a href="/sotd" class="all-link">Alle Songs →</a>
-  </section>
+  {LINK_GROUPS.map((group) => (
+    <section class="now-section">
+      <p class="zone-label">{group.label}</p>
+      <div class="link-list" role="list">
+        {group.items.map((item) => (
+          <a class="link-row" href={item.url} target="_blank" rel="noopener noreferrer" role="listitem">
+            <span class="lr-name">{item.name}</span>
+            <span class="lr-note">{item.note}</span>
+            <span class="lr-meta">{item.meta} <span class="lr-arrow">&#8599;</span></span>
+          </a>
+        ))}
+      </div>
+    </section>
+  ))}
 
   <section class="now-section">
-    <div class="zone-label">Jetzt</div>
-    <div class="now-items">
-      <div class="now-item">
-        <div class="now-item-label">Lernend</div>
-        <div class="now-item-text">Strudel &mdash; Coding Music.</div>
-      </div>
-      <div class="now-item">
-        <div class="now-item-label">N&auml;chstes Ziel</div>
-        <div class="now-item-text">Mittelmeer.</div>
-      </div>
+    <p class="zone-label">Strudel</p>
+    {/* loading="lazy" statt sofort: der REPL bringt seine ganze Audio-Maschine
+        mit, die soll nicht bei jedem Seitenaufruf ungefragt laden. Der Rahmen
+        holt sie erst, wenn er in die Nähe des Sichtfensters kommt.
+        strudel.cc erlaubt das Einbetten — nachgesehen, kein X-Frame-Options.
+        frame-src steht in netlify.toml. */}
+    <div class="strudel-frame">
+      <iframe
+        src="https://strudel.cc/?embed=1"
+        title="Strudel REPL"
+        loading="lazy"
+        allow="autoplay"
+      ></iframe>
     </div>
+    <p class="strudel-note">
+      Fremder Code in einem eigenen Rahmen. Ton gibt es erst nach einem Klick auf{' '}
+      <em>play</em>, und <a href="https://strudel.cc" target="_blank" rel="noopener noreferrer">strudel.cc</a>{' '}
+      hat mehr Platz.
+    </p>
   </section>
 
   <p class="now-footer">
@@ -86,233 +99,135 @@ const NOW_UPDATED = '2026-04-01';
 </div>
 </BaseLayout>
 
-<style is:global>
-.now-wrap {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 4rem 2rem 6rem;
-}
-.now-header {
-  margin-bottom: 4rem;
-  text-align: center;
-}
-.now-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: .22em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 1rem;
-}
-.now-title {
-  font-family: var(--font-serif);
-  font-size: clamp(56px, 8vw, 90px);
-  font-weight: 300;
-  line-height: 1;
-  margin-bottom: 0.75rem;
-  animation: color-breathe 3.8s ease-in-out infinite;
-}
-.now-location {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: .1em;
-  color: var(--text-dim);
-}
-@keyframes color-breathe {
-  0%   { color: #1a6bb5; }
-  50%  { color: #87ceeb; }
-  100% { color: #1a6bb5; }
-}
-html.dark .now-title {
-  animation-name: color-breathe-dark;
-}
-@keyframes color-breathe-dark {
-  0%   { color: #7ab8f0; }
-  50%  { color: #b8dff8; }
-  100% { color: #7ab8f0; }
-}
-.now-section {
-  border-top: 0.5px solid var(--border-light);
-  padding-top: 2rem;
-  margin-bottom: 3rem;
-}
-.zone-label {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: .22em;
-  text-transform: uppercase;
-  color: var(--accent);
-  opacity: 0.7;
-  margin-bottom: 1.5rem;
-}
-.sotd-stats-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 1.5rem;
-}
-.stat-pill {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: .08em;
-  padding: 3px 10px;
-  border: 0.5px solid var(--border-mid);
-  border-radius: 20px;
-  color: var(--text-dim);
-  text-decoration: none;
-}
-.stat-pill-rss {
-  color: var(--accent);
-  border-color: var(--accent);
-  opacity: 0.7;
-}
-.now-latest-track {
-  display: block;
-  text-decoration: none;
-  padding: 1rem 1.25rem;
-  border: 0.5px solid var(--glass-border);
-  border-radius: 10px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  margin-bottom: 1.25rem;
-  transition: border-color 0.15s, background 0.15s;
-}
-.now-latest-track:hover {
-  border-color: var(--accent);
-  background: var(--glass-bg-strong);
-}
-.nlt-label {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--accent);
-  opacity: 0.7;
-  margin-bottom: 0.4rem;
-}
-.nlt-title {
-  font-family: var(--font-serif);
-  font-size: 1.4rem;
-  font-weight: 300;
-  color: var(--text-deep);
-  line-height: 1.2;
-  margin-bottom: 2px;
-}
-.nlt-artist {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--accent);
-  opacity: 0.8;
-  margin-bottom: 0.4rem;
-}
-.nlt-note {
-  font-family: var(--font-serif);
-  font-size: 0.95rem;
-  font-style: italic;
-  color: var(--text-dim);
-}
-.recent-list {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 1rem;
-}
-.recent-item {
-  display: grid;
-  grid-template-columns: 10px 90px 1fr auto;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.55rem 0;
-  border-bottom: 0.5px solid var(--border-light);
-  text-decoration: none;
-  transition: opacity 0.15s;
-}
-.recent-item:hover { opacity: 0.7; }
-.recent-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.recent-date {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: .08em;
-  color: var(--text-dim);
-  white-space: nowrap;
-}
-.recent-title {
-  font-family: var(--font-serif);
-  font-size: 0.95rem;
-  font-weight: 300;
-  color: var(--text-deep);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.recent-artist {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  white-space: nowrap;
-}
-.all-link {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: .1em;
-  color: var(--text-dim);
-  text-decoration: none;
-  transition: color 0.15s;
-  display: inline-block;
-  margin-top: 0.5rem;
-}
-.all-link:hover { color: var(--accent); }
-.now-items {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-.now-item-label {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 0.3rem;
-}
-.now-item-text {
-  font-family: var(--font-serif);
-  font-size: 1.1rem;
-  font-weight: 300;
-  color: var(--text-deep);
-  line-height: 1.5;
-}
-.now-item-text em { font-style: italic; color: var(--accent); }
-.now-footer {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: .05em;
-  color: var(--text-dim);
-  text-align: center;
-  margin-top: 2rem;
-  border-top: 0.5px solid var(--border-light);
-  padding-top: 2rem;
-}
-.now-footer a {
-  color: var(--accent);
-  text-decoration: none;
-  border-bottom: 0.5px solid currentColor;
-  padding-bottom: 1px;
-}
-@media (max-width: 600px) {
-  .now-wrap { padding: 2.5rem 1.5rem 4rem; }
-  .recent-item { grid-template-columns: 10px 1fr auto; }
-  .recent-date { display: none; }
-}
-</style>
+<style>
+  .now-wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 4rem 2rem 6rem;
+  }
 
-<!-- Relative date labels are refreshed client-side by BaseLayout (see [data-rel-date]). -->
+  /* ── Kopf ── */
+  .now-header {
+    margin-bottom: 4rem;
+    text-align: center;
+  }
+  .now-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    margin: 0 0 1rem;
+  }
+  .now-title {
+    font-family: var(--font-serif);
+    font-size: clamp(56px, 8vw, 90px);
+    font-weight: 300;
+    line-height: 1;
+    margin: 0 0 0.75rem;
+    /* color steht ausdrücklich da: bei reduzierter Bewegung friert der globale
+       Block die Animation ein, dann trägt diese Farbe die Überschrift. */
+    color: var(--heading);
+  }
+  .now-location {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    color: var(--text-dim);
+    margin: 0;
+  }
+
+  /* ── Abschnitt ── */
+  .now-section {
+    border-top: 0.5px solid var(--border-light);
+    padding-top: 2rem;
+    margin-bottom: 3rem;
+  }
+  .zone-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    margin: 0 0 1.5rem;
+  }
+
+  /* ── Linkliste ──
+     Dasselbe Muster wie "Labels & Ressourcen" auf der Radioseite: Name,
+     Halbsatz, Randnotiz an einer Haarlinie. */
+  .link-list { display: flex; flex-direction: column; }
+  .link-row {
+    display: grid;
+    grid-template-columns: 170px 1fr auto;
+    align-items: baseline;
+    gap: 1.2rem;
+    padding: 0.8rem 0.2rem;
+    border-bottom: 0.5px solid var(--border-mid);
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+  .link-row:hover { background: var(--glass-bg); }
+  .link-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .lr-name {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    line-height: 1.1;
+    color: var(--text-deep);
+  }
+  .lr-note {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    line-height: 1.55;
+    color: var(--text-dim);
+  }
+  .lr-meta {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .lr-arrow { color: var(--accent-ink); }
+
+  /* ── Strudel ── */
+  .strudel-frame {
+    border: 1px solid var(--border-mid);
+    border-radius: var(--r-card);
+    overflow: hidden;
+    background: var(--glass-bg);
+  }
+  .strudel-frame iframe {
+    display: block;
+    width: 100%;
+    height: 420px;
+    border: 0;
+  }
+  .strudel-note {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    line-height: 1.75;
+    color: var(--text-dim);
+    margin: 0.9rem 0 0;
+  }
+  .strudel-note em { font-family: var(--font-serif); font-size: 0.85rem; font-style: italic; }
+  .strudel-note a { color: var(--accent-ink); }
+
+  /* ── Fuß ── */
+  .now-footer {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    line-height: 1.75;
+    color: var(--text-dim);
+    text-align: center;
+    margin: 0;
+  }
+  .now-footer a { color: var(--accent-ink); }
+
+  @media (max-width: 700px) {
+    .now-wrap { padding: 3rem 1.5rem 4rem; }
+    .link-row { grid-template-columns: 1fr; gap: 0.3rem; }
+    .lr-meta { white-space: normal; }
+    .strudel-frame iframe { height: 360px; }
+  }
+</style>

@@ -13,13 +13,11 @@
     "sotd": "node scripts/sotd.mjs"
   },
   "dependencies": {
-    "@astrojs/rss": "^4.0.18",
+    "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
-    "astro": "^6.1.9",
-    "suncalc": "^1.9.0"
+    "astro": "^7.2.2"
   },
   "devDependencies": {
-    "@astrojs/netlify": "^7.0.11",
-    "sharp": "^0.34.5"
+    "sharp": "^0.35.3"
   }
 }

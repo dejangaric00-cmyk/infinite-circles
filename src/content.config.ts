@@ -1,15 +1,8 @@
 import { z, defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 
-const journal = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/journal' }),
-  schema: z.object({
-    title: z.string(),
-    date: z.coerce.date(),
-    description: z.string(),
-    draft: z.boolean().optional().default(false),
-  }),
-});
+// journal collection removed — the section is gone from the site.
+// Add it back here when there is something to publish.
 
 const sotd = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/sotd' }),
@@ -31,12 +24,12 @@ const sotd = defineCollection({
     label: z.string().optional(),
     note: z.string().optional(),
     tags: z.array(z.string().toLowerCase()).optional(),
-    // Same escape hatch as the journal collection: keep an entry in the repo
-    // without publishing it. Filtered out centrally in utils/sotd.ts.
+    // Escape hatch: keep an entry in the repo without publishing it.
+    // Filtered out centrally in utils/sotd.ts.
     draft: z.boolean().optional().default(false),
   }),
 });
 
 // writing collection intentionally removed — add back when src/content/writing/ exists.
 
-export const collections = { journal, sotd };
+export const collections = { sotd };
